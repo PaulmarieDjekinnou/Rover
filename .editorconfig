@@ -1,0 +1,6 @@
+root = true
+
+# Les espaces des fichiers de test font partie des cas testés.
+[src/test/resources/**]
+trim_trailing_whitespace = false
+insert_final_newline = false

@@ -4,13 +4,20 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,60 +42,36 @@ class MissionTest {
     }
 
     // Exécute la mission et renvoie ce que display() a affiché, ligne par ligne.
-    private List<String> process(String content) {
-        Mission mission = new Mission(content.lines().toList());
+    private List<String> process(List<String> lines) {
+        Mission mission = new Mission(lines);
         mission.run();
         mission.display();
         return printedLines();
+    }
+
+    private List<String> process(String content) {
+        return process(content.lines().toList());
     }
 
     private String errorFor(String content) {
         return assertThrows(IllegalArgumentException.class, () -> process(content)).getMessage();
     }
 
-    // Cas nominaux
-
-    @Test
-    void sampleInput() {
-        List<String> output = process("""
-                5 5
-                1 2 N
-                LMLMLMLMM
-                3 3 E
-                MMRMMRMRRM
-                """);
-        assertEquals(List.of("1 3 N", "5 1 E"), output);
+    // Lit un fichier de src/test/resources depuis le classpath.
+    static List<String> readResource(String name) throws IOException, URISyntaxException {
+        URL url = MissionTest.class.getResource("/" + name);
+        assertNotNull(url, "Fichier de test introuvable : " + name);
+        return Files.readAllLines(Path.of(url.toURI()));
     }
 
-    @Test
-    void blankLinesAndExtraSpacesAreIgnored() {
-        List<String> output = process("""
+    // Cas nominaux : chaque fichier missions/valid/<nom>.txt est comparé à <nom>.expected.txt
 
-                  5   5
-
-                1  2   N
-                   LMLMLMLMM
-
-                """);
-        assertEquals(List.of("1 3 N"), output);
-    }
-
-    @Test
-    void plateauWithoutRoversReturnsNothing() {
-        assertEquals(List.of(), process("5 5\n"));
-    }
-
-    @Test
-    void roversAreProcessedIndependently() {
-        // Deux rovers sur la même case : pas de détection de collision
-        List<String> output = process("""
-                3 3
-                0 0 N
-                MMM
-                0 0 E
-                MMM
-                """);
-        assertEquals(List.of("0 3 N", "3 0 E"), output);
+    @ParameterizedTest
+    @ValueSource(strings = {"sample", "blank-lines", "same-cell", "stuck-at-edge", "no-rovers"})
+    void validMission(String name) throws Exception {
+        List<String> input = readResource("missions/valid/" + name + ".txt");
+        List<String> expected = readResource("missions/valid/" + name + ".expected.txt");
+        assertEquals(expected, process(input));
     }
 
     @Test
@@ -107,7 +90,21 @@ class MissionTest {
         assertEquals(List.of("1 3 N"), printedLines());
     }
 
-    // Cas d'erreur
+    // Cas d'erreur : fichiers complets de missions/invalid, avec le message attendu
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+            "missing-instructions              | Chaque rover doit avoir une ligne de position et une ligne d'instructions",
+            "missing-instructions-second-rover | Chaque rover doit avoir une ligne de position et une ligne d'instructions",
+            "outside-plateau                   | Le rover démarre hors du plateau : 6 2",
+            "unknown-instruction               | Instruction inconnue : X",
+    })
+    void invalidMission(String name, String message) throws Exception {
+        List<String> input = readResource("missions/invalid/" + name + ".txt");
+        assertEquals(message, assertThrows(IllegalArgumentException.class, () -> process(input)).getMessage());
+    }
+
+    // Cas d'erreur sur une seule valeur
 
     @ParameterizedTest
     @ValueSource(strings = {"", "\n\n", "   \n  "})
@@ -132,26 +129,6 @@ class MissionTest {
         assertTrue(errorFor("-1 5").startsWith("Taille de plateau invalide"));
     }
 
-    @Test
-    void missingInstructionLineIsRejected() {
-        String message = errorFor("""
-                5 5
-                1 2 N
-                """);
-        assertEquals("Chaque rover doit avoir une ligne de position et une ligne d'instructions", message);
-    }
-
-    @Test
-    void missingInstructionLineForSecondRoverIsRejected() {
-        String message = errorFor("""
-                5 5
-                1 2 N
-                LMLMLMLMM
-                3 3 E
-                """);
-        assertEquals("Chaque rover doit avoir une ligne de position et une ligne d'instructions", message);
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {"1 2", "1 2 N E", "N"})
     void positionLineWithWrongNumberOfValuesIsRejected(String positionLine) {
@@ -169,15 +146,5 @@ class MissionTest {
     @ValueSource(strings = {"X", "n", "NORTH"})
     void invalidDirectionIsRejected(String direction) {
         assertEquals("Direction invalide : " + direction, errorFor("5 5\n1 2 " + direction + "\nM\n"));
-    }
-
-    @Test
-    void roverStartingOutsidePlateauIsRejected() {
-        assertTrue(errorFor("5 5\n6 2 N\nM\n").startsWith("Le rover démarre hors du plateau"));
-    }
-
-    @Test
-    void unknownInstructionIsRejected() {
-        assertEquals("Instruction inconnue : X", errorFor("5 5\n1 2 N\nMXM\n"));
     }
 }
