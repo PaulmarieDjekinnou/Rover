@@ -1,7 +1,13 @@
-package fr.paulm.projects;
+package fr.paulm.projects.rover;
+
+import fr.paulm.projects.rover.domain.Simulation;
+import fr.paulm.projects.rover.domain.SimulationInput;
+import fr.paulm.projects.rover.domain.exception.InvalidInputException;
+import fr.paulm.projects.rover.input.InputParser;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 public class Main {
@@ -13,10 +19,10 @@ public class Main {
         try {
             SimulationInput input = new InputParser().parse(Files.readAllLines(Path.of(args[0])));
             new Simulation(input).run();
-        } catch (IOException e) {
+        } catch (IOException | InvalidPathException e) {
             System.err.println("Impossible de lire le fichier : " + e.getMessage());
             System.exit(1);
-        } catch (IllegalArgumentException e) {
+        } catch (InvalidInputException e) {
             System.err.println("Entrée invalide : " + e.getMessage());
             System.exit(1);
         }

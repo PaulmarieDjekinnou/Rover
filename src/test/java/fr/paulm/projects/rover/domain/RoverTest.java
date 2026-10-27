@@ -1,11 +1,11 @@
-package fr.paulm.projects;
+package fr.paulm.projects.rover.domain;
 
+import fr.paulm.projects.rover.TestInstructions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class RoverTest {
 
@@ -13,7 +13,7 @@ class RoverTest {
 
     private String run(int x, int y, Direction heading, String instructions) {
         Rover rover = new Rover(x, y, heading);
-        rover.execute(instructions, plateau);
+        rover.execute(TestInstructions.of(instructions), plateau);
         return rover.toString();
     }
 
@@ -82,21 +82,7 @@ class RoverTest {
     @Test
     void roverOnSingleCellPlateauNeverMoves() {
         Rover rover = new Rover(0, 0, Direction.N);
-        rover.execute("MRMRMRMLM", new Plateau(0, 0));
+        rover.execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0));
         assertEquals("0 0 S", rover.toString());
-    }
-
-    @ParameterizedTest
-    @CsvSource({"X", "l", "m", "MMX", "' '"})
-    void rejectsUnknownInstruction(String instructions) {
-        Rover rover = new Rover(1, 1, Direction.N);
-        assertThrows(IllegalArgumentException.class, () -> rover.execute(instructions, plateau));
-    }
-
-    @Test
-    void instructionsBeforeAnInvalidOneAreStillApplied() {
-        Rover rover = new Rover(1, 1, Direction.N);
-        assertThrows(IllegalArgumentException.class, () -> rover.execute("MMXM", plateau));
-        assertEquals("1 3 N", rover.toString());
     }
 }

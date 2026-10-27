@@ -1,4 +1,6 @@
-package fr.paulm.projects;
+package fr.paulm.projects.rover.domain;
+
+import java.util.List;
 
 public final class Rover {
     private int x;
@@ -19,13 +21,12 @@ public final class Rover {
         return y;
     }
 
-    public void execute(String instructions, Plateau plateau) {
-        for (char c : instructions.toCharArray()) {
-            switch (c) {
-                case 'L' -> heading = heading.left();
-                case 'R' -> heading = heading.right();
-                case 'M' -> move(plateau);
-                default -> throw new IllegalArgumentException("Instruction inconnue : " + c);
+    void execute(List<Instruction> instructions, Plateau plateau) {
+        for (Instruction instruction : instructions) {
+            switch (instruction) {
+                case L -> heading = heading.left();
+                case R -> heading = heading.right();
+                case M -> move(plateau);
             }
         }
     }

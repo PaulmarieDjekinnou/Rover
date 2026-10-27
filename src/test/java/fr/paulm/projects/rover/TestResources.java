@@ -1,4 +1,4 @@
-package fr.paulm.projects;
+package fr.paulm.projects.rover;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -9,19 +9,19 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-final class TestResources {
+public final class TestResources {
 
     private TestResources() {
     }
 
     // Chemin d'un fichier de src/test/resources, trouvé depuis le classpath.
-    static Path path(String name) throws URISyntaxException {
+    public static Path path(String name) throws URISyntaxException {
         URL url = TestResources.class.getResource("/" + name);
         assertNotNull(url, "Fichier de test introuvable : " + name);
         return Path.of(url.toURI());
     }
 
-    static List<String> read(String name) throws IOException, URISyntaxException {
+    public static List<String> read(String name) throws IOException, URISyntaxException {
         return Files.readAllLines(path(name));
     }
 }

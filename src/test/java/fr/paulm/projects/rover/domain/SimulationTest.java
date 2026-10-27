@@ -1,5 +1,8 @@
-package fr.paulm.projects;
+package fr.paulm.projects.rover.domain;
 
+import fr.paulm.projects.rover.TestInstructions;
+import fr.paulm.projects.rover.TestResources;
+import fr.paulm.projects.rover.input.InputParser;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,8 +38,8 @@ class SimulationTest {
     @Test
     void printsFinalPositionOfEachRoverInOrder() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverInstructions(new Rover(1, 2, Direction.N), "LMLMLMLMM"),
-                new RoverInstructions(new Rover(3, 3, Direction.E), "MMRMMRMRRM")));
+                new RoverInstructions(new Rover(1, 2, Direction.N), TestInstructions.of("LMLMLMLMM")),
+                new RoverInstructions(new Rover(3, 3, Direction.E), TestInstructions.of("MMRMMRMRRM"))));
         new Simulation(input).run();
         assertEquals(List.of("1 3 N", "5 1 E"), printedLines());
     }
@@ -44,8 +47,8 @@ class SimulationTest {
     @Test
     void roversShareThePlateauLimits() {
         SimulationInput input = new SimulationInput(new Plateau(2, 2), List.of(
-                new RoverInstructions(new Rover(0, 0, Direction.N), "MMMM"),
-                new RoverInstructions(new Rover(0, 0, Direction.E), "MMMM")));
+                new RoverInstructions(new Rover(0, 0, Direction.N), TestInstructions.of("MMMM")),
+                new RoverInstructions(new Rover(0, 0, Direction.E), TestInstructions.of("MMMM"))));
         new Simulation(input).run();
         assertEquals(List.of("0 2 N", "2 0 E"), printedLines());
     }

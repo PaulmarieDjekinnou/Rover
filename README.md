@@ -53,7 +53,7 @@ Entrée invalide : Direction invalide : X
 
 ```bash
 mvn package
-java -cp target/Rover-1.0-SNAPSHOT.jar fr.paulm.projects.Main src/main/resources/input.txt
+java -cp target/Rover-1.0-SNAPSHOT.jar fr.paulm.projects.rover.Main src/main/resources/input.txt
 ```
 
 ## Tests
@@ -71,12 +71,18 @@ Pour ajouter un cas nominal, il suffit de créer les deux fichiers et d'ajouter 
 
 ## Structure
 
-| Classe | Rôle |
-|---|---|
-| `Direction` | les quatre orientations, les rotations et le vecteur de déplacement |
-| `Plateau` | les limites de la grille |
-| `Rover` | position, orientation et exécution des instructions |
-| `InputParser` | lit et valide le fichier d'entrée, et le transforme en `SimulationInput` |
-| `SimulationInput`, `RoverInstructions` | le contenu du fichier une fois lu : le plateau, et chaque rover avec ses instructions |
-| `Simulation` | fait avancer chaque rover et affiche sa position finale |
-| `Main` | point d'entrée : lit le fichier passé en argument et gère les erreurs |
+Toutes les classes sont dans le package `fr.paulm.projects.rover`.
+
+| Package | Classe | Rôle |
+|---|---|---|
+| *(racine)* | `Main` | point d'entrée : lit le fichier passé en argument et gère les erreurs |
+| `domain` | `Direction` | les quatre orientations, les rotations et le vecteur de déplacement |
+| | `Instruction` | les ordres `L`, `R` et `M` |
+| | `Plateau` | les limites de la grille |
+| | `Rover` | position, orientation et exécution des instructions |
+| | `SimulationInput`, `RoverInstructions` | le plateau, et chaque rover avec ses instructions ; vérifie que chaque rover démarre sur le plateau |
+| | `Simulation` | fait avancer chaque rover et affiche sa position finale |
+| `domain.exception` | `InvalidInputException` | parent de toutes les erreurs dues au contenu de l'entrée |
+| | `InvalidSimulationException`, `RoverOutsidePlateauException` | une règle de la simulation n'est pas respectée |
+| `input` | `InputParser` | lit et valide le fichier texte, et le transforme en `SimulationInput` |
+| `input.exception` | `InputFormatException`, `InvalidDirectionException`, `UnknownInstructionException` | le fichier ne respecte pas le format attendu |

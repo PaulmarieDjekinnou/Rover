@@ -1,16 +1,18 @@
-package fr.paulm.projects;
+package fr.paulm.projects.rover.domain;
+
+import fr.paulm.projects.rover.domain.exception.RoverOutsidePlateauException;
 
 import java.util.List;
 
 // Le plateau et les rovers à simuler, dans l'ordre du fichier.
 // Vérifie à la construction que chaque rover démarre sur le plateau.
-record SimulationInput(Plateau plateau, List<RoverInstructions> rovers) {
+public record SimulationInput(Plateau plateau, List<RoverInstructions> rovers) {
 
-    SimulationInput {
+    public SimulationInput {
         for (RoverInstructions r : rovers) {
             Rover rover = r.rover();
             if (!plateau.contains(rover.x(), rover.y())) {
-                throw new IllegalArgumentException("Le rover démarre hors du plateau : " + rover.x() + " " + rover.y());
+                throw new RoverOutsidePlateauException(rover.x(), rover.y());
             }
         }
     }
