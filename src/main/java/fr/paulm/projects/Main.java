@@ -11,9 +11,8 @@ public class Main {
             System.exit(1);
         }
         try {
-            Mission mission = new Mission(Files.readAllLines(Path.of(args[0])));
-            mission.run();
-            mission.display();
+            SimulationInput input = new InputParser().parse(Files.readAllLines(Path.of(args[0])));
+            new Simulation(input).run();
         } catch (IOException e) {
             System.err.println("Impossible de lire le fichier : " + e.getMessage());
             System.exit(1);

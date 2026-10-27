@@ -30,9 +30,9 @@ class MainTest {
 
     @Test
     void printsFinalPositionsForSampleFile() throws Exception {
-        Path input = Path.of(MainTest.class.getResource("/missions/valid/sample.txt").toURI());
+        Path input = TestResources.path("simulations/valid/sample.txt");
         Main.main(new String[]{input.toString()});
-        List<String> expected = MissionTest.readResource("missions/valid/sample.expected.txt");
+        List<String> expected = TestResources.read("simulations/valid/sample.expected.txt");
         assertEquals(expected, out.toString().lines().toList());
     }
 }

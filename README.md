@@ -62,12 +62,12 @@ java -cp target/Rover-1.0-SNAPSHOT.jar fr.paulm.projects.Main src/main/resources
 mvn test
 ```
 
-Les tests de `Mission` lisent des fichiers d'entrée dans `src/test/resources/missions/` :
+Les tests lisent des fichiers d'entrée dans `src/test/resources/simulations/` :
 
-- `valid/<nom>.txt` : entrée d'un cas nominal, comparée au résultat attendu dans `<nom>.expected.txt` ;
-- `invalid/<nom>.txt` : entrée d'un cas d'erreur, dont le message attendu est indiqué dans `MissionTest`.
+- `valid/<nom>.txt` : entrée d'un cas nominal, lue puis simulée, et comparée au résultat attendu dans `<nom>.expected.txt` (`SimulationTest`) ;
+- `invalid/<nom>.txt` : entrée d'un cas d'erreur, dont le message attendu est indiqué dans `InputParserTest`.
 
-Pour ajouter un cas nominal, il suffit de créer les deux fichiers et d'ajouter le nom dans `MissionTest.validMission`.
+Pour ajouter un cas nominal, il suffit de créer les deux fichiers et d'ajouter le nom dans `SimulationTest.validFile`.
 
 ## Structure
 
@@ -76,5 +76,7 @@ Pour ajouter un cas nominal, il suffit de créer les deux fichiers et d'ajouter 
 | `Direction` | les quatre orientations, les rotations et le vecteur de déplacement |
 | `Plateau` | les limites de la grille |
 | `Rover` | position, orientation et exécution des instructions |
-| `Mission` | lit le fichier, fait avancer chaque rover et affiche les positions finales |
+| `InputParser` | lit et valide le fichier d'entrée, et le transforme en `SimulationInput` |
+| `SimulationInput`, `RoverInstructions` | le contenu du fichier une fois lu : le plateau, et chaque rover avec ses instructions |
+| `Simulation` | fait avancer chaque rover et affiche sa position finale |
 | `Main` | point d'entrée : lit le fichier passé en argument et gère les erreurs |

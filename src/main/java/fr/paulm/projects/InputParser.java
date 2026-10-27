@@ -3,33 +3,21 @@ package fr.paulm.projects;
 import java.util.ArrayList;
 import java.util.List;
 
-final class Mission {
-    private final List<String> rawLines;
-    private final List<Rover> rovers = new ArrayList<>();
+final class InputParser {
 
-    Mission(List<String> rawLines) {
-        this.rawLines = List.copyOf(rawLines);
-    }
-
-    // Déplace chaque rover selon ses instructions, dans l'ordre du fichier.
-    void run() {
+    // Lit et valide tout le fichier : une erreur est levée avant qu'aucun rover ne bouge.
+    SimulationInput parse(List<String> rawLines) {
         List<String> lines = nonBlankLines(rawLines);
         Plateau plateau = parsePlateau(lines.get(0));
-        rovers.clear();
         // Après la ligne du plateau, chaque rover occupe deux lignes : position puis instructions.
         int roverCount = (lines.size() - 1) / 2;
+        List<RoverInstructions> rovers = new ArrayList<>();
         for (int r = 0; r < roverCount; r++) {
-            String position = lines.get(1 + 2 * r);
-            String instructions = lines.get(2 + 2 * r);
-            Rover rover = parseRover(plateau, position);
-            rover.execute(instructions);
-            rovers.add(rover);
+            Rover rover = parseRover(lines.get(1 + 2 * r));
+            String instructions = parseInstructions(lines.get(2 + 2 * r));
+            rovers.add(new RoverInstructions(rover, instructions));
         }
-    }
-
-    // Affiche la position finale de chaque rover, une par ligne.
-    void display() {
-        rovers.forEach(System.out::println);
+        return new SimulationInput(plateau, rovers);
     }
 
     // Retire les espaces autour de chaque ligne, supprime les lignes vides et vérifie
@@ -60,7 +48,7 @@ final class Mission {
         }
     }
 
-    private Rover parseRover(Plateau plateau, String line) {
+    private Rover parseRover(String line) {
         String[] pos = line.split("\\s+");
         if (pos.length != 3) {
             throw new IllegalArgumentException("Position invalide : " + line);
@@ -73,7 +61,7 @@ final class Mission {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Position invalide : " + line);
         }
-        return new Rover(plateau, x, y, parseDirection(pos[2]));
+        return new Rover(x, y, parseDirection(pos[2]));
     }
 
     private Direction parseDirection(String value) {
@@ -82,5 +70,14 @@ final class Mission {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Direction invalide : " + value);
         }
+    }
+
+    private String parseInstructions(String line) {
+        for (char c : line.toCharArray()) {
+            if (c != 'L' && c != 'R' && c != 'M') {
+                throw new IllegalArgumentException("Instruction inconnue : " + c);
+            }
+        }
+        return line;
     }
 }

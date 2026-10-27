@@ -12,8 +12,8 @@ class RoverTest {
     private final Plateau plateau = new Plateau(5, 5);
 
     private String run(int x, int y, Direction heading, String instructions) {
-        Rover rover = new Rover(plateau, x, y, heading);
-        rover.execute(instructions);
+        Rover rover = new Rover(x, y, heading);
+        rover.execute(instructions, plateau);
         return rover.toString();
     }
 
@@ -30,7 +30,7 @@ class RoverTest {
 
     @Test
     void toStringFormatsPositionAndHeading() {
-        assertEquals("2 4 W", new Rover(plateau, 2, 4, Direction.W).toString());
+        assertEquals("2 4 W", new Rover(2, 4, Direction.W).toString());
     }
 
     @Test
@@ -81,28 +81,22 @@ class RoverTest {
 
     @Test
     void roverOnSingleCellPlateauNeverMoves() {
-        Rover rover = new Rover(new Plateau(0, 0), 0, 0, Direction.N);
-        rover.execute("MRMRMRMLM");
+        Rover rover = new Rover(0, 0, Direction.N);
+        rover.execute("MRMRMRMLM", new Plateau(0, 0));
         assertEquals("0 0 S", rover.toString());
-    }
-
-    @ParameterizedTest
-    @CsvSource({"-1, 0", "0, -1", "6, 0", "0, 6"})
-    void rejectsStartOutsidePlateau(int x, int y) {
-        assertThrows(IllegalArgumentException.class, () -> new Rover(plateau, x, y, Direction.N));
     }
 
     @ParameterizedTest
     @CsvSource({"X", "l", "m", "MMX", "' '"})
     void rejectsUnknownInstruction(String instructions) {
-        Rover rover = new Rover(plateau, 1, 1, Direction.N);
-        assertThrows(IllegalArgumentException.class, () -> rover.execute(instructions));
+        Rover rover = new Rover(1, 1, Direction.N);
+        assertThrows(IllegalArgumentException.class, () -> rover.execute(instructions, plateau));
     }
 
     @Test
     void instructionsBeforeAnInvalidOneAreStillApplied() {
-        Rover rover = new Rover(plateau, 1, 1, Direction.N);
-        assertThrows(IllegalArgumentException.class, () -> rover.execute("MMXM"));
+        Rover rover = new Rover(1, 1, Direction.N);
+        assertThrows(IllegalArgumentException.class, () -> rover.execute("MMXM", plateau));
         assertEquals("1 3 N", rover.toString());
     }
 }
