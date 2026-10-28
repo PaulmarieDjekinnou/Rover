@@ -1,12 +1,11 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.Simulation;
-import fr.paulm.projects.rover.domain.SimulationInput;
-import fr.paulm.projects.rover.domain.exception.InvalidInputException;
-import fr.paulm.projects.rover.input.InputParser;
+import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
+import fr.paulm.projects.rover.input.SimulationReader;
+import fr.paulm.projects.rover.input.TextFileReader;
 
-import java.io.IOException;
-import java.nio.file.Files;
+import java.io.UncheckedIOException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
@@ -17,9 +16,12 @@ public class Main {
             System.exit(1);
         }
         try {
-            SimulationInput input = new InputParser().parse(Files.readAllLines(Path.of(args[0])));
-            new Simulation(input).run();
-        } catch (IOException | InvalidPathException e) {
+            SimulationReader reader = new TextFileReader(Path.of(args[0]));
+            new Simulation(reader.read()).run();
+        } catch (UncheckedIOException e) {
+            System.err.println("Impossible de lire le fichier : " + e.getCause().getMessage());
+            System.exit(1);
+        } catch (InvalidPathException e) {
             System.err.println("Impossible de lire le fichier : " + e.getMessage());
             System.exit(1);
         } catch (InvalidInputException e) {

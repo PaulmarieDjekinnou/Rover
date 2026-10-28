@@ -1,6 +1,6 @@
 package fr.paulm.projects.rover;
 
-import fr.paulm.projects.rover.domain.Instruction;
+import fr.paulm.projects.rover.domain.enums.Instruction;
 
 import java.util.List;
 

@@ -1,17 +1,17 @@
-package fr.paulm.projects.rover.domain;
+package fr.paulm.projects.rover.domain.enums;
 
 public enum Direction {
     N(0, 1), E(1, 0), S(0, -1), W(-1, 0);
 
-    final int dx;
-    final int dy;
+    public final int dx;
+    public final int dy;
 
     Direction(int dx, int dy) {
         this.dx = dx;
         this.dy = dy;
     }
 
-    Direction left() {
+    public Direction left() {
         return switch (this) {
             case N -> W;
             case W -> S;
@@ -20,7 +20,7 @@ public enum Direction {
         };
     }
 
-    Direction right() {
+    public Direction right() {
         return switch (this) {
             case N -> E;
             case E -> S;

@@ -41,7 +41,7 @@ La position finale et l'orientation de chaque rover, une par ligne, dans l'ordre
 Si le fichier est invalide, le programme affiche un message d'erreur en français et s'arrête avec le code 1. Par exemple :
 
 ```
-Entrée invalide : Direction invalide : X
+Entrée invalide : Direction invalide : « X ». Attendu : N, E, S ou W
 ```
 
 ## Prérequis
@@ -65,7 +65,7 @@ mvn test
 Les tests lisent des fichiers d'entrée dans `src/test/resources/simulations/` :
 
 - `valid/<nom>.txt` : entrée d'un cas nominal, lue puis simulée, et comparée au résultat attendu dans `<nom>.expected.txt` (`SimulationTest`) ;
-- `invalid/<nom>.txt` : entrée d'un cas d'erreur, dont le message attendu est indiqué dans `InputParserTest`.
+- `invalid/<nom>.txt` : entrée d'un cas d'erreur, dont le message attendu est indiqué dans `TextFileReaderTest`.
 
 Pour ajouter un cas nominal, il suffit de créer les deux fichiers et d'ajouter le nom dans `SimulationTest.validFile`.
 
@@ -76,13 +76,12 @@ Toutes les classes sont dans le package `fr.paulm.projects.rover`.
 | Package | Classe | Rôle |
 |---|---|---|
 | *(racine)* | `Main` | point d'entrée : lit le fichier passé en argument et gère les erreurs |
-| `domain` | `Direction` | les quatre orientations, les rotations et le vecteur de déplacement |
+| `domain.enums` | `Direction` | les quatre orientations, les rotations et le vecteur de déplacement |
 | | `Instruction` | les ordres `L`, `R` et `M` |
-| | `Plateau` | les limites de la grille |
+| `domain` | `Plateau` | les limites de la grille |
 | | `Rover` | position, orientation et exécution des instructions |
 | | `SimulationInput`, `RoverInstructions` | le plateau, et chaque rover avec ses instructions ; vérifie que chaque rover démarre sur le plateau |
 | | `Simulation` | fait avancer chaque rover et affiche sa position finale |
-| `domain.exception` | `InvalidInputException` | parent de toutes les erreurs dues au contenu de l'entrée |
-| | `InvalidSimulationException`, `RoverOutsidePlateauException` | une règle de la simulation n'est pas respectée |
-| `input` | `InputParser` | lit et valide le fichier texte, et le transforme en `SimulationInput` |
-| `input.exception` | `InputFormatException`, `InvalidDirectionException`, `UnknownInstructionException` | le fichier ne respecte pas le format attendu |
+| `domain.exceptions` | `InvalidInputException` | le contenu de l'entrée est invalide (format ou règle) ; le message explique l'erreur |
+| `input` | `SimulationReader` | interface : une entrée possible de la simulation (fichier texte, et plus tard JSON, base de données…) |
+| | `TextFileReader` | lit et valide un fichier au format texte |

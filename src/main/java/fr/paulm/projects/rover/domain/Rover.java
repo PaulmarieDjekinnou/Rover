@@ -1,5 +1,8 @@
 package fr.paulm.projects.rover.domain;
 
+import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.domain.enums.Instruction;
+
 import java.util.List;
 
 public final class Rover {

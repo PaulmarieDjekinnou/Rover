@@ -1,6 +1,6 @@
 package fr.paulm.projects.rover.domain;
 
-import fr.paulm.projects.rover.domain.exception.InvalidSimulationException;
+import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 
 public final class Plateau {
     private final int maxX;
@@ -8,7 +8,7 @@ public final class Plateau {
 
     public Plateau(int maxX, int maxY) {
         if (maxX < 0 || maxY < 0) {
-            throw new InvalidSimulationException("Taille de plateau invalide : " + maxX + " " + maxY);
+            throw new InvalidInputException("Taille de plateau invalide : « " + maxX + " " + maxY + " ». Les dimensions ne peuvent pas être négatives");
         }
         this.maxX = maxX;
         this.maxY = maxY;

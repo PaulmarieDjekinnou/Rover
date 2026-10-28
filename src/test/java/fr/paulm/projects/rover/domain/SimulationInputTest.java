@@ -1,6 +1,8 @@
 package fr.paulm.projects.rover.domain;
 
-import fr.paulm.projects.rover.domain.exception.RoverOutsidePlateauException;
+import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.domain.enums.Instruction;
+import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -27,10 +29,8 @@ class SimulationInputTest {
     @ParameterizedTest
     @CsvSource({"-1, 0", "0, -1", "6, 0", "0, 6"})
     void rejectsRoverStartingOutsidePlateau(int x, int y) {
-        RoverOutsidePlateauException e = assertThrows(RoverOutsidePlateauException.class,
+        InvalidInputException e = assertThrows(InvalidInputException.class,
                 () -> new SimulationInput(plateau, List.of(rover(1, 1), rover(x, y))));
-        assertEquals(x, e.x());
-        assertEquals(y, e.y());
-        assertEquals("Le rover démarre hors du plateau : " + x + " " + y, e.getMessage());
+        assertEquals("Le rover démarre hors du plateau : « " + x + " " + y + " »", e.getMessage());
     }
 }

@@ -1,23 +1,43 @@
 package fr.paulm.projects.rover.input;
 
-import fr.paulm.projects.rover.domain.Direction;
-import fr.paulm.projects.rover.domain.Instruction;
+import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.domain.enums.Instruction;
 import fr.paulm.projects.rover.domain.Plateau;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.RoverInstructions;
 import fr.paulm.projects.rover.domain.SimulationInput;
-import fr.paulm.projects.rover.input.exception.InputFormatException;
-import fr.paulm.projects.rover.input.exception.InvalidDirectionException;
-import fr.paulm.projects.rover.input.exception.UnknownInstructionException;
+import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class InputParser {
+// Lit une simulation depuis un fichier texte : une ligne pour le plateau,
+// puis deux lignes par rover (position, instructions).
+public final class TextFileReader implements SimulationReader {
+    private final Path path;
 
-    // Lit et valide tout le fichier : une erreur est levée avant qu'aucun rover ne bouge.
-    public SimulationInput parse(List<String> rawLines) {
-        List<String> lines = nonBlankLines(rawLines);
+    public TextFileReader(Path path) {
+        this.path = path;
+    }
+
+    @Override
+    public SimulationInput read() {
+        String content;
+        try {
+            content = Files.readString(path);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return parse(content);
+    }
+
+    // Lit et valide tout le contenu : une erreur est levée avant qu'aucun rover ne bouge.
+    private SimulationInput parse(String content) {
+        List<String> lines = nonBlankLines(content.lines().toList());
         Plateau plateau = parsePlateau(lines.get(0));
         // Après la ligne du plateau, chaque rover occupe deux lignes : position puis instructions.
         int roverCount = (lines.size() - 1) / 2;
@@ -38,10 +58,10 @@ public final class InputParser {
                 .filter(l -> !l.isEmpty())
                 .toList();
         if (lines.isEmpty()) {
-            throw new InputFormatException("Fichier vide");
+            throw new InvalidInputException("Fichier vide : la première ligne doit donner la taille du plateau, par exemple « 5 5 »");
         }
         if ((lines.size() - 1) % 2 != 0) {
-            throw new InputFormatException("Chaque rover doit avoir une ligne de position et une ligne d'instructions");
+            throw new InvalidInputException("Chaque rover doit avoir une ligne de position et une ligne d'instructions");
         }
         return lines;
     }
@@ -49,19 +69,19 @@ public final class InputParser {
     private Plateau parsePlateau(String line) {
         String[] size = line.split("\\s+");
         if (size.length != 2) {
-            throw new InputFormatException("Taille de plateau invalide : " + line);
+            throw new InvalidInputException("Taille de plateau invalide : « " + line + " ». Attendu : deux entiers, par exemple « 5 5 »");
         }
         try {
             return new Plateau(Integer.parseInt(size[0]), Integer.parseInt(size[1]));
         } catch (NumberFormatException e) {
-            throw new InputFormatException("Taille de plateau invalide : " + line);
+            throw new InvalidInputException("Taille de plateau invalide : « " + line + " ». Attendu : deux entiers, par exemple « 5 5 »");
         }
     }
 
     private Rover parseRover(String line) {
         String[] pos = line.split("\\s+");
         if (pos.length != 3) {
-            throw new InputFormatException("Position invalide : " + line);
+            throw new InvalidInputException("Position invalide : « " + line + " ». Attendu : x y direction, par exemple « 1 2 N »");
         }
         int x;
         int y;
@@ -69,7 +89,7 @@ public final class InputParser {
             x = Integer.parseInt(pos[0]);
             y = Integer.parseInt(pos[1]);
         } catch (NumberFormatException e) {
-            throw new InputFormatException("Position invalide : " + line);
+            throw new InvalidInputException("Position invalide : « " + line + " ». Attendu : x y direction, par exemple « 1 2 N »");
         }
         return new Rover(x, y, parseDirection(pos[2]));
     }
@@ -78,7 +98,7 @@ public final class InputParser {
         try {
             return Direction.valueOf(value);
         } catch (IllegalArgumentException e) {
-            throw new InvalidDirectionException(value);
+            throw new InvalidInputException("Direction invalide : « " + value + " ». Attendu : N, E, S ou W");
         }
     }
 
@@ -88,7 +108,7 @@ public final class InputParser {
             try {
                 instructions.add(Instruction.valueOf(String.valueOf(c)));
             } catch (IllegalArgumentException e) {
-                throw new UnknownInstructionException(c);
+                throw new InvalidInputException("Instruction inconnue : « " + c + " ». Attendu : L, R ou M");
             }
         }
         return instructions;

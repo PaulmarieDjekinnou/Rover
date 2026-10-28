@@ -1,6 +1,6 @@
 package fr.paulm.projects.rover.domain;
 
-import fr.paulm.projects.rover.domain.exception.RoverOutsidePlateauException;
+import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ public record SimulationInput(Plateau plateau, List<RoverInstructions> rovers) {
         for (RoverInstructions r : rovers) {
             Rover rover = r.rover();
             if (!plateau.contains(rover.x(), rover.y())) {
-                throw new RoverOutsidePlateauException(rover.x(), rover.y());
+                throw new InvalidInputException("Le rover démarre hors du plateau : « " + rover.x() + " " + rover.y() + " »");
             }
         }
     }

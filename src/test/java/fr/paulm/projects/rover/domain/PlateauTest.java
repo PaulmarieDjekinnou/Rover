@@ -1,6 +1,6 @@
 package fr.paulm.projects.rover.domain;
 
-import fr.paulm.projects.rover.domain.exception.InvalidSimulationException;
+import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -28,6 +28,6 @@ class PlateauTest {
     @ParameterizedTest
     @CsvSource({"-1, 3", "5, -1"})
     void rejectsNegativeSize(int maxX, int maxY) {
-        assertThrows(InvalidSimulationException.class, () -> new Plateau(maxX, maxY));
+        assertThrows(InvalidInputException.class, () -> new Plateau(maxX, maxY));
     }
 }

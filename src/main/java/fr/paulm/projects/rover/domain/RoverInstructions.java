@@ -1,5 +1,7 @@
 package fr.paulm.projects.rover.domain;
 
+import fr.paulm.projects.rover.domain.enums.Instruction;
+
 import java.util.List;
 
 // Un rover prêt à partir et la suite d'instructions qu'il doit exécuter.

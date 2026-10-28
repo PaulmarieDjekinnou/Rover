@@ -2,7 +2,8 @@ package fr.paulm.projects.rover.domain;
 
 import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.TestResources;
-import fr.paulm.projects.rover.input.InputParser;
+import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.input.TextFileReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,9 +65,9 @@ class SimulationTest {
     @ParameterizedTest
     @ValueSource(strings = {"sample", "blank-lines", "same-cell", "stuck-at-edge", "no-rovers"})
     void validFile(String name) throws Exception {
-        List<String> lines = TestResources.read("simulations/valid/" + name + ".txt");
+        TextFileReader reader = new TextFileReader(TestResources.path("simulations/valid/" + name + ".txt"));
         List<String> expected = TestResources.read("simulations/valid/" + name + ".expected.txt");
-        new Simulation(new InputParser().parse(lines)).run();
+        new Simulation(reader.read()).run();
         assertEquals(expected, printedLines());
     }
 }

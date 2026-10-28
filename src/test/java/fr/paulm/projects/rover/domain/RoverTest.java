@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.domain;
 
 import fr.paulm.projects.rover.TestInstructions;
+import fr.paulm.projects.rover.domain.enums.Direction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
