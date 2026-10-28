@@ -53,7 +53,7 @@ Entrée invalide : Direction invalide : « X ». Attendu : N, E, S ou W
 
 ```bash
 mvn package
-java -cp target/Rover-1.0-SNAPSHOT.jar fr.paulm.projects.rover.Main src/main/resources/input.txt
+java -jar target/rover.jar src/main/resources/input.txt
 ```
 
 ## Tests
