@@ -7,8 +7,6 @@ import fr.paulm.projects.rover.domain.enums.Direction;
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
 
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
@@ -35,17 +33,11 @@ class TextFileReaderTest {
         assertThrows(UncheckedIOException.class, () -> new TextFileReader(missing).read());
     }
 
-    // Complete files from simulations/invalid: the format error is propagated with its message.
-
-    @ParameterizedTest
-    @CsvSource(delimiter = '|', value = {
-            "missing-instructions              | Each rover needs a position line and an instruction line",
-            "missing-instructions-second-rover | Each rover needs a position line and an instruction line",
-            "outside-plateau                   | Rover starts outside the plateau: \"6 2\"",
-            "unknown-instruction               | Unknown instruction: \"X\". Expected: L, R or M",
-    })
-    void invalidFile(String name, String message) throws Exception {
-        TextFileReader reader = new TextFileReader(TestResources.path("simulations/invalid/" + name + ".txt"));
-        assertEquals(message, assertThrows(InvalidInputException.class, reader::read).getMessage());
+    @Test
+    void invalidContentErrorIsPropagated() throws Exception {
+        // Format messages are tested in TextFormatParserTest: this only checks the reader lets the error through.
+        TextFileReader reader = new TextFileReader(TestResources.path("simulations/invalid/unknown-instruction.txt"));
+        assertEquals("Unknown instruction: \"X\". Expected: L, R or M",
+                assertThrows(InvalidInputException.class, reader::read).getMessage());
     }
 }

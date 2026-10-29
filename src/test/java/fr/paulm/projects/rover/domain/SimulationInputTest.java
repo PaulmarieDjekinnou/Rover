@@ -22,10 +22,10 @@ class SimulationInputTest {
         return new RoverMission(new Rover(x, y, Direction.N), List.of(Instruction.M));
     }
 
-    @ParameterizedTest
-    @CsvSource({"0, 0", "5, 5", "0, 5", "5, 0"})
-    void acceptsRoversOnThePlateau(int x, int y) {
-        assertDoesNotThrow(() -> new SimulationInput(plateau, List.of(missionAt(x, y))));
+    @Test
+    void acceptsRoverStartingOnTheEdgeOfThePlateau() {
+        // The plateau boundaries themselves are tested in PlateauTest.
+        assertDoesNotThrow(() -> new SimulationInput(plateau, List.of(missionAt(5, 5))));
     }
 
     @ParameterizedTest

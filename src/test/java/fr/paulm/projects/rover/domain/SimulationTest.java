@@ -2,14 +2,10 @@ package fr.paulm.projects.rover.domain;
 
 import fr.paulm.projects.rover.LogCapture;
 import fr.paulm.projects.rover.TestInstructions;
-import fr.paulm.projects.rover.TestResources;
 import fr.paulm.projects.rover.domain.enums.Direction;
-import fr.paulm.projects.rover.input.TextFileReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -61,16 +57,5 @@ class SimulationTest {
     void noRoversLogsNothing() {
         new Simulation(new SimulationInput(new Plateau(5, 5), List.of())).run();
         assertEquals(List.of(), logs.messages());
-    }
-
-    // End to end: each simulations/valid/<name>.txt file is read, simulated and compared to <name>.expected.txt
-
-    @ParameterizedTest
-    @ValueSource(strings = {"sample", "blank-lines", "same-cell", "stuck-at-edge", "no-rovers"})
-    void validFile(String name) throws Exception {
-        TextFileReader reader = new TextFileReader(TestResources.path("simulations/valid/" + name + ".txt"));
-        List<String> expected = TestResources.read("simulations/valid/" + name + ".expected.txt");
-        new Simulation(reader.read()).run();
-        assertEquals(expected, logs.messages());
     }
 }

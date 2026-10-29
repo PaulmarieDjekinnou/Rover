@@ -92,10 +92,16 @@ class TextFormatParserTest {
                 errorFor("5 5\n" + positionLine + "\nM\n"));
     }
 
+    @Test
+    void roverStartingOutsidePlateauIsRejected() {
+        // The rule belongs to SimulationInput (tested there on every side); this only checks it applies after parsing.
+        assertEquals("Rover starts outside the plateau: \"6 2\"", errorFor("5 5\n6 2 N\nM\n"));
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {"-1 0", "0 -1", "6 0", "0 6"})
-    void roverStartingOutsidePlateauIsRejected(String coordinates) {
-        assertEquals("Rover starts outside the plateau: \"" + coordinates + "\"", errorFor("5 5\n" + coordinates + " N\nM\n"));
+    @ValueSource(strings = {"5 5\n1 2 N\n", "5 5\n1 2 N\nLMLMLMLMM\n3 3 E\n"})
+    void missingInstructionLineIsRejected(String content) {
+        assertEquals("Each rover needs a position line and an instruction line", errorFor(content));
     }
 
     @ParameterizedTest

@@ -75,10 +75,10 @@ mvn test
 
 The tests read input files from `src/test/resources/simulations/`:
 
-- `valid/<name>.txt`: input of a nominal case, read then simulated, and compared to the expected result in `<name>.expected.txt` (`SimulationTest`);
-- `invalid/<name>.txt`: input of an error case, whose expected message is given in `TextFileReaderTest`.
+- `valid/<name>.txt`: input of a nominal case, run through the program and compared to the expected result in `<name>.expected.txt` (`MainTest`);
+- `invalid/<name>.txt`: input of an error case, used to check that errors are reported (`TextFileReaderTest`, `MainTest`).
 
-To add a nominal case, create both files and add the name to `SimulationTest.validFile`.
+To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest`.
 
 ## Structure
 

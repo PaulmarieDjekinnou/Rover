@@ -5,6 +5,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -32,11 +34,13 @@ class MainTest {
         errors.stop();
     }
 
-    @Test
-    void logsFinalPositionsForSampleFile() throws Exception {
-        Path input = TestResources.path("simulations/valid/sample.txt");
+    // Each simulations/valid/<name>.txt file is run through the program and compared to <name>.expected.txt
+    @ParameterizedTest
+    @ValueSource(strings = {"sample", "blank-lines", "same-cell", "stuck-at-edge", "no-rovers"})
+    void validFile(String name) throws Exception {
+        Path input = TestResources.path("simulations/valid/" + name + ".txt");
         assertEquals(ExitCode.SUCCESS, new Main().run(new String[]{input.toString()}));
-        List<String> expected = TestResources.read("simulations/valid/sample.expected.txt");
+        List<String> expected = TestResources.read("simulations/valid/" + name + ".expected.txt");
         assertEquals(expected, logs.messages());
         assertEquals(List.of(), errors.messages());
     }
