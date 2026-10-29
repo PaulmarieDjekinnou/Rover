@@ -5,45 +5,34 @@ import fr.paulm.projects.rover.domain.enums.Instruction;
 
 import java.util.List;
 
-public final class Rover {
-    private int x;
-    private int y;
-    private Direction heading;
+// The state of a rover at a given moment: its position and heading.
+// Immutable: executing instructions returns a new state and leaves this one unchanged.
+public record Rover(int x, int y, Direction heading) {
 
-    public Rover(int x, int y, Direction heading) {
-        this.x = x;
-        this.y = y;
-        this.heading = heading;
-    }
-
-    int x() {
-        return x;
-    }
-
-    int y() {
-        return y;
-    }
-
-    void execute(List<Instruction> instructions, Plateau plateau) {
+    Rover execute(List<Instruction> instructions, Plateau plateau) {
+        Rover current = this;
         for (Instruction instruction : instructions) {
-            switch (instruction) {
-                case L -> heading = heading.left();
-                case R -> heading = heading.right();
-                case M -> move(plateau);
-            }
+            current = current.apply(instruction, plateau);
         }
+        return current;
     }
 
-    // Un déplacement qui ferait sortir du plateau est ignoré, pour que le rover ne soit jamais perdu.
-    private void move(Plateau plateau) {
+    private Rover apply(Instruction instruction, Plateau plateau) {
+        return switch (instruction) {
+            case L -> new Rover(x, y, heading.left());
+            case R -> new Rover(x, y, heading.right());
+            case M -> move(plateau);
+        };
+    }
+
+    // A move that would leave the plateau is ignored, so the rover is never lost.
+    private Rover move(Plateau plateau) {
         int nx = x + heading.dx;
         int ny = y + heading.dy;
-        if (plateau.contains(nx, ny)) {
-            x = nx;
-            y = ny;
-        }
+        return plateau.contains(nx, ny) ? new Rover(nx, ny, heading) : this;
     }
 
+    // The output format of the program: "x y heading".
     @Override
     public String toString() {
         return x + " " + y + " " + heading;

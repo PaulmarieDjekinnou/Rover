@@ -1,7 +1,7 @@
 package fr.paulm.projects.rover.domain.exceptions;
 
-// Le contenu de l'entrée est invalide (format ou règle de la simulation).
-// C'est la seule exception que Main présente comme une entrée invalide : son message explique l'erreur à l'utilisateur.
+// The input content is invalid (format or simulation rule).
+// It is the only exception Main reports as invalid input: its message explains the error to the user.
 public final class InvalidInputException extends RuntimeException {
 
     public InvalidInputException(String message) {

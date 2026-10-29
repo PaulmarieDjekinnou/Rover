@@ -8,7 +8,7 @@ public final class Plateau {
 
     public Plateau(int maxX, int maxY) {
         if (maxX < 0 || maxY < 0) {
-            throw new InvalidInputException("Taille de plateau invalide : « " + maxX + " " + maxY + " ». Les dimensions ne peuvent pas être négatives");
+            throw new InvalidInputException("Invalid plateau size: \"" + maxX + " " + maxY + "\". Dimensions cannot be negative");
         }
         this.maxX = maxX;
         this.maxY = maxY;

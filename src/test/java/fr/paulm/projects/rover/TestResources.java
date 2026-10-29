@@ -14,10 +14,10 @@ public final class TestResources {
     private TestResources() {
     }
 
-    // Chemin d'un fichier de src/test/resources, trouvé depuis le classpath.
+    // Path of a file in src/test/resources, resolved from the classpath.
     public static Path path(String name) throws URISyntaxException {
         URL url = TestResources.class.getResource("/" + name);
-        assertNotNull(url, "Fichier de test introuvable : " + name);
+        assertNotNull(url, "Test file not found: " + name);
         return Path.of(url.toURI());
     }
 

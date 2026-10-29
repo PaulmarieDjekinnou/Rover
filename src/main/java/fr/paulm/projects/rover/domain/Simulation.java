@@ -1,18 +1,23 @@
 package fr.paulm.projects.rover.domain;
 
-public final class Simulation {
-    private final SimulationInput input;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    public Simulation(SimulationInput input) {
-        this.input = input;
+public final class Simulation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Simulation.class);
+
+    private final SimulationInput simulationInput;
+
+    public Simulation(SimulationInput simulationInput) {
+        this.simulationInput = simulationInput;
     }
 
-    // Déplace chaque rover selon ses instructions, dans l'ordre du fichier,
-    // et affiche sa position finale dès qu'il a terminé.
+    // Moves each rover according to its instructions, in input order,
+    // and logs its final position as soon as it has finished.
     public void run() {
-        for (RoverInstructions r : input.rovers()) {
-            r.rover().execute(r.instructions(), input.plateau());
-            System.out.println(r.rover());
+        for (RoverMission mission : simulationInput.missions()) {
+            Rover finalRover = mission.rover().execute(mission.instructions(), simulationInput.plateau());
+            LOGGER.info("{}", finalRover);
         }
     }
 }

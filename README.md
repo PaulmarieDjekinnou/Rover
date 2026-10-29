@@ -1,20 +1,20 @@
 # Rover
 
-Simulation de rovers martiens qui explorent un plateau rectangulaire.
+Simulation of Mars rovers exploring a rectangular plateau.
 
-Chaque rover a une position `(x, y)` et une orientation (`N`, `E`, `S`, `W`). Il reçoit une suite d'instructions :
+Each rover has a position `(x, y)` and a heading (`N`, `E`, `S`, `W`). It receives a sequence of instructions:
 
-| Instruction | Effet |
+| Instruction | Effect |
 |---|---|
-| `L` | tourne de 90° à gauche, sans bouger |
-| `R` | tourne de 90° à droite, sans bouger |
-| `M` | avance d'une case dans la direction actuelle |
+| `L` | turns 90° left, without moving |
+| `R` | turns 90° right, without moving |
+| `M` | moves forward one cell in its current heading |
 
-Le coin inférieur gauche du plateau est `(0, 0)`. Le nord correspond à `y + 1`.
+The bottom-left corner of the plateau is `(0, 0)`. North is `y + 1`.
 
-Un déplacement qui ferait sortir le rover du plateau est ignoré : le rover reste sur place et passe à l'instruction suivante. Les rovers sont traités l'un après l'autre et indépendamment, sans détection de collision.
+A move that would take the rover off the plateau is ignored: the rover stays where it is and goes on to the next instruction. Rovers are processed one after the other and independently, with no collision detection.
 
-## Format du fichier d'entrée
+## Input file format
 
 ```
 5 5
@@ -24,32 +24,43 @@ LMLMLMLMM
 MMRMMRMRRM
 ```
 
-- **Ligne 1** : coordonnées du coin supérieur droit du plateau.
-- **Puis, pour chaque rover, deux lignes** : sa position de départ et son orientation, puis ses instructions.
+- **Line 1**: coordinates of the top-right corner of the plateau.
+- **Then, for each rover, two lines**: its starting position and heading, then its instructions.
 
-Les lignes vides et les espaces en trop sont ignorés.
+Blank lines and extra spaces are ignored.
 
-## Sortie
+## Output
 
-La position finale et l'orientation de chaque rover, une par ligne, dans l'ordre du fichier :
+The final position and heading of each rover, one per line, in input order, on the standard output:
 
 ```
 1 3 N
 5 1 E
 ```
 
-Si le fichier est invalide, le programme affiche un message d'erreur en français et s'arrête avec le code 1. Par exemple :
+If something goes wrong, the program prints an error message on the standard error output, for example:
 
 ```
-Entrée invalide : Direction invalide : « X ». Attendu : N, E, S ou W
+Invalid input: Invalid direction: "X". Expected: N, E, S or W
 ```
 
-## Prérequis
+The exit code tells the cause:
+
+| Code | Meaning |
+|---|---|
+| `0` | success |
+| `2` | wrong usage: missing or extra argument |
+| `3` | invalid input: the file does not follow the format or a simulation rule |
+| `4` | unreadable file: missing file or invalid path |
+
+Results and errors are written with SLF4J and Logback. `src/main/resources/logback.xml` sends the final positions to the standard output and everything else to the standard error output, with the message only.
+
+## Requirements
 
 - Java 21
 - Maven
 
-## Utilisation
+## Usage
 
 ```bash
 mvn package
@@ -62,26 +73,27 @@ java -jar target/rover.jar src/main/resources/input.txt
 mvn test
 ```
 
-Les tests lisent des fichiers d'entrée dans `src/test/resources/simulations/` :
+The tests read input files from `src/test/resources/simulations/`:
 
-- `valid/<nom>.txt` : entrée d'un cas nominal, lue puis simulée, et comparée au résultat attendu dans `<nom>.expected.txt` (`SimulationTest`) ;
-- `invalid/<nom>.txt` : entrée d'un cas d'erreur, dont le message attendu est indiqué dans `TextFileReaderTest`.
+- `valid/<name>.txt`: input of a nominal case, read then simulated, and compared to the expected result in `<name>.expected.txt` (`SimulationTest`);
+- `invalid/<name>.txt`: input of an error case, whose expected message is given in `TextFileReaderTest`.
 
-Pour ajouter un cas nominal, il suffit de créer les deux fichiers et d'ajouter le nom dans `SimulationTest.validFile`.
+To add a nominal case, create both files and add the name to `SimulationTest.validFile`.
 
 ## Structure
 
-Toutes les classes sont dans le package `fr.paulm.projects.rover`.
+All classes are in the `fr.paulm.projects.rover` package.
 
-| Package | Classe | Rôle |
+| Package | Class | Role |
 |---|---|---|
-| *(racine)* | `Main` | point d'entrée : lit le fichier passé en argument et gère les erreurs |
-| `domain.enums` | `Direction` | les quatre orientations, les rotations et le vecteur de déplacement |
-| | `Instruction` | les ordres `L`, `R` et `M` |
-| `domain` | `Plateau` | les limites de la grille |
-| | `Rover` | position, orientation et exécution des instructions |
-| | `SimulationInput`, `RoverInstructions` | le plateau, et chaque rover avec ses instructions ; vérifie que chaque rover démarre sur le plateau |
-| | `Simulation` | fait avancer chaque rover et affiche sa position finale |
-| `domain.exceptions` | `InvalidInputException` | le contenu de l'entrée est invalide (format ou règle) ; le message explique l'erreur |
-| `input` | `SimulationReader` | interface : une entrée possible de la simulation (fichier texte, et plus tard JSON, base de données…) |
-| | `TextFileReader` | lit et valide un fichier au format texte |
+| *(root)* | `Main` | entry point: reads the file given as argument and handles errors |
+| `domain.enums` | `Direction` | the four headings, rotations and movement vector |
+| | `Instruction` | the `L`, `R` and `M` commands |
+| `domain` | `Plateau` | the grid boundaries |
+| | `Rover` | position, heading and execution of instructions |
+| | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau |
+| | `Simulation` | moves each rover and prints its final position |
+| `domain.exceptions` | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
+| `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
+| | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
+| | `TextFormatParser` | reads and validates the text format, wherever the content comes from |

@@ -1,0 +1,4 @@
+<configuration>
+    <!-- No console output during tests: LogCapture attaches its own appender to read the messages -->
+    <root level="INFO"/>
+</configuration>

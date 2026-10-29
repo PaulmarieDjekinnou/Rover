@@ -1,38 +1,70 @@
 package fr.paulm.projects.rover;
 
+import fr.paulm.projects.rover.domain.Simulation;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-// Test de bout en bout du cas nominal : les cas d'erreur appellent System.exit.
+// End-to-end tests of the program: Main.run returns the exit code instead of calling System.exit.
 class MainTest {
 
-    private final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    private PrintStream originalOut;
+    @TempDir
+    Path tempDir;
+
+    private LogCapture logs;
+    private LogCapture errors;
 
     @BeforeEach
-    void captureStdout() {
-        originalOut = System.out;
-        System.setOut(new PrintStream(out));
+    void capture() {
+        logs = LogCapture.start(Simulation.class);
+        errors = LogCapture.start(Main.class);
     }
 
     @AfterEach
-    void restoreStdout() {
-        System.setOut(originalOut);
+    void stopCapture() {
+        logs.stop();
+        errors.stop();
     }
 
     @Test
-    void printsFinalPositionsForSampleFile() throws Exception {
+    void logsFinalPositionsForSampleFile() throws Exception {
         Path input = TestResources.path("simulations/valid/sample.txt");
-        Main.main(new String[]{input.toString()});
+        assertEquals(ExitCode.SUCCESS, new Main().run(new String[]{input.toString()}));
         List<String> expected = TestResources.read("simulations/valid/sample.expected.txt");
-        assertEquals(expected, out.toString().lines().toList());
+        assertEquals(expected, logs.messages());
+        assertEquals(List.of(), errors.messages());
+    }
+
+    @Test
+    void missingArgumentPrintsUsage() {
+        assertEquals(ExitCode.USAGE_ERROR, new Main().run(new String[]{}));
+        assertEquals(List.of("Usage: java -jar rover.jar input.txt"), errors.messages());
+    }
+
+    @Test
+    void tooManyArgumentsPrintsUsage() {
+        assertEquals(ExitCode.USAGE_ERROR, new Main().run(new String[]{"a.txt", "b.txt"}));
+        assertEquals(List.of("Usage: java -jar rover.jar input.txt"), errors.messages());
+    }
+
+    @Test
+    void missingFileIsReported() {
+        Path missing = tempDir.resolve("absent.txt");
+        assertEquals(ExitCode.UNREADABLE_FILE, new Main().run(new String[]{missing.toString()}));
+        assertEquals(List.of("Cannot read file: " + missing), errors.messages());
+    }
+
+    @Test
+    void invalidContentIsReported() throws Exception {
+        Path input = TestResources.path("simulations/invalid/unknown-instruction.txt");
+        assertEquals(ExitCode.INVALID_INPUT, new Main().run(new String[]{input.toString()}));
+        assertEquals(List.of("Invalid input: Unknown instruction: \"X\". Expected: L, R or M"), errors.messages());
+        assertEquals(List.of(), logs.messages());
     }
 }

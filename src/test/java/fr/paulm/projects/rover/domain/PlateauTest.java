@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PlateauTest {
 
-    // Plateau non carré : une inversion largeur / hauteur ferait échouer les coins (5, 0) et (5, 3).
+    // Non-square plateau: swapping width and height would make the (5, 0) and (5, 3) corners fail.
     private final Plateau plateau = new Plateau(5, 3);
 
     @ParameterizedTest

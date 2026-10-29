@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover.domain;
 
+import fr.paulm.projects.rover.LogCapture;
 import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.TestResources;
 import fr.paulm.projects.rover.domain.enums.Direction;
@@ -10,57 +11,59 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SimulationTest {
 
-    private final ByteArrayOutputStream out = new ByteArrayOutputStream();
-    private PrintStream originalOut;
+    private LogCapture logs;
 
     @BeforeEach
-    void captureStdout() {
-        originalOut = System.out;
-        System.setOut(new PrintStream(out));
+    void captureLogs() {
+        logs = LogCapture.start(Simulation.class);
     }
 
     @AfterEach
-    void restoreStdout() {
-        System.setOut(originalOut);
-    }
-
-    private List<String> printedLines() {
-        return out.toString().lines().toList();
+    void stopCapture() {
+        logs.stop();
     }
 
     @Test
-    void printsFinalPositionOfEachRoverInOrder() {
+    void logsFinalPositionOfEachRoverInOrder() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverInstructions(new Rover(1, 2, Direction.N), TestInstructions.of("LMLMLMLMM")),
-                new RoverInstructions(new Rover(3, 3, Direction.E), TestInstructions.of("MMRMMRMRRM"))));
+                new RoverMission(new Rover(1, 2, Direction.N), TestInstructions.of("LMLMLMLMM")),
+                new RoverMission(new Rover(3, 3, Direction.E), TestInstructions.of("MMRMMRMRRM"))));
         new Simulation(input).run();
-        assertEquals(List.of("1 3 N", "5 1 E"), printedLines());
+        assertEquals(List.of("1 3 N", "5 1 E"), logs.messages());
     }
 
     @Test
     void roversShareThePlateauLimits() {
         SimulationInput input = new SimulationInput(new Plateau(2, 2), List.of(
-                new RoverInstructions(new Rover(0, 0, Direction.N), TestInstructions.of("MMMM")),
-                new RoverInstructions(new Rover(0, 0, Direction.E), TestInstructions.of("MMMM"))));
+                new RoverMission(new Rover(0, 0, Direction.N), TestInstructions.of("MMMM")),
+                new RoverMission(new Rover(0, 0, Direction.E), TestInstructions.of("MMMM"))));
         new Simulation(input).run();
-        assertEquals(List.of("0 2 N", "2 0 E"), printedLines());
+        assertEquals(List.of("0 2 N", "2 0 E"), logs.messages());
     }
 
     @Test
-    void noRoversPrintsNothing() {
-        new Simulation(new SimulationInput(new Plateau(5, 5), List.of())).run();
-        assertEquals("", out.toString());
+    void runCanBeReplayedWithTheSameResult() {
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
+                new RoverMission(new Rover(1, 2, Direction.N), TestInstructions.of("LMLMLMLMM"))));
+        Simulation simulation = new Simulation(input);
+        simulation.run();
+        simulation.run();
+        assertEquals(List.of("1 3 N", "1 3 N"), logs.messages());
     }
 
-    // Bout en bout : chaque fichier simulations/valid/<nom>.txt est lu, simulé et comparé à <nom>.expected.txt
+    @Test
+    void noRoversLogsNothing() {
+        new Simulation(new SimulationInput(new Plateau(5, 5), List.of())).run();
+        assertEquals(List.of(), logs.messages());
+    }
+
+    // End to end: each simulations/valid/<name>.txt file is read, simulated and compared to <name>.expected.txt
 
     @ParameterizedTest
     @ValueSource(strings = {"sample", "blank-lines", "same-cell", "stuck-at-edge", "no-rovers"})
@@ -68,6 +71,6 @@ class SimulationTest {
         TextFileReader reader = new TextFileReader(TestResources.path("simulations/valid/" + name + ".txt"));
         List<String> expected = TestResources.read("simulations/valid/" + name + ".expected.txt");
         new Simulation(reader.read()).run();
-        assertEquals(expected, printedLines());
+        assertEquals(expected, logs.messages());
     }
 }

@@ -3,9 +3,11 @@ package fr.paulm.projects.rover.domain;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import fr.paulm.projects.rover.domain.enums.Instruction;
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -16,21 +18,31 @@ class SimulationInputTest {
 
     private final Plateau plateau = new Plateau(5, 5);
 
-    private static RoverInstructions rover(int x, int y) {
-        return new RoverInstructions(new Rover(x, y, Direction.N), List.of(Instruction.M));
+    private static RoverMission missionAt(int x, int y) {
+        return new RoverMission(new Rover(x, y, Direction.N), List.of(Instruction.M));
     }
 
     @ParameterizedTest
     @CsvSource({"0, 0", "5, 5", "0, 5", "5, 0"})
     void acceptsRoversOnThePlateau(int x, int y) {
-        assertDoesNotThrow(() -> new SimulationInput(plateau, List.of(rover(x, y))));
+        assertDoesNotThrow(() -> new SimulationInput(plateau, List.of(missionAt(x, y))));
     }
 
     @ParameterizedTest
     @CsvSource({"-1, 0", "0, -1", "6, 0", "0, 6"})
     void rejectsRoverStartingOutsidePlateau(int x, int y) {
         InvalidInputException e = assertThrows(InvalidInputException.class,
-                () -> new SimulationInput(plateau, List.of(rover(1, 1), rover(x, y))));
-        assertEquals("Le rover démarre hors du plateau : « " + x + " " + y + " »", e.getMessage());
+                () -> new SimulationInput(plateau, List.of(missionAt(1, 1), missionAt(x, y))));
+        assertEquals("Rover starts outside the plateau: \"" + x + " " + y + "\"", e.getMessage());
+    }
+
+    @Test
+    void missionListCannotBeChangedAfterConstruction() {
+        List<RoverMission> missions = new ArrayList<>(List.of(missionAt(1, 1)));
+        SimulationInput input = new SimulationInput(plateau, missions);
+
+        missions.add(missionAt(10, 10));
+        assertEquals(1, input.missions().size());
+        assertThrows(UnsupportedOperationException.class, () -> input.missions().add(missionAt(2, 2)));
     }
 }

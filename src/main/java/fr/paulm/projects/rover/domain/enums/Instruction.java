@@ -1,6 +1,6 @@
 package fr.paulm.projects.rover.domain.enums;
 
-// Les ordres qu'un rover sait exécuter.
+// The commands a rover can execute.
 public enum Instruction {
     L, R, M
 }

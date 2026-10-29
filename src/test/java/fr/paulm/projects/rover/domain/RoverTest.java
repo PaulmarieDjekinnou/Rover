@@ -6,84 +6,89 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static fr.paulm.projects.rover.domain.enums.Direction.E;
+import static fr.paulm.projects.rover.domain.enums.Direction.N;
+import static fr.paulm.projects.rover.domain.enums.Direction.S;
+import static fr.paulm.projects.rover.domain.enums.Direction.W;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RoverTest {
 
     private final Plateau plateau = new Plateau(5, 5);
 
-    private String run(int x, int y, Direction heading, String instructions) {
-        Rover rover = new Rover(x, y, heading);
-        rover.execute(TestInstructions.of(instructions), plateau);
-        return rover.toString();
+    private Rover run(Rover start, String instructions) {
+        return start.execute(TestInstructions.of(instructions), plateau);
     }
 
-    // Cas d'exemple de l'énoncé
+    // Examples from the problem statement
     @Test
     void firstSampleRover() {
-        assertEquals("1 3 N", run(1, 2, Direction.N, "LMLMLMLMM"));
+        assertEquals(new Rover(1, 3, N), run(new Rover(1, 2, N), "LMLMLMLMM"));
     }
 
     @Test
     void secondSampleRover() {
-        assertEquals("5 1 E", run(3, 3, Direction.E, "MMRMMRMRRM"));
+        assertEquals(new Rover(5, 1, E), run(new Rover(3, 3, E), "MMRMMRMRRM"));
     }
 
     @Test
     void toStringFormatsPositionAndHeading() {
-        assertEquals("2 4 W", new Rover(2, 4, Direction.W).toString());
+        assertEquals("2 4 W", new Rover(2, 4, W).toString());
     }
 
     @Test
     void emptyInstructionsLeaveRoverUnchanged() {
-        assertEquals("1 1 S", run(1, 1, Direction.S, ""));
+        assertEquals(new Rover(1, 1, S), run(new Rover(1, 1, S), ""));
     }
 
     @ParameterizedTest
-    @CsvSource({"N, 2 3 N", "E, 3 2 E", "S, 2 1 S", "W, 1 2 W"})
-    void moveGoesOneStepInEachDirection(Direction heading, String expected) {
-        assertEquals(expected, run(2, 2, heading, "M"));
+    @CsvSource({"N, 2, 3", "E, 3, 2", "S, 2, 1", "W, 1, 2"})
+    void moveGoesOneStepInEachDirection(Direction heading, int expectedX, int expectedY) {
+        assertEquals(new Rover(expectedX, expectedY, heading), run(new Rover(2, 2, heading), "M"));
     }
 
     @Test
     void turnsDoNotChangePosition() {
-        assertEquals("2 2 N", run(2, 2, Direction.N, "LLLLRRRR"));
-        assertEquals("2 2 S", run(2, 2, Direction.N, "RR"));
-        assertEquals("2 2 W", run(2, 2, Direction.N, "L"));
+        assertEquals(new Rover(2, 2, N), run(new Rover(2, 2, N), "LLLLRRRR"));
+        assertEquals(new Rover(2, 2, S), run(new Rover(2, 2, N), "RR"));
+        assertEquals(new Rover(2, 2, W), run(new Rover(2, 2, N), "L"));
     }
 
     @Test
     void roundTripReturnsToStart() {
-        assertEquals("2 2 N", run(2, 2, Direction.N, "MMRRMMRR"));
+        assertEquals(new Rover(2, 2, N), run(new Rover(2, 2, N), "MMRRMMRR"));
     }
 
     @Test
     void squarePathReturnsToStart() {
-        assertEquals("0 0 N", run(0, 0, Direction.N, "MRMRMRMR"));
+        assertEquals(new Rover(0, 0, N), run(new Rover(0, 0, N), "MRMRMRMR"));
     }
 
-    // Les mouvements qui sortiraient du plateau sont ignorés
+    // Moves that would leave the plateau are ignored
     @ParameterizedTest
-    @CsvSource({
-            "0, 5, N, 0 5 N",
-            "5, 0, E, 5 0 E",
-            "0, 0, S, 0 0 S",
-            "0, 0, W, 0 0 W",
-    })
-    void moveOffTheEdgeIsIgnored(int x, int y, Direction heading, String expected) {
-        assertEquals(expected, run(x, y, heading, "M"));
+    @CsvSource({"0, 5, N", "5, 0, E", "0, 0, S", "0, 0, W"})
+    void moveOffTheEdgeIsIgnored(int x, int y, Direction heading) {
+        Rover start = new Rover(x, y, heading);
+        assertEquals(start, run(start, "M"));
     }
 
     @Test
     void roverStopsAtEdgeAndContinuesAfterwards() {
-        // Bloqué au nord après 5 pas, puis tourne et repart vers l'est
-        assertEquals("2 5 E", run(0, 0, Direction.N, "MMMMMMMMRMM"));
+        // Blocked to the north after 5 steps, then turns and moves east
+        assertEquals(new Rover(2, 5, E), run(new Rover(0, 0, N), "MMMMMMMMRMM"));
     }
 
     @Test
     void roverOnSingleCellPlateauNeverMoves() {
-        Rover rover = new Rover(0, 0, Direction.N);
-        rover.execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0));
-        assertEquals("0 0 S", rover.toString());
+        Rover rover = new Rover(0, 0, N).execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0));
+        assertEquals(new Rover(0, 0, S), rover);
+    }
+
+    @Test
+    void executeReturnsANewStateAndLeavesTheOriginalUnchanged() {
+        Rover start = new Rover(1, 2, N);
+        Rover end = run(start, "RMM");
+        assertEquals(new Rover(1, 2, N), start);
+        assertEquals(new Rover(3, 2, E), end);
     }
 }
