@@ -61,6 +61,13 @@ class MainTest {
     }
 
     @Test
+    void invalidPathIsReported() {
+        // A nul character can never be part of a path, on any operating system.
+        assertEquals(ExitCode.UNREADABLE_FILE, new Main().run(new String[]{"a\0b"}));
+        assertEquals(List.of("Invalid file path: \"a\0b\". Nul character not allowed"), errors.messages());
+    }
+
+    @Test
     void invalidContentIsReported() throws Exception {
         Path input = TestResources.path("simulations/invalid/unknown-instruction.txt");
         assertEquals(ExitCode.INVALID_INPUT, new Main().run(new String[]{input.toString()}));

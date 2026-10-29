@@ -35,7 +35,7 @@ public class Main {
             LOGGER.error("Cannot read file: {}", e.getCause().getMessage());
             return ExitCode.UNREADABLE_FILE;
         } catch (InvalidPathException e) {
-            LOGGER.error("Cannot read file: {}", e.getMessage());
+            LOGGER.error("Invalid file path: \"{}\". {}", e.getInput(), e.getReason());
             return ExitCode.UNREADABLE_FILE;
         } catch (InvalidInputException e) {
             LOGGER.error("Invalid input: {}", e.getMessage());
