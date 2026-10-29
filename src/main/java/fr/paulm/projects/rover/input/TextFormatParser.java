@@ -85,12 +85,18 @@ public final class TextFormatParser {
     private List<Instruction> parseInstructions(String line) {
         List<Instruction> instructions = new ArrayList<>();
         for (char c : line.toCharArray()) {
-            try {
-                instructions.add(Instruction.valueOf(String.valueOf(c)));
-            } catch (IllegalArgumentException e) {
-                throw new InvalidInputException("Unknown instruction: \"" + c + "\". Expected: L, R or M");
-            }
+            instructions.add(parseInstruction(c));
         }
         return instructions;
+    }
+
+    // The letters of the text format: L, R and M.
+    private Instruction parseInstruction(char c) {
+        return switch (c) {
+            case 'L' -> Instruction.LEFT;
+            case 'R' -> Instruction.RIGHT;
+            case 'M' -> Instruction.MOVE;
+            default -> throw new InvalidInputException("Unknown instruction: \"" + c + "\". Expected: L, R or M");
+        };
     }
 }

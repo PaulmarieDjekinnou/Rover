@@ -1,10 +1,13 @@
 package fr.paulm.projects.rover.domain;
 
+import fr.paulm.projects.rover.LogCapture;
 import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import java.util.List;
 
 import static fr.paulm.projects.rover.domain.enums.Direction.E;
 import static fr.paulm.projects.rover.domain.enums.Direction.N;
@@ -65,6 +68,17 @@ class RoverTest {
     void moveOffTheEdgeIsIgnored(int x, int y, Direction heading) {
         Rover start = new Rover(x, y, heading);
         assertEquals(start, run(start, "M"));
+    }
+
+    @Test
+    void moveOffTheEdgeIsReportedAsAWarning() {
+        LogCapture logs = LogCapture.start(Rover.class);
+        try {
+            run(new Rover(0, 5, N), "M");
+            assertEquals(List.of("Rover at \"0 5 N\" cannot move to \"0 6\": move ignored."), logs.messages());
+        } finally {
+            logs.stop();
+        }
     }
 
     @Test

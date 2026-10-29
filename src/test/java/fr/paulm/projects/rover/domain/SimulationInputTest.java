@@ -19,7 +19,7 @@ class SimulationInputTest {
     private final Plateau plateau = new Plateau(5, 5);
 
     private static RoverMission missionAt(int x, int y) {
-        return new RoverMission(new Rover(x, y, Direction.N), List.of(Instruction.M));
+        return new RoverMission(new Rover(x, y, Direction.N), List.of(Instruction.MOVE));
     }
 
     @Test

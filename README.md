@@ -12,7 +12,7 @@ Each rover has a position `(x, y)` and a heading (`N`, `E`, `S`, `W`). It receiv
 
 The bottom-left corner of the plateau is `(0, 0)`. North is `y + 1`.
 
-A move that would take the rover off the plateau is ignored: the rover stays where it is and goes on to the next instruction. Rovers are processed one after the other and independently, with no collision detection.
+A move that would take the rover off the plateau is ignored: the rover stays where it is and goes on to the next instruction. A warning is printed on the standard error output, for example `Rover at "0 5 N" cannot move to "0 6": move ignored.` Rovers are processed one after the other and independently, with no collision detection.
 
 ## Input file format
 
@@ -88,7 +88,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the file given as argument and handles errors |
 | `domain.enums` | `Direction` | the four headings, rotations and movement vector |
-| | `Instruction` | the `L`, `R` and `M` commands |
+| | `Instruction` | the `LEFT`, `RIGHT` and `MOVE` commands (written `L`, `R` and `M` in the text format) |
 | `domain` | `Plateau` | the grid boundaries |
 | | `Rover` | position, heading and execution of instructions |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau |

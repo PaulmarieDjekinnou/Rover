@@ -14,11 +14,11 @@ class RoverMissionTest {
 
     @Test
     void instructionListCannotBeChangedAfterConstruction() {
-        List<Instruction> instructions = new ArrayList<>(List.of(Instruction.M));
+        List<Instruction> instructions = new ArrayList<>(List.of(Instruction.MOVE));
         RoverMission mission = new RoverMission(new Rover(0, 0, Direction.N), instructions);
 
-        instructions.add(Instruction.L);
-        assertEquals(List.of(Instruction.M), mission.instructions());
-        assertThrows(UnsupportedOperationException.class, () -> mission.instructions().add(Instruction.R));
+        instructions.add(Instruction.LEFT);
+        assertEquals(List.of(Instruction.MOVE), mission.instructions());
+        assertThrows(UnsupportedOperationException.class, () -> mission.instructions().add(Instruction.RIGHT));
     }
 }
