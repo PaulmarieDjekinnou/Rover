@@ -39,7 +39,7 @@ class MainTest {
     @ValueSource(strings = {"sample", "blank-lines", "same-cell", "stuck-at-edge", "no-rovers"})
     void validFile(String name) throws Exception {
         Path input = TestResources.path("simulations/valid/" + name + ".txt");
-        assertEquals(ExitCode.SUCCESS, new Main().run(new String[]{input.toString()}));
+        assertEquals(0, new Main().run(new String[]{input.toString()}));
         List<String> expected = TestResources.read("simulations/valid/" + name + ".expected.txt");
         assertEquals(expected, logs.messages());
         assertEquals(List.of(), errors.messages());
@@ -47,34 +47,34 @@ class MainTest {
 
     @Test
     void missingArgumentPrintsUsage() {
-        assertEquals(ExitCode.USAGE_ERROR, new Main().run(new String[]{}));
+        assertEquals(1, new Main().run(new String[]{}));
         assertEquals(List.of("Usage: java -jar rover.jar input.txt"), errors.messages());
     }
 
     @Test
     void tooManyArgumentsPrintsUsage() {
-        assertEquals(ExitCode.USAGE_ERROR, new Main().run(new String[]{"a.txt", "b.txt"}));
+        assertEquals(1, new Main().run(new String[]{"a.txt", "b.txt"}));
         assertEquals(List.of("Usage: java -jar rover.jar input.txt"), errors.messages());
     }
 
     @Test
     void missingFileIsReported() {
         Path missing = tempDir.resolve("absent.txt");
-        assertEquals(ExitCode.UNREADABLE_FILE, new Main().run(new String[]{missing.toString()}));
+        assertEquals(1, new Main().run(new String[]{missing.toString()}));
         assertEquals(List.of("Cannot read file: " + missing), errors.messages());
     }
 
     @Test
     void invalidPathIsReported() {
         // A nul character can never be part of a path, on any operating system.
-        assertEquals(ExitCode.UNREADABLE_FILE, new Main().run(new String[]{"a\0b"}));
+        assertEquals(1, new Main().run(new String[]{"a\0b"}));
         assertEquals(List.of("Invalid file path: \"a\0b\". Nul character not allowed"), errors.messages());
     }
 
     @Test
     void invalidContentIsReported() throws Exception {
         Path input = TestResources.path("simulations/invalid/unknown-instruction.txt");
-        assertEquals(ExitCode.INVALID_INPUT, new Main().run(new String[]{input.toString()}));
+        assertEquals(1, new Main().run(new String[]{input.toString()}));
         assertEquals(List.of("Invalid input: Unknown instruction: \"X\". Expected: L, R or M"), errors.messages());
         assertEquals(List.of(), logs.messages());
     }

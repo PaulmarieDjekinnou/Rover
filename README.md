@@ -38,20 +38,11 @@ The final position and heading of each rover, one per line, in input order, on t
 5 1 E
 ```
 
-If something goes wrong, the program prints an error message on the standard error output, for example:
+If something goes wrong, the program prints an error message on the standard error output and exits with code 1, for example:
 
 ```
 Invalid input: Invalid direction: "X". Expected: N, E, S or W
 ```
-
-The exit code tells the cause:
-
-| Code | Meaning |
-|---|---|
-| `0` | success |
-| `2` | wrong usage: missing or extra argument |
-| `3` | invalid input: the file does not follow the format or a simulation rule |
-| `4` | unreadable file: missing file or invalid path |
 
 Results and errors are written with SLF4J and Logback. `src/main/resources/logback.xml` sends the final positions to the standard output and everything else to the standard error output, with the message only.
 
