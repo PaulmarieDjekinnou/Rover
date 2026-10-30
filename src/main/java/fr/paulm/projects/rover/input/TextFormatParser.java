@@ -90,13 +90,8 @@ public final class TextFormatParser {
         return instructions;
     }
 
-    // The letters of the text format: L, R and M.
     private Instruction parseInstruction(char c) {
-        return switch (c) {
-            case 'L' -> Instruction.LEFT;
-            case 'R' -> Instruction.RIGHT;
-            case 'M' -> Instruction.MOVE;
-            default -> throw new InvalidInputException("Unknown instruction: \"" + c + "\". Expected: L, R or M");
-        };
+        return Instruction.fromCode(c)
+                .orElseThrow(() -> new InvalidInputException("Unknown instruction: \"" + c + "\". Expected: L, R or M"));
     }
 }

@@ -12,12 +12,7 @@ public final class TestInstructions {
     // "LMR" → [LEFT, MOVE, RIGHT], to write test instructions in a readable way, with the letters of the text format.
     public static List<Instruction> of(String letters) {
         return letters.chars()
-                .mapToObj(c -> switch (c) {
-                    case 'L' -> Instruction.LEFT;
-                    case 'R' -> Instruction.RIGHT;
-                    case 'M' -> Instruction.MOVE;
-                    default -> throw new IllegalArgumentException("Not an instruction letter: " + (char) c);
-                })
+                .mapToObj(c -> Instruction.fromCode((char) c).orElseThrow())
                 .toList();
     }
 }
