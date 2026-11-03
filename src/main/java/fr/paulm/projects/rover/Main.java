@@ -66,8 +66,8 @@ public class Main {
     // A short explanation of why the file could not be read.
     private String reasonOf(IOException e) {
         return switch (e) {
-            case NoSuchFileException notFound -> "file not found";
-            case AccessDeniedException denied -> "permission denied";
+            case NoSuchFileException _ -> "file not found";
+            case AccessDeniedException _ -> "permission denied";
             default -> e.getMessage();
         };
     }

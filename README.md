@@ -60,7 +60,7 @@ The simulation itself has no side effect: it returns its results, and `Main` pri
 
 ## Requirements
 
-- Java 21
+- Java 25
 - Maven
 
 ## Usage
