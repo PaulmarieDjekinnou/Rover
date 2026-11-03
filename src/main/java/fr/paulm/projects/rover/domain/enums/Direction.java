@@ -2,6 +2,9 @@ package fr.paulm.projects.rover.domain.enums;
 
 import fr.paulm.projects.rover.domain.Position;
 
+import java.util.Arrays;
+import java.util.Optional;
+
 // Each direction knows its movement vector and its two neighbouring directions.
 public enum Direction {
     N(0, 1) {
@@ -55,6 +58,13 @@ public enum Direction {
     Direction(int dx, int dy) {
         this.dx = dx;
         this.dy = dy;
+    }
+
+    // The direction written with this code (N, E, S or W), if any. The caller decides how to report an unknown code.
+    public static Optional<Direction> fromCode(String code) {
+        return Arrays.stream(values())
+                .filter(direction -> direction.name().equals(code))
+                .findFirst();
     }
 
     // The cell ahead of the given position, one step in this direction.

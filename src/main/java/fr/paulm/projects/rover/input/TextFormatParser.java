@@ -95,11 +95,8 @@ public final class TextFormatParser {
     }
 
     private Direction parseDirection(Line line, String value) {
-        try {
-            return Direction.valueOf(value);
-        } catch (IllegalArgumentException e) {
-            throw line.error("Invalid direction: \"" + value + "\". Expected: N, E, S or W");
-        }
+        return Direction.fromCode(value)
+                .orElseThrow(() -> line.error("Invalid direction: \"" + value + "\". Expected: N, E, S or W"));
     }
 
     private List<Instruction> parseInstructions(Line line) {
