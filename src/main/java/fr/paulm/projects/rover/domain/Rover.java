@@ -12,30 +12,36 @@ import java.util.List;
 public record Rover(Position position, Direction direction) {
     private static final Logger LOGGER = LoggerFactory.getLogger(Rover.class);
 
+    // A move that would leave the plateau is ignored, so the rover is never lost.
+    // Ignored moves are counted, and the user is warned once per rover, at the end of its mission.
     Rover execute(List<Instruction> instructions, Plateau plateau) {
         Rover current = this;
+        int ignoredMoves = 0;
         for (Instruction instruction : instructions) {
-            current = current.apply(instruction, plateau);
+            if (instruction == Instruction.MOVE && !current.canMoveForward(plateau)) {
+                ignoredMoves++;
+                continue;
+            }
+            current = current.apply(instruction);
+        }
+        if (ignoredMoves > 0) {
+            LOGGER.warn("Rover starting at \"{}\": {} move(s) ignored because they would leave the plateau.",
+                    this, ignoredMoves);
         }
         return current;
     }
 
-    private Rover apply(Instruction instruction, Plateau plateau) {
+    private boolean canMoveForward(Plateau plateau) {
+        return plateau.contains(direction.from(position));
+    }
+
+    // Only called once the instruction is known to keep the rover on the plateau.
+    private Rover apply(Instruction instruction) {
         return switch (instruction) {
             case LEFT -> new Rover(position, direction.left());
             case RIGHT -> new Rover(position, direction.right());
-            case MOVE -> move(plateau);
+            case MOVE -> new Rover(direction.from(position), direction);
         };
-    }
-
-    // A move that would leave the plateau is ignored, so the rover is never lost; the user is warned.
-    private Rover move(Plateau plateau) {
-        Position next = direction.from(position);
-        if (!plateau.contains(next)) {
-            LOGGER.warn("Rover at \"{}\" cannot move to \"{}\": move ignored.", this, next);
-            return this;
-        }
-        return new Rover(next, direction);
     }
 
     // The output format of the program: "x y direction".

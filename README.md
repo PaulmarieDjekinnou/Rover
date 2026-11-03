@@ -12,7 +12,7 @@ Each rover has a position `(x, y)` and a direction (`N`, `E`, `S`, `W`). It rece
 
 The bottom-left corner of the plateau is `(0, 0)`. North is `y + 1`.
 
-A move that would take the rover off the plateau is ignored: the rover stays where it is and goes on to the next instruction. A warning is printed on the standard error output, for example `Rover at "0 5 N" cannot move to "0 6": move ignored.` Rovers are processed one after the other and independently, with no collision detection.
+A move that would take the rover off the plateau is ignored: the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and a single warning per rover is printed on the standard error output at the end of its mission, for example `Rover starting at "0 0 N": 3 move(s) ignored because they would leave the plateau.` Rovers are processed one after the other and independently, with no collision detection.
 
 ## Input file format
 

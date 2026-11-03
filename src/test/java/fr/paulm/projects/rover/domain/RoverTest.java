@@ -75,7 +75,32 @@ class RoverTest {
         LogCapture logs = LogCapture.start(Rover.class);
         try {
             run(new Rover(new Position(0, 5), N), "M");
-            assertEquals(List.of("Rover at \"0 5 N\" cannot move to \"0 6\": move ignored."), logs.messages());
+            assertEquals(List.of("Rover starting at \"0 5 N\": 1 move(s) ignored because they would leave the plateau."),
+                    logs.messages());
+        } finally {
+            logs.stop();
+        }
+    }
+
+    @Test
+    void severalIgnoredMovesAreReportedInASingleWarning() {
+        LogCapture logs = LogCapture.start(Rover.class);
+        try {
+            // Reaches the north edge after 5 steps: the last 3 moves are ignored
+            run(new Rover(new Position(0, 0), N), "MMMMMMMM");
+            assertEquals(List.of("Rover starting at \"0 0 N\": 3 move(s) ignored because they would leave the plateau."),
+                    logs.messages());
+        } finally {
+            logs.stop();
+        }
+    }
+
+    @Test
+    void noWarningWhenNoMoveIsIgnored() {
+        LogCapture logs = LogCapture.start(Rover.class);
+        try {
+            run(new Rover(new Position(1, 2), N), "LMLMLMLMM");
+            assertEquals(List.of(), logs.messages());
         } finally {
             logs.stop();
         }
