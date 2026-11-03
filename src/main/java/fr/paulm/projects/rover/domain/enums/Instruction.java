@@ -3,9 +3,9 @@ package fr.paulm.projects.rover.domain.enums;
 import java.util.Arrays;
 import java.util.Optional;
 
-// The commands a rover can execute, each with the letter that writes it in an input (L, R and M).
+// The commands a rover can execute, each with the letter that writes it in an input (L, R, M and B).
 public enum Instruction {
-    LEFT('L'), RIGHT('R'), MOVE('M');
+    LEFT('L'), RIGHT('R'), MOVE('M'), BACK('B');
 
     private final char code;
 

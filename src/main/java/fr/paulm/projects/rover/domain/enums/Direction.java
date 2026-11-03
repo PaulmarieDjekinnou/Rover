@@ -72,6 +72,11 @@ public enum Direction {
         return position.shiftedBy(dx, dy);
     }
 
+    // The cell behind the given position, one step in the opposite direction.
+    public Position behind(Position position) {
+        return position.shiftedBy(-dx, -dy);
+    }
+
     // The direction after a 90° turn to the left.
     public abstract Direction left();
 

@@ -51,6 +51,17 @@ class RoverTest {
         assertEquals(new Rover(new Position(expectedX, expectedY), direction), run(new Rover(new Position(2, 2), direction), "M"));
     }
 
+    @ParameterizedTest
+    @CsvSource({"N, 2, 1", "E, 1, 2", "S, 2, 3", "W, 3, 2"})
+    void backGoesOneStepBackwardsAndKeepsTheDirection(Direction direction, int expectedX, int expectedY) {
+        assertEquals(new Rover(new Position(expectedX, expectedY), direction), run(new Rover(new Position(2, 2), direction), "B"));
+    }
+
+    @Test
+    void backCancelsMove() {
+        assertEquals(new Rover(new Position(2, 2), E), run(new Rover(new Position(2, 2), E), "MMBB"));
+    }
+
     @Test
     void turnsDoNotChangePosition() {
         assertEquals(new Rover(new Position(2, 2), N), run(new Rover(new Position(2, 2), N), "LLLLRRRR"));
@@ -68,6 +79,11 @@ class RoverTest {
     @CsvSource({"0, 5, N, 0, 0", "5, 0, E, 0, 0", "0, 0, S, 0, 5", "0, 0, W, 5, 0"})
     void moveOffTheEdgeWrapsAround(int x, int y, Direction direction, int expectedX, int expectedY) {
         assertEquals(new Rover(new Position(expectedX, expectedY), direction), run(new Rover(new Position(x, y), direction), "M"));
+    }
+
+    @Test
+    void backOffTheEdgeWrapsAround() {
+        assertEquals(new Rover(new Position(0, 5), N), run(new Rover(new Position(0, 0), N), "B"));
     }
 
     @Test
@@ -94,6 +110,13 @@ class RoverTest {
         Rover rover = new Rover(new Position(2, 2), N)
                 .execute(TestInstructions.of("M"), plateau, Set.of(new Position(2, 3))).finalRover();
         assertEquals(new Rover(new Position(2, 2), N), rover);
+    }
+
+    @Test
+    void backOntoAnOccupiedCellIsIgnored() {
+        MissionResult result = new Rover(new Position(2, 2), N)
+                .execute(TestInstructions.of("B"), plateau, Set.of(new Position(2, 1)));
+        assertEquals(new MissionResult(new Rover(new Position(2, 2), N), 1), result);
     }
 
     @Test

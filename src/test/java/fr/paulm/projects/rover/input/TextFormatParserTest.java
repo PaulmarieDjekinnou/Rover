@@ -122,7 +122,7 @@ class TextFormatParserTest {
     @ParameterizedTest
     @CsvSource({"MXM, X", "l, l", "M M, ' '"})
     void unknownInstructionIsRejected(String instructions, char unknown) {
-        assertEquals("Line 3: Unknown instruction: \"" + unknown + "\". Expected: L, R or M",
+        assertEquals("Line 3: Unknown instruction: \"" + unknown + "\". Expected: L, R, M or B",
                 errorFor("5 5\n1 2 N\n" + instructions + "\n"));
     }
 

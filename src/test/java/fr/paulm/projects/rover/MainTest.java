@@ -101,7 +101,7 @@ class MainTest {
     void invalidContentIsReported() throws Exception {
         Path input = TestResources.path("simulations/invalid/unknown-instruction.txt");
         assertEquals(1, new Main().run(new String[]{input.toString()}));
-        assertEquals(List.of("Invalid input: Line 5: Unknown instruction: \"X\". Expected: L, R or M"),
+        assertEquals(List.of("Invalid input: Line 5: Unknown instruction: \"X\". Expected: L, R, M or B"),
                 logs.messages());
         assertEquals(List.of(), outputLines());
     }

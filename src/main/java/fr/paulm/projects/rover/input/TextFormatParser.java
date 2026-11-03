@@ -103,7 +103,7 @@ public final class TextFormatParser {
         List<Instruction> instructions = new ArrayList<>();
         for (char c : line.text().toCharArray()) {
             instructions.add(Instruction.fromCode(c)
-                    .orElseThrow(() -> line.error("Unknown instruction: \"" + c + "\". Expected: L, R or M")));
+                    .orElseThrow(() -> line.error("Unknown instruction: \"" + c + "\". Expected: L, R, M or B")));
         }
         return instructions;
     }
