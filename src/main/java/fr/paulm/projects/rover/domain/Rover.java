@@ -4,6 +4,7 @@ import fr.paulm.projects.rover.domain.enums.Direction;
 import fr.paulm.projects.rover.domain.enums.Instruction;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 // The state of a rover at a given moment: its position and direction.
@@ -17,15 +18,22 @@ public record Rover(Position position, Direction direction) {
         Rover current = this;
         int blockedMoves = 0;
         for (Instruction instruction : instructions) {
-            Rover next = current.apply(instruction, plateau);
-            // Only a move (forward or back) changes the position, and the rover's own cell is never in occupiedCells
-            if (occupiedCells.contains(next.position)) {
+            Optional<Rover> next = current.step(instruction, plateau, occupiedCells);
+            if (next.isPresent()) {
+                current = next.get();
+            } else {
                 blockedMoves++;
-                continue;
             }
-            current = next;
         }
         return new MissionResult(current, blockedMoves);
+    }
+
+    // The rover after one instruction, or empty when the instruction would move it onto an occupied cell.
+    // occupiedCells must not contain the rover's own cell, otherwise a turn on the spot would be blocked.
+    Optional<Rover> step(Instruction instruction, Plateau plateau, Set<Position> occupiedCells) {
+        Rover next = apply(instruction, plateau);
+        // Only a move (forward or back) changes the position
+        return occupiedCells.contains(next.position) ? Optional.empty() : Optional.of(next);
     }
 
     private Rover apply(Instruction instruction, Plateau plateau) {

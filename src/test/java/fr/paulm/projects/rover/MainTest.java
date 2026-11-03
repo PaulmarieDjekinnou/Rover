@@ -19,6 +19,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 // The results are read from the standard output, the warnings and errors from Main's logs.
 class MainTest {
 
+    private static final String USAGE = "Usage: java -jar rover.jar [--step-by-step] input.txt";
+
     @TempDir
     Path tempDir;
 
@@ -72,15 +74,33 @@ class MainTest {
     }
 
     @Test
+    void stepByStepOptionMovesTheRoversTurnByTurn() throws Exception {
+        Path input = TestResources.path("simulations/valid/collision.txt");
+        assertEquals(0, new Main().run(new String[]{"--step-by-step", input.toString()}));
+        // Sequential mode gives "0 2 N" and "0 3 S" (see collision.expected.txt)
+        assertEquals(List.of("0 1 N", "0 2 S"), outputLines());
+        assertEquals(List.of(
+                "Rover 1: 2 move(s) ignored because the cell is occupied by another rover.",
+                "Rover 2: 2 move(s) ignored because the cell is occupied by another rover."),
+                logs.messages(Level.WARN));
+    }
+
+    @Test
+    void unknownOptionPrintsUsage() {
+        assertEquals(1, new Main().run(new String[]{"--fast", "input.txt"}));
+        assertEquals(List.of(USAGE), logs.messages());
+    }
+
+    @Test
     void missingArgumentPrintsUsage() {
         assertEquals(1, new Main().run(new String[]{}));
-        assertEquals(List.of("Usage: java -jar rover.jar input.txt"), logs.messages());
+        assertEquals(List.of(USAGE), logs.messages());
     }
 
     @Test
     void tooManyArgumentsPrintsUsage() {
         assertEquals(1, new Main().run(new String[]{"a.txt", "b.txt"}));
-        assertEquals(List.of("Usage: java -jar rover.jar input.txt"), logs.messages());
+        assertEquals(List.of(USAGE), logs.messages());
     }
 
     @Test
