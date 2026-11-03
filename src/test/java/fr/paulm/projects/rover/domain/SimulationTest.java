@@ -35,12 +35,13 @@ class SimulationTest {
     }
 
     @Test
-    void roversShareThePlateauLimits() {
+    void roversWrapAroundThePlateau() {
         SimulationInput input = new SimulationInput(new Plateau(2, 2), List.of(
                 new RoverMission(new Rover(new Position(0, 0), Direction.N), TestInstructions.of("MMMM")),
                 new RoverMission(new Rover(new Position(1, 0), Direction.E), TestInstructions.of("MMMM"))));
         new Simulation(input).run();
-        assertEquals(List.of("0 2 N", "2 0 E"), logs.messages());
+        // On a 3x3 plateau, 4 moves wrap around once
+        assertEquals(List.of("0 1 N", "2 0 E"), logs.messages());
     }
 
     // Collisions

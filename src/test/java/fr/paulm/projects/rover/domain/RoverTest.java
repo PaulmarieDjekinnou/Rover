@@ -64,54 +64,23 @@ class RoverTest {
         assertEquals(new Rover(new Position(2, 2), N), run(new Rover(new Position(2, 2), N), "MMRRMMRR"));
     }
 
-    // Moves that would leave the plateau are ignored
+    // The plateau wraps around: a rover leaving one edge comes back on the opposite edge
     @ParameterizedTest
-    @CsvSource({"0, 5, N", "5, 0, E", "0, 0, S", "0, 0, W"})
-    void moveOffTheEdgeIsIgnored(int x, int y, Direction direction) {
-        Rover start = new Rover(new Position(x, y), direction);
-        assertEquals(start, run(start, "M"));
+    @CsvSource({"0, 5, N, 0, 0", "5, 0, E, 0, 0", "0, 0, S, 0, 5", "0, 0, W, 5, 0"})
+    void moveOffTheEdgeWrapsAround(int x, int y, Direction direction, int expectedX, int expectedY) {
+        assertEquals(new Rover(new Position(expectedX, expectedY), direction), run(new Rover(new Position(x, y), direction), "M"));
     }
 
     @Test
-    void moveOffTheEdgeIsReportedAsAWarning() {
-        LogCapture logs = LogCapture.start(Rover.class);
-        try {
-            run(new Rover(new Position(0, 5), N), "M");
-            assertEquals(List.of("Rover starting at \"0 5 N\": 1 move(s) ignored because they would leave the plateau."),
-                    logs.messages());
-        } finally {
-            logs.stop();
-        }
+    void goingAroundThePlanetComesBackToTheStart() {
+        // 6 cells high: 6 moves to the north bring the rover back to its starting cell
+        assertEquals(new Rover(new Position(0, 0), N), run(new Rover(new Position(0, 0), N), "MMMMMM"));
     }
 
     @Test
-    void severalIgnoredMovesAreReportedInASingleWarning() {
-        LogCapture logs = LogCapture.start(Rover.class);
-        try {
-            // Reaches the north edge after 5 steps: the last 3 moves are ignored
-            run(new Rover(new Position(0, 0), N), "MMMMMMMM");
-            assertEquals(List.of("Rover starting at \"0 0 N\": 3 move(s) ignored because they would leave the plateau."),
-                    logs.messages());
-        } finally {
-            logs.stop();
-        }
-    }
-
-    @Test
-    void noWarningWhenNoMoveIsIgnored() {
-        LogCapture logs = LogCapture.start(Rover.class);
-        try {
-            run(new Rover(new Position(1, 2), N), "LMLMLMLMM");
-            assertEquals(List.of(), logs.messages());
-        } finally {
-            logs.stop();
-        }
-    }
-
-    @Test
-    void roverStopsAtEdgeAndContinuesAfterwards() {
-        // Blocked to the north after 5 steps, then turns and moves east
-        assertEquals(new Rover(new Position(2, 5), E), run(new Rover(new Position(0, 0), N), "MMMMMMMMRMM"));
+    void roverKeepsGoingAfterWrappingAround() {
+        // 8 moves to the north on a 6-cell column end in (0, 2), then 2 moves to the east
+        assertEquals(new Rover(new Position(2, 2), E), run(new Rover(new Position(0, 0), N), "MMMMMMMMRMM"));
     }
 
     @Test
@@ -137,16 +106,31 @@ class RoverTest {
     }
 
     @Test
-    void movesIntoAnotherRoverAreReportedSeparatelyFromMovesOffThePlateau() {
+    void roverIsBlockedByARoverOnTheOtherSideOfTheEdge() {
+        // Leaving (0, 5) to the north leads to (0, 0), which is occupied
+        Rover rover = new Rover(new Position(0, 5), N)
+                .execute(TestInstructions.of("M"), plateau, Set.of(new Position(0, 0)));
+        assertEquals(new Rover(new Position(0, 5), N), rover);
+    }
+
+    @Test
+    void blockedMovesAreReportedInASingleWarning() {
         LogCapture logs = LogCapture.start(Rover.class);
         try {
-            // From (0, 4) to the north: blocked once by the edge after one step, then twice by the rover in (1, 5)
-            new Rover(new Position(0, 4), N)
-                    .execute(TestInstructions.of("MMRMM"), plateau, Set.of(new Position(1, 5)));
-            assertEquals(List.of(
-                    "Rover starting at \"0 4 N\": 1 move(s) ignored because they would leave the plateau.",
-                    "Rover starting at \"0 4 N\": 2 move(s) ignored because the cell is occupied by another rover."),
+            new Rover(new Position(2, 2), N).execute(TestInstructions.of("MMM"), plateau, Set.of(new Position(2, 3)));
+            assertEquals(List.of("Rover starting at \"2 2 N\": 3 move(s) ignored because the cell is occupied by another rover."),
                     logs.messages());
+        } finally {
+            logs.stop();
+        }
+    }
+
+    @Test
+    void noWarningWhenNoMoveIsIgnored() {
+        LogCapture logs = LogCapture.start(Rover.class);
+        try {
+            run(new Rover(new Position(0, 5), N), "MMLMLM");
+            assertEquals(List.of(), logs.messages());
         } finally {
             logs.stop();
         }

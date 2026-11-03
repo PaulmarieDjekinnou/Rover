@@ -13,45 +13,34 @@ import java.util.Set;
 public record Rover(Position position, Direction direction) {
     private static final Logger LOGGER = LoggerFactory.getLogger(Rover.class);
 
-    // A move is ignored when it would leave the plateau, so the rover is never lost,
-    // or when the cell ahead is occupied by another rover, so two rovers never collide.
-    // Ignored moves are counted, and the user is warned at the end of the mission, once per reason.
+    // The plateau wraps around (see Plateau.wrap), so a rover never leaves it.
+    // A move is ignored when the cell ahead is occupied by another rover, so two rovers never collide.
+    // Ignored moves are counted, and the user is warned once, at the end of the mission.
     // occupiedCells holds the positions of the other rovers; it is only read, never modified.
     Rover execute(List<Instruction> instructions, Plateau plateau, Set<Position> occupiedCells) {
         Rover current = this;
-        int movesOffPlateau = 0;
-        int movesIntoRover = 0;
+        int blockedMoves = 0;
         for (Instruction instruction : instructions) {
-            if (instruction == Instruction.MOVE) {
-                Position ahead = current.direction.from(current.position);
-                if (!plateau.contains(ahead)) {
-                    movesOffPlateau++;
-                    continue;
-                }
-                if (occupiedCells.contains(ahead)) {
-                    movesIntoRover++;
-                    continue;
-                }
+            Rover next = current.apply(instruction, plateau);
+            // Only a move changes the position, and the rover's own cell is never in occupiedCells
+            if (occupiedCells.contains(next.position)) {
+                blockedMoves++;
+                continue;
             }
-            current = current.apply(instruction);
+            current = next;
         }
-        if (movesOffPlateau > 0) {
-            LOGGER.warn("Rover starting at \"{}\": {} move(s) ignored because they would leave the plateau.",
-                    this, movesOffPlateau);
-        }
-        if (movesIntoRover > 0) {
+        if (blockedMoves > 0) {
             LOGGER.warn("Rover starting at \"{}\": {} move(s) ignored because the cell is occupied by another rover.",
-                    this, movesIntoRover);
+                    this, blockedMoves);
         }
         return current;
     }
 
-    // Only called once the instruction is known to keep the rover on the plateau.
-    private Rover apply(Instruction instruction) {
+    private Rover apply(Instruction instruction, Plateau plateau) {
         return switch (instruction) {
             case LEFT -> new Rover(position, direction.left());
             case RIGHT -> new Rover(position, direction.right());
-            case MOVE -> new Rover(direction.from(position), direction);
+            case MOVE -> new Rover(plateau.wrap(direction.from(position)), direction);
         };
     }
 

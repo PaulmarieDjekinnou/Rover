@@ -1,9 +1,11 @@
 package fr.paulm.projects.rover.domain;
 
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,5 +31,19 @@ class PlateauTest {
     @CsvSource({"-1, 3", "5, -1"})
     void rejectsNegativeSize(int maxX, int maxY) {
         assertThrows(InvalidInputException.class, () -> new Plateau(maxX, maxY));
+    }
+
+    // The plateau is a torus: positions beyond an edge come back on the opposite edge
+    @ParameterizedTest
+    @CsvSource({"2, 1, 2, 1", "6, 1, 0, 1", "-1, 1, 5, 1", "2, 4, 2, 0", "2, -1, 2, 3", "6, 4, 0, 0"})
+    void wrapBringsPositionsBackOnThePlateau(int x, int y, int expectedX, int expectedY) {
+        assertEquals(new Position(expectedX, expectedY), plateau.wrap(new Position(x, y)));
+    }
+
+    @Test
+    void wrapWorksOnTheLargestPossiblePlateau() {
+        Plateau huge = new Plateau(Integer.MAX_VALUE, 0);
+        // Integer.MAX_VALUE + 1 overflows to Integer.MIN_VALUE: it must still wrap to 0
+        assertEquals(new Position(0, 0), huge.wrap(new Position(Integer.MIN_VALUE, 0)));
     }
 }

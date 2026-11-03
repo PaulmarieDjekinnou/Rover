@@ -12,16 +12,16 @@ Each rover has a position `(x, y)` and a direction (`N`, `E`, `S`, `W`). It rece
 
 The bottom-left corner of the plateau is `(0, 0)`. North is `y + 1`.
 
+The plateau is a small planet: it **wraps around**, like a torus. A rover that moves beyond one edge comes back on the opposite edge, on the same row or column, with the same direction. For example, on a `5 5` plateau, a rover in `4 5 N` that moves ends in `4 0 N`. A rover can never leave the plateau.
+
 Rovers are processed one after the other, in input order. All of them are on the plateau from the start, and two rovers can never be on the same cell:
 
-- a move that would take the rover **off the plateau** is ignored;
-- a move onto a cell **occupied by another rover** is ignored: a rover that has finished occupies its final cell, a rover that has not started yet occupies its starting cell;
+- a move onto a cell **occupied by another rover** is ignored: a rover that has finished occupies its final cell, a rover that has not started yet occupies its starting cell. This also holds across an edge;
 - two rovers that **start on the same cell** make the input invalid.
 
-After an ignored move, the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and at the end of its mission each rover prints at most one warning per reason on the standard error output, for example:
+After an ignored move, the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and at the end of its mission each blocked rover prints one warning on the standard error output, for example:
 
 ```
-Rover starting at "0 0 N": 3 move(s) ignored because they would leave the plateau.
 Rover starting at "0 0 N": 1 move(s) ignored because the cell is occupied by another rover.
 ```
 
@@ -92,7 +92,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `domain.enums` | `Direction` | the four directions, rotations and movement vector |
 | | `Instruction` | the `LEFT`, `RIGHT` and `MOVE` commands (written `L`, `R` and `M` in the text format) |
 | `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |
-| | `Plateau` | the grid boundaries |
+| | `Plateau` | the grid boundaries; wraps positions around its edges |
 | | `Rover` | position, direction and execution of instructions |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau |
 | | `Simulation` | moves each rover and prints its final position |
