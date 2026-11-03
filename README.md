@@ -2,13 +2,13 @@
 
 Simulation of Mars rovers exploring a rectangular plateau.
 
-Each rover has a position `(x, y)` and a heading (`N`, `E`, `S`, `W`). It receives a sequence of instructions:
+Each rover has a position `(x, y)` and a direction (`N`, `E`, `S`, `W`). It receives a sequence of instructions:
 
 | Instruction | Effect |
 |---|---|
 | `L` | turns 90° left, without moving |
 | `R` | turns 90° right, without moving |
-| `M` | moves forward one cell in its current heading |
+| `M` | moves forward one cell in its current direction |
 
 The bottom-left corner of the plateau is `(0, 0)`. North is `y + 1`.
 
@@ -25,13 +25,13 @@ MMRMMRMRRM
 ```
 
 - **Line 1**: coordinates of the top-right corner of the plateau.
-- **Then, for each rover, two lines**: its starting position and heading, then its instructions.
+- **Then, for each rover, two lines**: its starting position and direction, then its instructions.
 
 Blank lines and extra spaces are ignored.
 
 ## Output
 
-The final position and heading of each rover, one per line, in input order, on the standard output:
+The final position and direction of each rover, one per line, in input order, on the standard output:
 
 ```
 1 3 N
@@ -78,10 +78,10 @@ All classes are in the `fr.paulm.projects.rover` package.
 | Package | Class | Role |
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the file given as argument and handles errors |
-| `domain.enums` | `Direction` | the four headings, rotations and movement vector |
+| `domain.enums` | `Direction` | the four directions, rotations and movement vector |
 | | `Instruction` | the `LEFT`, `RIGHT` and `MOVE` commands (written `L`, `R` and `M` in the text format) |
 | `domain` | `Plateau` | the grid boundaries |
-| | `Rover` | position, heading and execution of instructions |
+| | `Rover` | position, direction and execution of instructions |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau |
 | | `Simulation` | moves each rover and prints its final position |
 | `domain.exceptions` | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |

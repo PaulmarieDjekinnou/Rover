@@ -46,8 +46,8 @@ class RoverTest {
 
     @ParameterizedTest
     @CsvSource({"N, 2, 3", "E, 3, 2", "S, 2, 1", "W, 1, 2"})
-    void moveGoesOneStepInEachDirection(Direction heading, int expectedX, int expectedY) {
-        assertEquals(new Rover(expectedX, expectedY, heading), run(new Rover(2, 2, heading), "M"));
+    void moveGoesOneStepInEachDirection(Direction direction, int expectedX, int expectedY) {
+        assertEquals(new Rover(expectedX, expectedY, direction), run(new Rover(2, 2, direction), "M"));
     }
 
     @Test
@@ -65,8 +65,8 @@ class RoverTest {
     // Moves that would leave the plateau are ignored
     @ParameterizedTest
     @CsvSource({"0, 5, N", "5, 0, E", "0, 0, S", "0, 0, W"})
-    void moveOffTheEdgeIsIgnored(int x, int y, Direction heading) {
-        Rover start = new Rover(x, y, heading);
+    void moveOffTheEdgeIsIgnored(int x, int y, Direction direction) {
+        Rover start = new Rover(x, y, direction);
         assertEquals(start, run(start, "M"));
     }
 
