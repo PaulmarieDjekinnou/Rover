@@ -12,7 +12,18 @@ Each rover has a position `(x, y)` and a direction (`N`, `E`, `S`, `W`). It rece
 
 The bottom-left corner of the plateau is `(0, 0)`. North is `y + 1`.
 
-A move that would take the rover off the plateau is ignored: the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and a single warning per rover is printed on the standard error output at the end of its mission, for example `Rover starting at "0 0 N": 3 move(s) ignored because they would leave the plateau.` Rovers are processed one after the other and independently, with no collision detection.
+Rovers are processed one after the other, in input order. All of them are on the plateau from the start, and two rovers can never be on the same cell:
+
+- a move that would take the rover **off the plateau** is ignored;
+- a move onto a cell **occupied by another rover** is ignored: a rover that has finished occupies its final cell, a rover that has not started yet occupies its starting cell;
+- two rovers that **start on the same cell** make the input invalid.
+
+After an ignored move, the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and at the end of its mission each rover prints at most one warning per reason on the standard error output, for example:
+
+```
+Rover starting at "0 0 N": 3 move(s) ignored because they would leave the plateau.
+Rover starting at "0 0 N": 1 move(s) ignored because the cell is occupied by another rover.
+```
 
 ## Input file format
 

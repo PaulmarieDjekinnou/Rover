@@ -6,33 +6,44 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Set;
 
 // The state of a rover at a given moment: its position and direction.
 // Immutable: executing instructions returns a new state and leaves this one unchanged.
 public record Rover(Position position, Direction direction) {
     private static final Logger LOGGER = LoggerFactory.getLogger(Rover.class);
 
-    // A move that would leave the plateau is ignored, so the rover is never lost.
-    // Ignored moves are counted, and the user is warned once per rover, at the end of its mission.
-    Rover execute(List<Instruction> instructions, Plateau plateau) {
+    // A move is ignored when it would leave the plateau, so the rover is never lost,
+    // or when the cell ahead is occupied by another rover, so two rovers never collide.
+    // Ignored moves are counted, and the user is warned at the end of the mission, once per reason.
+    // occupiedCells holds the positions of the other rovers; it is only read, never modified.
+    Rover execute(List<Instruction> instructions, Plateau plateau, Set<Position> occupiedCells) {
         Rover current = this;
-        int ignoredMoves = 0;
+        int movesOffPlateau = 0;
+        int movesIntoRover = 0;
         for (Instruction instruction : instructions) {
-            if (instruction == Instruction.MOVE && !current.canMoveForward(plateau)) {
-                ignoredMoves++;
-                continue;
+            if (instruction == Instruction.MOVE) {
+                Position ahead = current.direction.from(current.position);
+                if (!plateau.contains(ahead)) {
+                    movesOffPlateau++;
+                    continue;
+                }
+                if (occupiedCells.contains(ahead)) {
+                    movesIntoRover++;
+                    continue;
+                }
             }
             current = current.apply(instruction);
         }
-        if (ignoredMoves > 0) {
+        if (movesOffPlateau > 0) {
             LOGGER.warn("Rover starting at \"{}\": {} move(s) ignored because they would leave the plateau.",
-                    this, ignoredMoves);
+                    this, movesOffPlateau);
+        }
+        if (movesIntoRover > 0) {
+            LOGGER.warn("Rover starting at \"{}\": {} move(s) ignored because the cell is occupied by another rover.",
+                    this, movesIntoRover);
         }
         return current;
-    }
-
-    private boolean canMoveForward(Plateau plateau) {
-        return plateau.contains(direction.from(position));
     }
 
     // Only called once the instruction is known to keep the rover on the plateau.

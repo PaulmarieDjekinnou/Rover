@@ -8,6 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
+import java.util.Set;
 
 import static fr.paulm.projects.rover.domain.enums.Direction.E;
 import static fr.paulm.projects.rover.domain.enums.Direction.N;
@@ -19,8 +20,9 @@ class RoverTest {
 
     private final Plateau plateau = new Plateau(5, 5);
 
+    // Runs the instructions on the 5x5 plateau, with no other rover.
     private Rover run(Rover rover, String instructions) {
-        return rover.execute(TestInstructions.of(instructions), plateau);
+        return rover.execute(TestInstructions.of(instructions), plateau, Set.of());
     }
 
     // Examples from the problem statement
@@ -114,8 +116,40 @@ class RoverTest {
 
     @Test
     void roverOnSingleCellPlateauNeverMoves() {
-        Rover rover = new Rover(new Position(0, 0), N).execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0));
+        Rover rover = new Rover(new Position(0, 0), N).execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0), Set.of());
         assertEquals(new Rover(new Position(0, 0), S), rover);
+    }
+
+    // Collisions: a move onto a cell occupied by another rover is ignored
+    @Test
+    void moveOntoAnOccupiedCellIsIgnored() {
+        Rover rover = new Rover(new Position(2, 2), N)
+                .execute(TestInstructions.of("M"), plateau, Set.of(new Position(2, 3)));
+        assertEquals(new Rover(new Position(2, 2), N), rover);
+    }
+
+    @Test
+    void roverGoesAroundAnOccupiedCell() {
+        // Blocked to the north by a rover in (2, 3), then goes around it by the east
+        Rover rover = new Rover(new Position(2, 2), N)
+                .execute(TestInstructions.of("MRMLMM"), plateau, Set.of(new Position(2, 3)));
+        assertEquals(new Rover(new Position(3, 4), N), rover);
+    }
+
+    @Test
+    void movesIntoAnotherRoverAreReportedSeparatelyFromMovesOffThePlateau() {
+        LogCapture logs = LogCapture.start(Rover.class);
+        try {
+            // From (0, 4) to the north: blocked once by the edge after one step, then twice by the rover in (1, 5)
+            new Rover(new Position(0, 4), N)
+                    .execute(TestInstructions.of("MMRMM"), plateau, Set.of(new Position(1, 5)));
+            assertEquals(List.of(
+                    "Rover starting at \"0 4 N\": 1 move(s) ignored because they would leave the plateau.",
+                    "Rover starting at \"0 4 N\": 2 move(s) ignored because the cell is occupied by another rover."),
+                    logs.messages());
+        } finally {
+            logs.stop();
+        }
     }
 
     @Test

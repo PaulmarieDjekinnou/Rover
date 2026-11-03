@@ -37,6 +37,13 @@ class SimulationInputTest {
     }
 
     @Test
+    void rejectsTwoRoversStartingOnTheSameCell() {
+        InvalidInputException e = assertThrows(InvalidInputException.class,
+                () -> new SimulationInput(plateau, List.of(missionAt(1, 1), missionAt(2, 2), missionAt(1, 1))));
+        assertEquals("Two rovers start on the same cell: \"1 1\"", e.getMessage());
+    }
+
+    @Test
     void missionListCannotBeChangedAfterConstruction() {
         List<RoverMission> missions = new ArrayList<>(List.of(missionAt(1, 1)));
         SimulationInput input = new SimulationInput(plateau, missions);
