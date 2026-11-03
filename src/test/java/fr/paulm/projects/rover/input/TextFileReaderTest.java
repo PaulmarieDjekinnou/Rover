@@ -38,7 +38,7 @@ class TextFileReaderTest {
     void invalidContentErrorIsPropagated() throws Exception {
         // Format messages are tested in TextFormatParserTest: this only checks the reader lets the error through.
         TextFileReader reader = new TextFileReader(TestResources.path("simulations/invalid/unknown-instruction.txt"));
-        assertEquals("Unknown instruction: \"X\". Expected: L, R or M",
+        assertEquals("Line 5: Unknown instruction: \"X\". Expected: L, R or M",
                 assertThrows(InvalidInputException.class, reader::read).getMessage());
     }
 }

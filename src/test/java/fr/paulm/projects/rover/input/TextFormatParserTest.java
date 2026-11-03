@@ -77,19 +77,19 @@ class TextFormatParserTest {
     @ParameterizedTest
     @ValueSource(strings = {"5", "5 5 5", "a 5", "5 b", "5.5 5"})
     void invalidPlateauLineIsRejected(String sizeLine) {
-        assertEquals("Invalid plateau size: \"" + sizeLine + "\". Expected: two integers, for example \"5 5\"",
+        assertEquals("Line 1: Invalid plateau size: \"" + sizeLine + "\". Expected: two integers, for example \"5 5\"",
                 errorFor(sizeLine));
     }
 
     @Test
     void negativePlateauSizeIsRejected() {
-        assertEquals("Invalid plateau size: \"-1 5\". Dimensions cannot be negative", errorFor("-1 5"));
+        assertEquals("Line 1: Invalid plateau size: \"-1 5\". Dimensions cannot be negative", errorFor("-1 5"));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"1 2", "1 2 N E", "N", "x 2 N", "1 y N", "1.5 2 N"})
     void invalidPositionLineIsRejected(String positionLine) {
-        assertEquals("Invalid position: \"" + positionLine + "\". Expected: x y direction, for example \"1 2 N\"",
+        assertEquals("Line 2: Invalid position: \"" + positionLine + "\". Expected: x y direction, for example \"1 2 N\"",
                 errorFor("5 5\n" + positionLine + "\nM\n"));
     }
 
@@ -100,28 +100,35 @@ class TextFormatParserTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"5 5\n1 2 N\n", "5 5\n1 2 N\nLMLMLMLMM\n3 3 E\n"})
-    void missingInstructionLineIsRejected(String content) {
-        assertEquals("Each rover needs a position line and an instruction line", errorFor(content));
+    @CsvSource(delimiter = '|', value = {"5 5\\n1 2 N | 2", "5 5\\n1 2 N\\nLMLMLMLMM\\n3 3 E | 4"})
+    void missingInstructionLineIsRejected(String content, int lineNumber) {
+        assertEquals("Line " + lineNumber + ": Each rover needs a position line and an instruction line",
+                errorFor(content.replace("\\n", "\n")));
+    }
+
+    @Test
+    void lineNumbersCountBlankLines() {
+        // The direction is on the 4th line of the content, after two blank lines
+        assertEquals("Line 4: Invalid direction: \"X\". Expected: N, E, S or W", errorFor("5 5\n\n\n1 2 X\nM\n"));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"X", "n", "NORTH"})
     void invalidDirectionIsRejected(String direction) {
-        assertEquals("Invalid direction: \"" + direction + "\". Expected: N, E, S or W",
+        assertEquals("Line 2: Invalid direction: \"" + direction + "\". Expected: N, E, S or W",
                 errorFor("5 5\n1 2 " + direction + "\nM\n"));
     }
 
     @ParameterizedTest
     @CsvSource({"MXM, X", "l, l", "M M, ' '"})
     void unknownInstructionIsRejected(String instructions, char unknown) {
-        assertEquals("Unknown instruction: \"" + unknown + "\". Expected: L, R or M",
+        assertEquals("Line 3: Unknown instruction: \"" + unknown + "\". Expected: L, R or M",
                 errorFor("5 5\n1 2 N\n" + instructions + "\n"));
     }
 
     @Test
     void errorOnLastRoverRejectsWholeFile() {
         // The first rover is valid, but nothing is returned: the whole file is rejected.
-        assertEquals("Invalid direction: \"X\". Expected: N, E, S or W", errorFor("5 5\n1 2 N\nM\n3 3 X\nM\n"));
+        assertEquals("Line 4: Invalid direction: \"X\". Expected: N, E, S or W", errorFor("5 5\n1 2 N\nM\n3 3 X\nM\n"));
     }
 }

@@ -4,7 +4,8 @@ package fr.paulm.projects.rover.domain;
 // which is the one that decides whether a position is valid.
 public record Position(int x, int y) {
 
-    public Position translate(int dx, int dy) {
+    // The position shifted by the given offsets.
+    public Position shiftedBy(int dx, int dy) {
         return new Position(x + dx, y + dy);
     }
 

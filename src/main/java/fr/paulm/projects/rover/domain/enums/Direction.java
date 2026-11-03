@@ -57,9 +57,9 @@ public enum Direction {
         this.dy = dy;
     }
 
-    // The neighbouring cell of the given position, in this direction.
-    public Position from(Position position) {
-        return position.translate(dx, dy);
+    // The cell ahead of the given position, one step in this direction.
+    public Position ahead(Position position) {
+        return position.shiftedBy(dx, dy);
     }
 
     // The direction after a 90° turn to the left.

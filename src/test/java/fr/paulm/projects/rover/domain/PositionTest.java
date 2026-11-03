@@ -10,9 +10,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 class PositionTest {
 
     @Test
-    void translateReturnsANewPositionAndLeavesTheOriginalUnchanged() {
+    void shiftedByReturnsANewPositionAndLeavesTheOriginalUnchanged() {
         Position start = new Position(1, 2);
-        assertEquals(new Position(3, 1), start.translate(2, -1));
+        assertEquals(new Position(3, 1), start.shiftedBy(2, -1));
         assertEquals(new Position(1, 2), start);
     }
 
@@ -25,6 +25,6 @@ class PositionTest {
     @ParameterizedTest
     @CsvSource({"N, 2, 3", "E, 3, 2", "S, 2, 1", "W, 1, 2"})
     void neighbourInEachDirection(Direction direction, int expectedX, int expectedY) {
-        assertEquals(new Position(expectedX, expectedY), direction.from(new Position(2, 2)));
+        assertEquals(new Position(expectedX, expectedY), direction.ahead(new Position(2, 2)));
     }
 }

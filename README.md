@@ -19,10 +19,10 @@ Rovers are processed one after the other, in input order. All of them are on the
 - a move onto a cell **occupied by another rover** is ignored: a rover that has finished occupies its final cell, a rover that has not started yet occupies its starting cell. This also holds across an edge;
 - two rovers that **start on the same cell** make the input invalid.
 
-After an ignored move, the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and at the end of its mission each blocked rover prints one warning on the standard error output, for example:
+After an ignored move, the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and one warning per blocked rover is printed on the standard error output, with the rover's number in input order, for example:
 
 ```
-Rover starting at "0 0 N": 1 move(s) ignored because the cell is occupied by another rover.
+Rover 2: 3 move(s) ignored because the cell is occupied by another rover.
 ```
 
 ## Input file format
@@ -49,13 +49,14 @@ The final position and direction of each rover, one per line, in input order, on
 5 1 E
 ```
 
-If something goes wrong, the program prints an error message on the standard error output and exits with code 1, for example:
+If something goes wrong, the program prints an error message on the standard error output and exits with code 1. Format errors give the line number in the file (blank lines included), for example:
 
 ```
-Invalid input: Invalid direction: "X". Expected: N, E, S or W
+Invalid input: Line 4: Invalid direction: "X". Expected: N, E, S or W
+Cannot read file "input.txt": file not found
 ```
 
-Results and errors are written with SLF4J and Logback. `src/main/resources/logback.xml` sends the final positions to the standard output and everything else to the standard error output, with the message only.
+The simulation itself has no side effect: it returns its results, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
 ## Requirements
 
@@ -88,15 +89,16 @@ All classes are in the `fr.paulm.projects.rover` package.
 
 | Package | Class | Role |
 |---|---|---|
-| *(root)* | `Main` | entry point: reads the file given as argument and handles errors |
-| `domain.enums` | `Direction` | the four directions, rotations and movement vector |
+| *(root)* | `Main` | entry point: reads the file given as argument, prints the results and the warnings, handles errors |
+| `domain.enums` | `Direction` | the four directions, their rotations and the cell ahead of a position |
 | | `Instruction` | the `LEFT`, `RIGHT` and `MOVE` commands (written `L`, `R` and `M` in the text format) |
 | `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |
 | | `Plateau` | the grid boundaries; wraps positions around its edges |
 | | `Rover` | position, direction and execution of instructions |
-| | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau |
-| | `Simulation` | moves each rover and prints its final position |
+| | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
+| | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau, on its own cell |
+| | `Simulation` | moves each rover, avoiding collisions, and returns the result of each mission |
 | `domain.exceptions` | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
-| | `TextFormatParser` | reads and validates the text format, wherever the content comes from |
+| | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |
