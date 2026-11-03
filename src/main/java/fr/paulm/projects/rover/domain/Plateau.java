@@ -14,7 +14,8 @@ public final class Plateau {
         this.maxY = maxY;
     }
 
-    public boolean contains(int x, int y) {
-        return x >= 0 && x <= maxX && y >= 0 && y <= maxY;
+    public boolean contains(Position position) {
+        return position.x() >= 0 && position.x() <= maxX
+                && position.y() >= 0 && position.y() <= maxY;
     }
 }

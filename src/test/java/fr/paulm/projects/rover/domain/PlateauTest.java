@@ -16,13 +16,13 @@ class PlateauTest {
     @ParameterizedTest
     @CsvSource({"0, 0", "5, 0", "0, 3", "5, 3"})
     void containsItsFourCorners(int x, int y) {
-        assertTrue(plateau.contains(x, y));
+        assertTrue(plateau.contains(new Position(x, y)));
     }
 
     @ParameterizedTest
     @CsvSource({"-1, 0", "0, -1", "6, 0", "0, 4"})
     void doesNotContainPointsJustOutsideEachSide(int x, int y) {
-        assertFalse(plateau.contains(x, y));
+        assertFalse(plateau.contains(new Position(x, y)));
     }
 
     @ParameterizedTest

@@ -80,7 +80,8 @@ All classes are in the `fr.paulm.projects.rover` package.
 | *(root)* | `Main` | entry point: reads the file given as argument and handles errors |
 | `domain.enums` | `Direction` | the four directions, rotations and movement vector |
 | | `Instruction` | the `LEFT`, `RIGHT` and `MOVE` commands (written `L`, `R` and `M` in the text format) |
-| `domain` | `Plateau` | the grid boundaries |
+| `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |
+| | `Plateau` | the grid boundaries |
 | | `Rover` | position, direction and execution of instructions |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau |
 | | `Simulation` | moves each rover and prints its final position |

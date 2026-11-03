@@ -9,7 +9,7 @@ import java.util.List;
 
 // The state of a rover at a given moment: its position and direction.
 // Immutable: executing instructions returns a new state and leaves this one unchanged.
-public record Rover(int x, int y, Direction direction) {
+public record Rover(Position position, Direction direction) {
     private static final Logger LOGGER = LoggerFactory.getLogger(Rover.class);
 
     Rover execute(List<Instruction> instructions, Plateau plateau) {
@@ -22,26 +22,25 @@ public record Rover(int x, int y, Direction direction) {
 
     private Rover apply(Instruction instruction, Plateau plateau) {
         return switch (instruction) {
-            case LEFT -> new Rover(x, y, direction.left());
-            case RIGHT -> new Rover(x, y, direction.right());
+            case LEFT -> new Rover(position, direction.left());
+            case RIGHT -> new Rover(position, direction.right());
             case MOVE -> move(plateau);
         };
     }
 
     // A move that would leave the plateau is ignored, so the rover is never lost; the user is warned.
     private Rover move(Plateau plateau) {
-        int nx = x + direction.dx;
-        int ny = y + direction.dy;
-        if (!plateau.contains(nx, ny)) {
-            LOGGER.warn("Rover at \"{}\" cannot move to \"{} {}\": move ignored.", this, nx, ny);
+        Position next = direction.from(position);
+        if (!plateau.contains(next)) {
+            LOGGER.warn("Rover at \"{}\" cannot move to \"{}\": move ignored.", this, next);
             return this;
         }
-        return new Rover(nx, ny, direction);
+        return new Rover(next, direction);
     }
 
     // The output format of the program: "x y direction".
     @Override
     public String toString() {
-        return x + " " + y + " " + direction;
+        return position + " " + direction;
     }
 }

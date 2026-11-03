@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.input;
 
 import fr.paulm.projects.rover.TestResources;
+import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.SimulationInput;
 import fr.paulm.projects.rover.domain.enums.Direction;
@@ -23,8 +24,8 @@ class TextFileReaderTest {
     void readsAndParsesTheFile() throws Exception {
         SimulationInput input = new TextFileReader(TestResources.path("simulations/valid/sample.txt")).read();
         assertEquals(2, input.missions().size());
-        assertEquals(new Rover(1, 2, Direction.N), input.missions().get(0).rover());
-        assertEquals(new Rover(3, 3, Direction.E), input.missions().get(1).rover());
+        assertEquals(new Rover(new Position(1, 2), Direction.N), input.missions().get(0).rover());
+        assertEquals(new Rover(new Position(3, 3), Direction.E), input.missions().get(1).rover());
     }
 
     @Test

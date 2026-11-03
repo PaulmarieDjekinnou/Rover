@@ -15,7 +15,7 @@ class RoverMissionTest {
     @Test
     void instructionListCannotBeChangedAfterConstruction() {
         List<Instruction> instructions = new ArrayList<>(List.of(Instruction.MOVE));
-        RoverMission mission = new RoverMission(new Rover(0, 0, Direction.N), instructions);
+        RoverMission mission = new RoverMission(new Rover(new Position(0, 0), Direction.N), instructions);
 
         instructions.add(Instruction.LEFT);
         assertEquals(List.of(Instruction.MOVE), mission.instructions());

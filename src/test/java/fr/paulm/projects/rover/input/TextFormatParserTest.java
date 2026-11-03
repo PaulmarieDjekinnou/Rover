@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.input;
 
 import fr.paulm.projects.rover.TestInstructions;
+import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.RoverMission;
 import fr.paulm.projects.rover.domain.SimulationInput;
@@ -42,21 +43,21 @@ class TextFormatParserTest {
                 MMRMMRMRRM
                 """);
 
-        assertTrue(input.plateau().contains(5, 3));
-        assertFalse(input.plateau().contains(5, 4));
+        assertTrue(input.plateau().contains(new Position(5, 3)));
+        assertFalse(input.plateau().contains(new Position(5, 4)));
 
         List<RoverMission> missions = input.missions();
         assertEquals(2, missions.size());
-        assertEquals(new Rover(1, 2, Direction.N), missions.get(0).rover());
+        assertEquals(new Rover(new Position(1, 2), Direction.N), missions.get(0).rover());
         assertEquals(TestInstructions.of("LMLMLMLMM"), missions.get(0).instructions());
-        assertEquals(new Rover(3, 3, Direction.E), missions.get(1).rover());
+        assertEquals(new Rover(new Position(3, 3), Direction.E), missions.get(1).rover());
         assertEquals(TestInstructions.of("MMRMMRMRRM"), missions.get(1).instructions());
     }
 
     @Test
     void blankLinesAndExtraSpacesAreIgnored() {
         SimulationInput input = parse("\n  5   5\n\n 1  2   N \n   LM \n\n");
-        assertEquals(new Rover(1, 2, Direction.N), input.missions().get(0).rover());
+        assertEquals(new Rover(new Position(1, 2), Direction.N), input.missions().get(0).rover());
         assertEquals(TestInstructions.of("LM"), input.missions().get(0).instructions());
     }
 

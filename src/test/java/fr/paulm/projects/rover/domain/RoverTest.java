@@ -26,47 +26,47 @@ class RoverTest {
     // Examples from the problem statement
     @Test
     void firstSampleRover() {
-        assertEquals(new Rover(1, 3, N), run(new Rover(1, 2, N), "LMLMLMLMM"));
+        assertEquals(new Rover(new Position(1, 3), N), run(new Rover(new Position(1, 2), N), "LMLMLMLMM"));
     }
 
     @Test
     void secondSampleRover() {
-        assertEquals(new Rover(5, 1, E), run(new Rover(3, 3, E), "MMRMMRMRRM"));
+        assertEquals(new Rover(new Position(5, 1), E), run(new Rover(new Position(3, 3), E), "MMRMMRMRRM"));
     }
 
     @Test
     void toStringFormatsPositionAndHeading() {
-        assertEquals("2 4 W", new Rover(2, 4, W).toString());
+        assertEquals("2 4 W", new Rover(new Position(2, 4), W).toString());
     }
 
     @Test
     void emptyInstructionsLeaveRoverUnchanged() {
-        assertEquals(new Rover(1, 1, S), run(new Rover(1, 1, S), ""));
+        assertEquals(new Rover(new Position(1, 1), S), run(new Rover(new Position(1, 1), S), ""));
     }
 
     @ParameterizedTest
     @CsvSource({"N, 2, 3", "E, 3, 2", "S, 2, 1", "W, 1, 2"})
     void moveGoesOneStepInEachDirection(Direction direction, int expectedX, int expectedY) {
-        assertEquals(new Rover(expectedX, expectedY, direction), run(new Rover(2, 2, direction), "M"));
+        assertEquals(new Rover(new Position(expectedX, expectedY), direction), run(new Rover(new Position(2, 2), direction), "M"));
     }
 
     @Test
     void turnsDoNotChangePosition() {
-        assertEquals(new Rover(2, 2, N), run(new Rover(2, 2, N), "LLLLRRRR"));
-        assertEquals(new Rover(2, 2, S), run(new Rover(2, 2, N), "RR"));
-        assertEquals(new Rover(2, 2, W), run(new Rover(2, 2, N), "L"));
+        assertEquals(new Rover(new Position(2, 2), N), run(new Rover(new Position(2, 2), N), "LLLLRRRR"));
+        assertEquals(new Rover(new Position(2, 2), S), run(new Rover(new Position(2, 2), N), "RR"));
+        assertEquals(new Rover(new Position(2, 2), W), run(new Rover(new Position(2, 2), N), "L"));
     }
 
     @Test
     void roundTripReturnsToStart() {
-        assertEquals(new Rover(2, 2, N), run(new Rover(2, 2, N), "MMRRMMRR"));
+        assertEquals(new Rover(new Position(2, 2), N), run(new Rover(new Position(2, 2), N), "MMRRMMRR"));
     }
 
     // Moves that would leave the plateau are ignored
     @ParameterizedTest
     @CsvSource({"0, 5, N", "5, 0, E", "0, 0, S", "0, 0, W"})
     void moveOffTheEdgeIsIgnored(int x, int y, Direction direction) {
-        Rover start = new Rover(x, y, direction);
+        Rover start = new Rover(new Position(x, y), direction);
         assertEquals(start, run(start, "M"));
     }
 
@@ -74,7 +74,7 @@ class RoverTest {
     void moveOffTheEdgeIsReportedAsAWarning() {
         LogCapture logs = LogCapture.start(Rover.class);
         try {
-            run(new Rover(0, 5, N), "M");
+            run(new Rover(new Position(0, 5), N), "M");
             assertEquals(List.of("Rover at \"0 5 N\" cannot move to \"0 6\": move ignored."), logs.messages());
         } finally {
             logs.stop();
@@ -84,20 +84,20 @@ class RoverTest {
     @Test
     void roverStopsAtEdgeAndContinuesAfterwards() {
         // Blocked to the north after 5 steps, then turns and moves east
-        assertEquals(new Rover(2, 5, E), run(new Rover(0, 0, N), "MMMMMMMMRMM"));
+        assertEquals(new Rover(new Position(2, 5), E), run(new Rover(new Position(0, 0), N), "MMMMMMMMRMM"));
     }
 
     @Test
     void roverOnSingleCellPlateauNeverMoves() {
-        Rover rover = new Rover(0, 0, N).execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0));
-        assertEquals(new Rover(0, 0, S), rover);
+        Rover rover = new Rover(new Position(0, 0), N).execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0));
+        assertEquals(new Rover(new Position(0, 0), S), rover);
     }
 
     @Test
     void executeReturnsANewStateAndLeavesTheOriginalUnchanged() {
-        Rover roverStart = new Rover(1, 2, N);
+        Rover roverStart = new Rover(new Position(1, 2), N);
         Rover roverEnd = run(roverStart, "RMM");
-        assertEquals(new Rover(1, 2, N), roverStart);
-        assertEquals(new Rover(3, 2, E), roverEnd);
+        assertEquals(new Rover(new Position(1, 2), N), roverStart);
+        assertEquals(new Rover(new Position(3, 2), E), roverEnd);
     }
 }

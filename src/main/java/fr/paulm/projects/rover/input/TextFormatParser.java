@@ -3,6 +3,7 @@ package fr.paulm.projects.rover.input;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import fr.paulm.projects.rover.domain.enums.Instruction;
 import fr.paulm.projects.rover.domain.Plateau;
+import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.RoverMission;
 import fr.paulm.projects.rover.domain.SimulationInput;
@@ -71,7 +72,7 @@ public final class TextFormatParser {
         } catch (NumberFormatException e) {
             throw new InvalidInputException("Invalid position: \"" + line + "\". Expected: x y direction, for example \"1 2 N\"");
         }
-        return new Rover(x, y, parseDirection(pos[2]));
+        return new Rover(new Position(x, y), parseDirection(pos[2]));
     }
 
     private Direction parseDirection(String value) {

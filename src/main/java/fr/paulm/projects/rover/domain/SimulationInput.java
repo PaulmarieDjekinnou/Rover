@@ -13,8 +13,8 @@ public record SimulationInput(Plateau plateau, List<RoverMission> missions) {
         missions = List.copyOf(missions);
         for (RoverMission mission : missions) {
             Rover rover = mission.rover();
-            if (!plateau.contains(rover.x(), rover.y())) {
-                throw new InvalidInputException("Rover starts outside the plateau: \"" + rover.x() + " " + rover.y() + "\"");
+            if (!plateau.contains(rover.position())) {
+                throw new InvalidInputException("Rover starts outside the plateau: \"" + rover.position() + "\"");
             }
         }
     }
