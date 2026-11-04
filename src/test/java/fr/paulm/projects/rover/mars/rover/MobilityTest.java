@@ -1,4 +1,4 @@
-package fr.paulm.projects.rover.mars.planet;
+package fr.paulm.projects.rover.mars.rover;
 
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import org.junit.jupiter.api.Test;

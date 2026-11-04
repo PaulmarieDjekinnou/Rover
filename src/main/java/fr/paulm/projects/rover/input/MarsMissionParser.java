@@ -10,7 +10,7 @@ import fr.paulm.projects.rover.mars.mission.LandingSite;
 import fr.paulm.projects.rover.mars.mission.MarsMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.planet.Mobility;
+import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 
 import java.util.ArrayList;

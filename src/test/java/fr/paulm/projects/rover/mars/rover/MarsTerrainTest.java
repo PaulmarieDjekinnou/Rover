@@ -1,6 +1,8 @@
-package fr.paulm.projects.rover.mars.planet;
+package fr.paulm.projects.rover.mars.rover;
 
 import fr.paulm.projects.rover.domain.Position;
+import fr.paulm.projects.rover.mars.planet.Planet;
+import fr.paulm.projects.rover.mars.planet.TestPlanets;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

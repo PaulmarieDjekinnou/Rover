@@ -184,13 +184,13 @@ The tests read input files from `src/test/resources/simulations/`:
 
 To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest` and `MarsMissionParserTest`. `mini-planet.txt` is a mission on the small planet drawn in `mini-planet.map.txt`; `mars.txt` is a mission on the real Mars.
 
-`ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else; `domain.simulation` and `mars.planet` only on `domain`, and never on each other; `mars.mission` on these three; `input` on all of them; and only the root package uses everything. The build fails if a dependency goes the wrong way.
+`ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else; `domain.simulation` and `mars.planet` only on `domain`, and never on each other; `mars.rover` on `mars.planet`; `mars.mission` on all these; `input` on all of them; and only the root package uses everything. The build fails if a dependency goes the wrong way.
 
 ## Structure
 
 All classes are in the `fr.paulm.projects.rover` package.
 
-`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its ground, `mars.mission` lands the rovers on it. `input` reads a text file: rovers on a plateau, or a mission to a planet.
+`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its relief, `mars.rover` how the rovers drive on it, and `mars.mission` lands them. `input` reads a text file: rovers on a plateau, or a mission to a planet.
 
 | Package | Class | Role |
 |---|---|---|
@@ -214,7 +214,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance and the time; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius cut into the grid of its elevation map; the height of each cell |
-| | `MarsTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
+| `mars.rover` | `MarsTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
 | `mars.mission` | `MarsMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |

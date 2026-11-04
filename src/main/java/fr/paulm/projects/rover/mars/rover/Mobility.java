@@ -1,10 +1,10 @@
-package fr.paulm.projects.rover.mars.planet;
+package fr.paulm.projects.rover.mars.rover;
 
 import fr.paulm.projects.rover.domain.InvalidInputException;
 
 import java.time.Duration;
 
-// How a rover drives: its speed on flat ground, the steepest slope it can drive on, and the time a turn takes.
+// How a rover drives (the same for all the rovers of a mission): its speed on flat ground, the steepest slope it can drive on, and the time a turn takes.
 public record Mobility(double flatSpeedMetersPerSecond, double maxSlopeDegrees, Duration turnTime) {
 
     // About the top speed of Curiosity (4 cm/s). The slope limit is low because the 4 cells per degree map

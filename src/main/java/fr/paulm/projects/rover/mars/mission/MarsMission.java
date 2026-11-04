@@ -5,8 +5,8 @@ import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.RoverMission;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.planet.MarsTerrain;
-import fr.paulm.projects.rover.mars.planet.Mobility;
+import fr.paulm.projects.rover.mars.rover.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 
 import java.util.ArrayList;

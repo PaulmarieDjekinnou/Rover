@@ -3,7 +3,7 @@ package fr.paulm.projects.rover.mars.mission;
 import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
-import fr.paulm.projects.rover.mars.planet.Mobility;
+import fr.paulm.projects.rover.mars.rover.Mobility;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

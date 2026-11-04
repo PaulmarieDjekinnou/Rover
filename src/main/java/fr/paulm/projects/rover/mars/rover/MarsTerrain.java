@@ -1,11 +1,12 @@
-package fr.paulm.projects.rover.mars.planet;
+package fr.paulm.projects.rover.mars.rover;
 
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Terrain;
+import fr.paulm.projects.rover.mars.planet.Planet;
 
 import java.time.Duration;
 
-// The ground of a planet, for a rover with a given mobility.
+// The ground of a planet as a rover with a given mobility sees it.
 // The slope of a move is computed from the elevation of the two cells and the distance between their centers,
 // so the same cell can be reachable from one side and not from another. The distance is the one along the surface;
 // the slope makes the drive slower, not longer.

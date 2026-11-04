@@ -4,7 +4,7 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.planet.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.MarsTerrain;
 import fr.paulm.projects.rover.mars.planet.Planet;
 
 import java.util.Arrays;

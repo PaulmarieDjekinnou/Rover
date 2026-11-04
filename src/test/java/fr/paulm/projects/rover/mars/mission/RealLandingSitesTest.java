@@ -2,8 +2,8 @@ package fr.paulm.projects.rover.mars.mission;
 
 import fr.paulm.projects.rover.input.MolaFileReader;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.planet.MarsTerrain;
-import fr.paulm.projects.rover.mars.planet.Mobility;
+import fr.paulm.projects.rover.mars.rover.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import org.junit.jupiter.api.BeforeAll;
