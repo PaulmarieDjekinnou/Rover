@@ -5,6 +5,7 @@ import fr.paulm.projects.rover.domain.enums.Direction;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -17,7 +18,7 @@ class SimultaneousSimulationTest {
     }
 
     private List<MissionResult> run(RoverMission... missions) {
-        return simulation.run(new SimulationInput(new Plateau(5, 5), List.of(missions)));
+        return simulation.run(new SimulationInput(new Plateau(5, 5), List.of(missions))).missions();
     }
 
     private static MissionResult result(int x, int y, Direction direction, int blockedMoves) {
@@ -84,5 +85,19 @@ class SimultaneousSimulationTest {
     @Test
     void noRoversGivesNoResult() {
         assertEquals(List.of(), run());
+    }
+
+    // History: each turn, every rover that still has instructions executes one
+
+    @Test
+    void historyShowsEachTurn() {
+        // Turn 1: both rovers move together; turn 2: the second rover has finished and blocks the first one
+        List<Turn> history = simulation.run(new SimulationInput(new Plateau(5, 5), List.of(
+                mission(0, 0, Direction.E, "MM"), mission(1, 0, Direction.E, "M")))).history();
+        Rover second = new Rover(new Position(2, 0), Direction.E);
+        assertEquals(List.of(
+                new Turn(1, List.of(new Rover(new Position(1, 0), Direction.E), second), Set.of()),
+                new Turn(2, List.of(new Rover(new Position(1, 0), Direction.E), second), Set.of(0))),
+                history);
     }
 }

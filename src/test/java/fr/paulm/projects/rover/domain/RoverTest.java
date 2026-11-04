@@ -2,11 +2,12 @@ package fr.paulm.projects.rover.domain;
 
 import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.domain.enums.Instruction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static fr.paulm.projects.rover.domain.enums.Direction.E;
@@ -19,9 +20,17 @@ class RoverTest {
 
     private final Plateau plateau = new Plateau(5, 5);
 
-    // Runs the instructions on the 5x5 plateau, with no other rover.
+    // Applies the instructions one after the other on the given plateau, with no other rover.
+    private static Rover run(Rover rover, String instructions, Plateau plateau) {
+        Rover current = rover;
+        for (Instruction instruction : TestInstructions.of(instructions)) {
+            current = current.apply(instruction, plateau);
+        }
+        return current;
+    }
+
     private Rover run(Rover rover, String instructions) {
-        return rover.execute(TestInstructions.of(instructions), plateau, Set.of()).finalRover();
+        return run(rover, instructions, plateau);
     }
 
     // Examples from the problem statement
@@ -100,59 +109,44 @@ class RoverTest {
 
     @Test
     void roverOnSingleCellPlateauNeverMoves() {
-        Rover rover = new Rover(new Position(0, 0), N).execute(TestInstructions.of("MRMRMRMLM"), new Plateau(0, 0), Set.of()).finalRover();
-        assertEquals(new Rover(new Position(0, 0), S), rover);
-    }
-
-    // Collisions: a move onto a cell occupied by another rover is ignored
-    @Test
-    void moveOntoAnOccupiedCellIsIgnored() {
-        Rover rover = new Rover(new Position(2, 2), N)
-                .execute(TestInstructions.of("M"), plateau, Set.of(new Position(2, 3))).finalRover();
-        assertEquals(new Rover(new Position(2, 2), N), rover);
+        assertEquals(new Rover(new Position(0, 0), S), run(new Rover(new Position(0, 0), N), "MRMRMRMLM", new Plateau(0, 0)));
     }
 
     @Test
-    void backOntoAnOccupiedCellIsIgnored() {
-        MissionResult result = new Rover(new Position(2, 2), N)
-                .execute(TestInstructions.of("B"), plateau, Set.of(new Position(2, 1)));
-        assertEquals(new MissionResult(new Rover(new Position(2, 2), N), 1), result);
-    }
-
-    @Test
-    void roverGoesAroundAnOccupiedCell() {
-        // Blocked to the north by a rover in (2, 3), then goes around it by the east
-        Rover rover = new Rover(new Position(2, 2), N)
-                .execute(TestInstructions.of("MRMLMM"), plateau, Set.of(new Position(2, 3))).finalRover();
-        assertEquals(new Rover(new Position(3, 4), N), rover);
-    }
-
-    @Test
-    void roverIsBlockedByARoverOnTheOtherSideOfTheEdge() {
-        // Leaving (0, 5) to the north leads to (0, 0), which is occupied
-        Rover rover = new Rover(new Position(0, 5), N)
-                .execute(TestInstructions.of("M"), plateau, Set.of(new Position(0, 0))).finalRover();
-        assertEquals(new Rover(new Position(0, 5), N), rover);
-    }
-
-    @Test
-    void blockedMovesAreCounted() {
-        MissionResult result = new Rover(new Position(2, 2), N)
-                .execute(TestInstructions.of("MMRM"), plateau, Set.of(new Position(2, 3)));
-        assertEquals(new MissionResult(new Rover(new Position(3, 2), E), 2), result);
-    }
-
-    @Test
-    void noBlockedMoveWhenNothingIsInTheWay() {
-        MissionResult result = new Rover(new Position(0, 5), N).execute(TestInstructions.of("MMLMLM"), plateau, Set.of());
-        assertEquals(0, result.blockedMoves());
-    }
-
-    @Test
-    void executeReturnsANewStateAndLeavesTheOriginalUnchanged() {
+    void applyReturnsANewStateAndLeavesTheOriginalUnchanged() {
         Rover roverStart = new Rover(new Position(1, 2), N);
         Rover roverEnd = run(roverStart, "RMM");
         assertEquals(new Rover(new Position(1, 2), N), roverStart);
         assertEquals(new Rover(new Position(3, 2), E), roverEnd);
+    }
+
+    // Collisions: step refuses a move onto a cell occupied by another rover
+    @Test
+    void stepMovesOntoAFreeCell() {
+        assertEquals(Optional.of(new Rover(new Position(2, 3), N)),
+                new Rover(new Position(2, 2), N).step(Instruction.MOVE, plateau, Set.of(new Position(4, 4))));
+    }
+
+    @Test
+    void stepOntoAnOccupiedCellIsBlocked() {
+        assertEquals(Optional.empty(), new Rover(new Position(2, 2), N).step(Instruction.MOVE, plateau, Set.of(new Position(2, 3))));
+    }
+
+    @Test
+    void stepBackOntoAnOccupiedCellIsBlocked() {
+        assertEquals(Optional.empty(), new Rover(new Position(2, 2), N).step(Instruction.BACK, plateau, Set.of(new Position(2, 1))));
+    }
+
+    @Test
+    void stepIsBlockedByARoverOnTheOtherSideOfTheEdge() {
+        // Leaving (0, 5) to the north leads to (0, 0), which is occupied
+        assertEquals(Optional.empty(), new Rover(new Position(0, 5), N).step(Instruction.MOVE, plateau, Set.of(new Position(0, 0))));
+    }
+
+    @Test
+    void turnIsNeverBlocked() {
+        Set<Position> allAround = Set.of(new Position(2, 3), new Position(3, 2), new Position(2, 1), new Position(1, 2));
+        assertEquals(Optional.of(new Rover(new Position(2, 2), W)),
+                new Rover(new Position(2, 2), N).step(Instruction.LEFT, plateau, allAround));
     }
 }

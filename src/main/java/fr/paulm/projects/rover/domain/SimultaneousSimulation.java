@@ -4,8 +4,10 @@ import fr.paulm.projects.rover.domain.enums.Instruction;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 // The rovers move turn by turn, all at the same time: in each turn, every rover executes its next instruction,
 // and the order of the rovers in the input gives no priority. A move is blocked when:
@@ -13,14 +15,15 @@ import java.util.Map;
 // - two rovers want to swap their cells (they would cross each other);
 // - the cell is occupied by a rover that does not leave it during this turn.
 // A rover can follow another one that leaves its cell in the same turn.
-// A rover that has no instruction left stays on its cell until the end.
+// A rover that has no instruction left stays on its cell until the end. Each turn is a turn of the history.
 public final class SimultaneousSimulation implements Simulation {
 
     @Override
-    public List<MissionResult> run(SimulationInput input) {
+    public SimulationResult run(SimulationInput input) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
         int[] blockedMoves = new int[missions.size()];
+        List<Turn> history = new ArrayList<>();
 
         int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
         for (int turn = 0; turn < turns; turn++) {
@@ -31,20 +34,18 @@ public final class SimultaneousSimulation implements Simulation {
                 wanted.add(turn < instructions.size() ? rover.apply(instructions.get(turn), input.plateau()) : rover);
             }
             boolean[] blocked = blockedMovesOfTurn(rovers, wanted);
+            Set<Integer> blockedRovers = new HashSet<>();
             for (int i = 0; i < rovers.size(); i++) {
                 if (blocked[i]) {
                     blockedMoves[i]++;
+                    blockedRovers.add(i);
                 } else {
                     rovers.set(i, wanted.get(i));
                 }
             }
+            history.add(new Turn(turn + 1, rovers, blockedRovers));
         }
-
-        List<MissionResult> results = new ArrayList<>();
-        for (int i = 0; i < rovers.size(); i++) {
-            results.add(new MissionResult(rovers.get(i), blockedMoves[i]));
-        }
-        return results;
+        return SimulationResult.of(rovers, blockedMoves, history);
     }
 
     // Which rovers cannot make the move they want in this turn. A rover that turns or stays never is.

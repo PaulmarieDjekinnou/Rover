@@ -3,7 +3,6 @@ package fr.paulm.projects.rover.domain;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import fr.paulm.projects.rover.domain.enums.Instruction;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -11,24 +10,9 @@ import java.util.Set;
 // Immutable: executing instructions returns a new state and leaves this one unchanged.
 public record Rover(Position position, Direction direction) {
 
-    // The plateau wraps around (see Plateau.wrap), so a rover never leaves it.
-    // A move (forward or back) is ignored when the target cell is occupied by another rover, so two rovers never collide.
+    // The rover after one instruction, or empty when the instruction would move it onto an occupied cell,
+    // so two rovers never collide. The plateau wraps around (see Plateau.wrap), so a rover never leaves it.
     // occupiedCells holds the positions of the other rovers; it is only read, never modified.
-    MissionResult execute(List<Instruction> instructions, Plateau plateau, Set<Position> occupiedCells) {
-        Rover current = this;
-        int blockedMoves = 0;
-        for (Instruction instruction : instructions) {
-            Optional<Rover> next = current.step(instruction, plateau, occupiedCells);
-            if (next.isPresent()) {
-                current = next.get();
-            } else {
-                blockedMoves++;
-            }
-        }
-        return new MissionResult(current, blockedMoves);
-    }
-
-    // The rover after one instruction, or empty when the instruction would move it onto an occupied cell.
     // occupiedCells must not contain the rover's own cell, otherwise a turn on the spot would be blocked.
     Optional<Rover> step(Instruction instruction, Plateau plateau, Set<Position> occupiedCells) {
         Rover next = apply(instruction, plateau);

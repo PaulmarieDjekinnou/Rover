@@ -9,19 +9,21 @@ import java.util.Optional;
 import java.util.Set;
 
 // The rovers move turn by turn: in each turn, every rover executes its next instruction, in input order.
-// A rover that has no instruction left stays on its cell until the end.
+// A rover that has no instruction left stays on its cell until the end. Each turn is a turn of the history.
 public final class StepByStepSimulation implements Simulation {
 
     @Override
-    public List<MissionResult> run(SimulationInput input) {
+    public SimulationResult run(SimulationInput input) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
         int[] blockedMoves = new int[missions.size()];
+        List<Turn> history = new ArrayList<>();
         Set<Position> occupiedCells = new HashSet<>();
         rovers.forEach(rover -> occupiedCells.add(rover.position()));
 
         int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
         for (int turn = 0; turn < turns; turn++) {
+            Set<Integer> blockedRovers = new HashSet<>();
             for (int i = 0; i < missions.size(); i++) {
                 List<Instruction> instructions = missions.get(i).instructions();
                 if (turn >= instructions.size()) {
@@ -36,15 +38,12 @@ public final class StepByStepSimulation implements Simulation {
                     rovers.set(i, rover);
                 } else {
                     blockedMoves[i]++;
+                    blockedRovers.add(i);
                 }
                 occupiedCells.add(rover.position());
             }
+            history.add(new Turn(turn + 1, rovers, blockedRovers));
         }
-
-        List<MissionResult> results = new ArrayList<>();
-        for (int i = 0; i < rovers.size(); i++) {
-            results.add(new MissionResult(rovers.get(i), blockedMoves[i]));
-        }
-        return results;
+        return SimulationResult.of(rovers, blockedMoves, history);
     }
 }

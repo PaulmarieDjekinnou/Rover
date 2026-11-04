@@ -58,6 +58,16 @@ The final position and direction of each rover, one per line, in input order, on
 5 1 E
 ```
 
+With the `--history` option, the state of every rover after each turn is printed first, one line per turn, with the rovers whose move was blocked in that turn:
+
+```
+Turn 1: 0 1 N | 0 3 S
+Turn 2: 0 2 N | 0 3 S
+Turn 3: 0 2 N | 0 3 S (blocked: 1)
+```
+
+What a turn is depends on the mode: one instruction of one rover in sequential mode, one instruction of every rover in the other two modes.
+
 If something goes wrong, the program prints an error message on the standard error output and exits with code 1. Format errors give the line number in the file (blank lines included), for example:
 
 ```
@@ -67,7 +77,7 @@ Cannot read file "input.txt": file not found
 
 An unexpected error (a bug) is reported as `Unexpected error: …`, followed by its stack trace.
 
-The simulation itself has no side effect: it returns its results, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
+The simulation itself has no side effect: it returns its results and its history, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
 ## Requirements
 
@@ -81,6 +91,7 @@ mvn package
 java -jar target/rover.jar src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step src/main/resources/input.txt
 java -jar target/rover.jar --simultaneous src/main/resources/input.txt
+java -jar target/rover.jar --step-by-step --history src/main/resources/input.txt
 ```
 
 ## Tests
@@ -102,15 +113,16 @@ All classes are in the `fr.paulm.projects.rover` package.
 
 | Package | Class | Role |
 |---|---|---|
-| *(root)* | `Main` | entry point: reads the file given as argument, chooses the simulation mode, prints the results and the warnings, handles errors |
+| *(root)* | `Main` | entry point: reads the file given as argument, reads the options, prints the history, the results and the warnings, handles errors |
 | `domain.enums` | `Direction` | the four directions, their rotations and the cells ahead of and behind a position |
 | | `Instruction` | the `LEFT`, `RIGHT`, `MOVE` and `BACK` commands (written `L`, `R`, `M` and `B` in the text format) |
 | `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |
 | | `Plateau` | the grid boundaries; wraps positions around its edges |
-| | `Rover` | position, direction and execution of instructions |
+| | `Rover` | position and direction; executes one instruction, unless it would collide with another rover |
 | | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau, on its own cell |
-| | `Simulation` | interface (strategy): runs the missions and returns the result of each one |
+| | `Simulation` | interface (strategy): runs the missions and returns a `SimulationResult` |
+| | `SimulationResult`, `Turn` | the result of each mission, and the history: the state of all the rovers after each turn |
 | | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
 | `domain.exceptions` | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |

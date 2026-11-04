@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 // The results are read from the standard output, the warnings and errors from Main's logs.
 class MainTest {
 
-    private static final String USAGE = "Usage: java -jar rover.jar [--step-by-step | --simultaneous] input.txt";
+    private static final String USAGE = "Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] input.txt";
 
     @TempDir
     Path tempDir;
@@ -102,6 +102,41 @@ class MainTest {
     void optionWithoutFilePrintsUsage() {
         assertEquals(1, new Main().run(new String[]{"--simultaneous"}));
         assertEquals(1, new Main().run(new String[]{"--step-by-step", "a.txt", "b.txt"}));
+        assertEquals(List.of(USAGE, USAGE), logs.messages());
+    }
+
+    @Test
+    void historyOptionPrintsEachTurnBeforeTheFinalPositions() throws Exception {
+        Path input = TestResources.path("simulations/valid/collision.txt");
+        assertEquals(0, new Main().run(new String[]{"--history", input.toString()}));
+        // Sequential mode: one turn per instruction, the first rover's three, then the second rover's three
+        assertEquals(List.of(
+                "Turn 1: 0 1 N | 0 3 S",
+                "Turn 2: 0 2 N | 0 3 S",
+                "Turn 3: 0 2 N | 0 3 S (blocked: 1)",
+                "Turn 4: 0 2 N | 0 3 S (blocked: 2)",
+                "Turn 5: 0 2 N | 0 3 S (blocked: 2)",
+                "Turn 6: 0 2 N | 0 3 S (blocked: 2)",
+                "0 2 N",
+                "0 3 S"), outputLines());
+    }
+
+    @Test
+    void historyOptionWorksWithAnotherMode() throws Exception {
+        Path input = TestResources.path("simulations/valid/collision.txt");
+        assertEquals(0, new Main().run(new String[]{"--simultaneous", "--history", input.toString()}));
+        assertEquals(List.of(
+                "Turn 1: 0 1 N | 0 2 S",
+                "Turn 2: 0 1 N | 0 2 S (blocked: 1, 2)",
+                "Turn 3: 0 1 N | 0 2 S (blocked: 1, 2)",
+                "0 1 N",
+                "0 2 S"), outputLines());
+    }
+
+    @Test
+    void repeatedOrConflictingOptionsPrintUsage() {
+        assertEquals(1, new Main().run(new String[]{"--history", "--history", "input.txt"}));
+        assertEquals(1, new Main().run(new String[]{"--step-by-step", "--simultaneous", "input.txt"}));
         assertEquals(List.of(USAGE, USAGE), logs.messages());
     }
 
