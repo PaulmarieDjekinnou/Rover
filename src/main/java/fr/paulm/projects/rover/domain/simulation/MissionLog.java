@@ -8,6 +8,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 // What happens to each rover during a simulation, written down as it goes: its moves blocked by another rover
 // or by the terrain, the distance it drove, the time it took, the time it waited, and whether it stopped.
@@ -20,7 +21,7 @@ final class MissionLog {
     private final double[] distances;
     private final Duration[] times;
     private final Duration[] waits;
-    private final boolean[] stopped;
+    private final Duration[] stopTimes;
 
     MissionLog(int rovers, Terrain terrain) {
         this.terrain = terrain;
@@ -31,7 +32,7 @@ final class MissionLog {
         Arrays.fill(times, Duration.ZERO);
         waits = new Duration[rovers];
         Arrays.fill(waits, Duration.ZERO);
-        stopped = new boolean[rovers];
+        stopTimes = new Duration[rovers];
     }
 
     void blocked(int rover, Obstacle obstacle) {
@@ -56,9 +57,9 @@ final class MissionLog {
         waits[rover] = waits[rover].plus(time);
     }
 
-    // The rover can no longer act: it leaves its other instructions undone.
-    void stopped(int rover) {
-        stopped[rover] = true;
+    // The rover can no longer act, from this time of the clock on: it leaves its other instructions undone.
+    void stopped(int rover, Duration time) {
+        stopTimes[rover] = time;
     }
 
     // The result of each mission, in input order, from the final state of each rover.
@@ -66,7 +67,7 @@ final class MissionLog {
         List<MissionResult> results = new ArrayList<>();
         for (int i = 0; i < finalRovers.size(); i++) {
             results.add(new MissionResult(finalRovers.get(i), blockedByRovers[i], blockedByTerrain[i],
-                    distances[i], times[i], waits[i], stopped[i]));
+                    distances[i], times[i], waits[i], Optional.ofNullable(stopTimes[i])));
         }
         return results;
     }

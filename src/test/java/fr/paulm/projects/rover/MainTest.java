@@ -56,7 +56,7 @@ class MainTest {
 
     // Each simulations/valid/<name>.txt file is run through the program and compared to <name>.expected.txt
     @ParameterizedTest
-    @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers", "mini-planet", "late-landing", "mars"})
+    @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers", "mini-planet", "late-landing", "stranded", "mars"})
     void validFile(String name) throws Exception {
         Path input = TestResources.path("simulations/valid/" + name + ".txt");
         assertEquals(0, main().run(new String[]{input.toString()}));

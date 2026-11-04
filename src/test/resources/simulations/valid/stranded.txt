@@ -1,0 +1,13 @@
+# A solar rover on the small planet of mini-planet.map.txt, under dust so thick that its panels never give
+# what it uses: it drives on its battery, waits a whole year to recharge, and stops for good.
+planet map mini-planet.map.txt
+dust-opacity 20
+landing-max-elevation 500
+landing-max-latitude 60
+
+rover Stranded
+site 22.5 67.5
+heading E
+orders MMM
+power solar 1.3
+battery 600

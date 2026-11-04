@@ -9,7 +9,6 @@ import fr.paulm.projects.rover.mars.rover.PowerSystem;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 
 // The batteries of the rovers that landed, followed through the mission: the pace of the rovers on the clock.
 // Each battery starts full. It is charged by the power source of its rover, and drained by the rover: more when it
@@ -53,14 +52,16 @@ public final class Batteries implements Pace {
     }
 
     @Override
-    public Optional<Duration> duration(int rover, Rover state, Duration start, Duration busy) {
+    public Timing timing(int rover, Rover state, Duration start, Duration busy) {
         PowerSystem system = systems.get(rover);
         double capacity = system.batteryWattHours();
         Coordinates point = planet.centerOf(state.position());
         Duration year = Duration.ofMillis(Math.round(planet.orbit().yearInSols() * planet.dayLength().toMillis()));
         Duration time = start;
         Duration left = busy;
+        // waiting: since the rover last made progress; waited: in all, during this instruction
         Duration waiting = Duration.ZERO;
+        Duration waited = Duration.ZERO;
         while (left.isPositive()) {
             if (charging[rover] && levels[rover] >= RECHARGED * capacity) {
                 charging[rover] = false;
@@ -74,8 +75,9 @@ public final class Batteries implements Pace {
             levels[rover] = Math.clamp(levels[rover] + (produced - used) * hours, 0, capacity);
             if (charging[rover]) {
                 waiting = waiting.plus(step);
+                waited = waited.plus(step);
                 if (waiting.compareTo(year) > 0) {
-                    return Optional.empty();
+                    return Timing.stoppedAfter(time.plus(step).minus(start), waited);
                 }
             } else {
                 left = left.minus(step);
@@ -83,6 +85,6 @@ public final class Batteries implements Pace {
             }
             time = time.plus(step);
         }
-        return Optional.of(time.minus(start));
+        return Timing.done(busy, waited);
     }
 }

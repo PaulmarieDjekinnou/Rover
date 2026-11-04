@@ -73,7 +73,7 @@ final class MissionReport {
     // its cell and direction, the distance and the time driving, the time waiting for energy, the charge of its
     // battery, and the Sun when it ends: "Curiosity: 4.54S 137.81E (cell 551 341) facing N, 59.2 km driven in
     // 17.3 sols, 6.1 sols waiting for energy, battery 63%, local time 03:12, night".
-    // A rover that ran out of energy says so: "Spirit stopped, out of energy: ...".
+    // A rover that ran out of energy says when: "Spirit stopped, out of energy, on Sol 312 04:10: ...".
     void results(Deployment deployment, List<MissionResult> results, RoverPositions positions, Batteries batteries) {
         Planet planet = deployment.planet();
         List<Touchdown> landed = deployment.landed();
@@ -88,10 +88,11 @@ final class MissionReport {
             }
             out.println(String.format(Locale.ROOT,
                     "%s%s %s (cell %s) facing %s, %.1f km driven in %.1f sols, %.1f sols waiting for energy, battery %.0f%%, %s",
-                    name, result.stopped() ? " stopped, out of energy:" : ":", positions.of(i),
+                    name, result.stopTime().map(time -> " stopped, out of energy, on " + clock(time, planet) + ":").orElse(":"),
+                    positions.of(i),
                     result.finalRover().position(), result.finalRover().direction(), result.distanceMeters() / 1_000,
                     sols(result.drivingTime(), planet), sols(result.waitingTime(), planet), 100 * batteries.charge(i),
-                    sky(deployment.sun(), positions.of(i), landed.get(i).time().plus(result.totalTime()))));
+                    sky(deployment.sun(), positions.of(i), result.stopTime().orElse(landed.get(i).time().plus(result.totalTime())))));
         }
     }
 

@@ -76,18 +76,18 @@ public final class ClockSimulation implements Simulation {
             if (event.start()) {
                 Decision decision = decide(input, rover, missions.get(i).instructions().get(event.rank()), heldCells);
                 Duration busy = duration(input.terrain(), rover, decision);
-                Optional<Duration> duration = decision.obstacle().isPresent()
-                        ? Optional.of(Duration.ZERO) : pace.duration(i, rover, event.time(), busy);
-                if (duration.isEmpty()) {
-                    log.stopped(i);
+                Pace.Timing timing = decision.obstacle().isPresent()
+                        ? Pace.Timing.done(Duration.ZERO, Duration.ZERO) : pace.timing(i, rover, event.time(), busy);
+                log.waited(i, timing.waiting());
+                if (timing.stopped()) {
+                    log.stopped(i, event.time().plus(timing.duration()));
                     continue;
                 }
-                log.waited(i, duration.get().minus(busy));
                 if (decision.obstacle().isEmpty() && !decision.next().position().equals(rover.position())) {
                     heldCells.merge(decision.next().position(), 1, Integer::sum);
                 }
                 decisions.put(i, decision);
-                events.add(new Event(event.time().plus(duration.get()), event.rank(), i, false));
+                events.add(new Event(event.time().plus(timing.duration()), event.rank(), i, false));
                 continue;
             }
             Decision decision = decisions.remove(i);
