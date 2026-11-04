@@ -196,7 +196,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
 | | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` and `--map` options and the file; each mode with the option that selects it |
-| | `ConsoleReport` | prints the landings, the history, the final positions and the maps on the standard output, and the warnings through the logger |
+| | `ConsoleReport`, `MissionReport` | print the results on the standard output, and the warnings through the logger: the history and the final positions on a plateau; the landings, the history, the end of each mission and the maps on a planet |
 | | `ReliefMap` | draws the relief around a cell in text, with the rovers |
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |

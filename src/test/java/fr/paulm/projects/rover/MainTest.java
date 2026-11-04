@@ -17,33 +17,36 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 // End-to-end tests of the program: Main.run returns the exit code instead of calling System.exit.
-// The history and the results are written to a buffer given to the ConsoleReport, the errors are read from Main's logs
-// and the warnings from ConsoleReport's logs.
+// The history and the results are written to a buffer given to Main, the errors are read from Main's logs
+// and the warnings from the logs of ConsoleReport (plateau) and MissionReport (planet).
 class MainTest {
 
     @TempDir
     Path tempDir;
 
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    private final ConsoleReport report = new ConsoleReport(new PrintStream(output, true));
+    private final PrintStream out = new PrintStream(output, true);
     private LogCapture logs;
     private LogCapture warnings;
+    private LogCapture missionWarnings;
 
     @BeforeEach
     void capture() {
         logs = LogCapture.start(Main.class);
         warnings = LogCapture.start(ConsoleReport.class);
+        missionWarnings = LogCapture.start(MissionReport.class);
     }
 
     @AfterEach
     void stopCapture() {
         logs.stop();
         warnings.stop();
+        missionWarnings.stop();
     }
 
     // The program, writing to the buffer instead of the standard output.
     private Main main() {
-        return new Main(TextFileReader::new, report);
+        return new Main(TextFileReader::new, out);
     }
 
     private List<String> outputLines() {
@@ -75,7 +78,7 @@ class MainTest {
     void movesBlockedByTheTerrainAreReportedByRoverName() throws Exception {
         Path input = TestResources.path("simulations/valid/mini-planet.txt");
         main().run(new String[]{input.toString()});
-        assertEquals(List.of("Climber: 1 move(s) blocked by the terrain."), warnings.messages());
+        assertEquals(List.of("Climber: 1 move(s) blocked by the terrain."), missionWarnings.messages());
     }
 
     @Test
@@ -187,7 +190,7 @@ class MainTest {
         SimulationReader failingReader = () -> {
             throw new IllegalStateException("boom");
         };
-        assertEquals(1, new Main(path -> failingReader, report).run(new String[]{"input.txt"}));
+        assertEquals(1, new Main(path -> failingReader, out).run(new String[]{"input.txt"}));
         assertEquals(List.of("Unexpected error: java.lang.IllegalStateException: boom"), logs.messages());
         assertEquals(List.of(), outputLines());
     }
