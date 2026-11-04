@@ -134,6 +134,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
 | | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
+| | `Planet`, `ElevationMap` | a sphere of a given radius cut into the grid of its elevation map; the height of each cell |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
 | | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |
