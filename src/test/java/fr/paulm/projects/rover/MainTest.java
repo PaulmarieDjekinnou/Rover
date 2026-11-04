@@ -20,8 +20,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 // The results are read from the standard output, the warnings and errors from Main's logs.
 class MainTest {
 
-    private static final String USAGE = "Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] input.txt";
-
     @TempDir
     Path tempDir;
 
@@ -99,13 +97,6 @@ class MainTest {
     }
 
     @Test
-    void optionWithoutFilePrintsUsage() {
-        assertEquals(1, new Main().run(new String[]{"--simultaneous"}));
-        assertEquals(1, new Main().run(new String[]{"--step-by-step", "a.txt", "b.txt"}));
-        assertEquals(List.of(USAGE, USAGE), logs.messages());
-    }
-
-    @Test
     void historyOptionPrintsEachTurnBeforeTheFinalPositions() throws Exception {
         Path input = TestResources.path("simulations/valid/collision.txt");
         assertEquals(0, new Main().run(new String[]{"--history", input.toString()}));
@@ -134,13 +125,6 @@ class MainTest {
     }
 
     @Test
-    void repeatedOrConflictingOptionsPrintUsage() {
-        assertEquals(1, new Main().run(new String[]{"--history", "--history", "input.txt"}));
-        assertEquals(1, new Main().run(new String[]{"--step-by-step", "--simultaneous", "input.txt"}));
-        assertEquals(List.of(USAGE, USAGE), logs.messages());
-    }
-
-    @Test
     void unexpectedErrorIsReported() {
         SimulationReader failingReader = () -> {
             throw new IllegalStateException("boom");
@@ -151,21 +135,10 @@ class MainTest {
     }
 
     @Test
-    void unknownOptionPrintsUsage() {
-        assertEquals(1, new Main().run(new String[]{"--fast", "input.txt"}));
-        assertEquals(List.of(USAGE), logs.messages());
-    }
-
-    @Test
-    void missingArgumentPrintsUsage() {
+    void invalidArgumentsPrintUsage() {
+        // Every invalid combination is tested in CommandLineTest
         assertEquals(1, new Main().run(new String[]{}));
-        assertEquals(List.of(USAGE), logs.messages());
-    }
-
-    @Test
-    void tooManyArgumentsPrintsUsage() {
-        assertEquals(1, new Main().run(new String[]{"a.txt", "b.txt"}));
-        assertEquals(List.of(USAGE), logs.messages());
+        assertEquals(List.of(CommandLine.usage()), logs.messages());
     }
 
     @Test

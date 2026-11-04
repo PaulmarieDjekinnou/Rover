@@ -1,10 +1,6 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.MissionResult;
-import fr.paulm.projects.rover.domain.SequentialSimulation;
-import fr.paulm.projects.rover.domain.SimultaneousSimulation;
-import fr.paulm.projects.rover.domain.Simulation;
-import fr.paulm.projects.rover.domain.StepByStepSimulation;
 import fr.paulm.projects.rover.domain.Turn;
 import fr.paulm.projects.rover.domain.TurnListener;
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
@@ -26,15 +22,6 @@ import java.util.stream.Collectors;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
-    private static final String STEP_BY_STEP_OPTION = "--step-by-step";
-    private static final String SIMULTANEOUS_OPTION = "--simultaneous";
-    private static final String HISTORY_OPTION = "--history";
-    private static final String USAGE = "Usage: java -jar rover.jar [" + STEP_BY_STEP_OPTION + " | " + SIMULTANEOUS_OPTION
-            + "] [" + HISTORY_OPTION + "] input.txt";
-
-    // What the options ask for: the simulation mode, and whether to print the state of the rovers after each turn.
-    private record Options(Simulation simulation, boolean history) {
-    }
 
     // Creates the reader of the input file. Replaceable in tests, to simulate an unexpected error.
     private final Function<Path, SimulationReader> readerFactory;
@@ -56,19 +43,19 @@ public class Main {
 
     // Runs the program and returns its exit code (0 on success, 1 on any error) instead of exiting,
     // so that error cases can be tested.
-    // Arguments: the options, then the input file.
+    // Arguments: the options, then the input file (see CommandLine).
     int run(String[] args) {
-        Optional<Options> options = optionsFor(args);
-        if (options.isEmpty()) {
-            LOGGER.error(USAGE);
+        Optional<CommandLine> commandLine = CommandLine.parse(args);
+        if (commandLine.isEmpty()) {
+            LOGGER.error(CommandLine.usage());
             return 1;
         }
-        String file = args[args.length - 1];
+        String file = commandLine.get().file();
         try {
             SimulationReader reader = readerFactory.apply(Path.of(file));
             // Each turn is printed as soon as it is over, before the final positions
-            TurnListener listener = options.get().history() ? this::displayTurn : TurnListener.NONE;
-            List<MissionResult> results = options.get().simulation().run(reader.read(), listener);
+            TurnListener listener = commandLine.get().history() ? this::displayTurn : TurnListener.NONE;
+            List<MissionResult> results = commandLine.get().mode().simulation().run(reader.read(), listener);
             display(results);
             return 0;
         } catch (UncheckedIOException e) {
@@ -85,29 +72,6 @@ public class Main {
             LOGGER.error("Unexpected error: {}", e.toString(), e);
             return 1;
         }
-    }
-
-    // The options given before the file name. The simulation is sequential unless another mode is given.
-    // Empty when the arguments are not valid: no file name, an unknown or repeated option, or two modes.
-    private Optional<Options> optionsFor(String[] args) {
-        if (args.length == 0 || args[args.length - 1].startsWith("--")) {
-            return Optional.empty();
-        }
-        Simulation simulation = null;
-        boolean history = false;
-        for (int i = 0; i < args.length - 1; i++) {
-            String option = args[i];
-            if (option.equals(HISTORY_OPTION) && !history) {
-                history = true;
-            } else if (option.equals(STEP_BY_STEP_OPTION) && simulation == null) {
-                simulation = new StepByStepSimulation();
-            } else if (option.equals(SIMULTANEOUS_OPTION) && simulation == null) {
-                simulation = new SimultaneousSimulation();
-            } else {
-                return Optional.empty();
-            }
-        }
-        return Optional.of(new Options(simulation == null ? new SequentialSimulation() : simulation, history));
     }
 
     // One line per turn: "Turn 3: 0 2 N | 0 3 S (blocked: 1)". Rovers are numbered from 1, as in the warnings.

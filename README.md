@@ -113,7 +113,8 @@ All classes are in the `fr.paulm.projects.rover` package.
 
 | Package | Class | Role |
 |---|---|---|
-| *(root)* | `Main` | entry point: reads the file given as argument, reads the options, prints the history, the results and the warnings, handles errors |
+| *(root)* | `Main` | entry point: reads the file given as argument, prints the history, the results and the warnings, handles errors |
+| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` option and the file; each mode with the option that selects it |
 | `domain.enums` | `Direction` | the four directions, their rotations and the cells ahead of and behind a position |
 | | `Instruction` | the `LEFT`, `RIGHT`, `MOVE` and `BACK` commands (written `L`, `R`, `M` and `B` in the text format) |
 | `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |
