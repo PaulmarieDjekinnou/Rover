@@ -1,0 +1,17 @@
+# Two rovers on the real Mars (MOLA map, 4 cells per degree: about 15 km per cell).
+planet mars
+seed 2026
+
+# Curiosity, in Gale crater: heads for the central mound, Aeolis Mons
+rover Curiosity
+site -4.59 137.44
+ellipse 20 7 0
+heading S
+orders MMMLMM
+
+# Perseverance, in Jezero crater: drives west towards the old river delta
+rover Perseverance
+site 18.38 77.58
+ellipse 7.7 6.6 0
+heading W
+orders MMMRMM

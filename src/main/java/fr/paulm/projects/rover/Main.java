@@ -1,9 +1,14 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.InvalidInputException;
+import fr.paulm.projects.rover.domain.simulation.Simulation;
+import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.domain.simulation.TurnListener;
+import fr.paulm.projects.rover.input.Scenario;
 import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
+import fr.paulm.projects.rover.mars.mission.Deployment;
+import fr.paulm.projects.rover.mars.mission.MarsMission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,9 +57,21 @@ public class Main {
         String file = commandLine.get().file();
         try {
             SimulationReader reader = readerFactory.apply(Path.of(file));
-            // Each turn is printed as soon as it is over, before the final positions
-            TurnListener listener = commandLine.get().history() ? report::turn : TurnListener.NONE;
-            report.results(commandLine.get().mode().simulation().run(reader.read(), listener));
+            Simulation simulation = commandLine.get().mode().simulation();
+            boolean history = commandLine.get().history();
+            switch (reader.read()) {
+                case Scenario.OnPlateau(SimulationInput input) -> {
+                    // Each turn is printed as soon as it is over, before the final positions
+                    TurnListener listener = history ? report::turn : TurnListener.NONE;
+                    report.results(simulation.run(input, listener));
+                }
+                case Scenario.OnMars(MarsMission mission) -> {
+                    Deployment deployment = mission.land();
+                    report.landings(deployment);
+                    TurnListener listener = history ? turn -> report.turn(turn, deployment) : TurnListener.NONE;
+                    report.results(deployment, simulation.run(deployment.input(), listener));
+                }
+            }
             return 0;
         } catch (UncheckedIOException e) {
             LOGGER.error("Cannot read file \"{}\": {}", file, reasonOf(e.getCause()));

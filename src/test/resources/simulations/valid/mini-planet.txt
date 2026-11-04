@@ -1,0 +1,24 @@
+# A small planet of radius 10 km (see mini-planet.map.txt): 8 x 4 cells of about 7.9 km,
+# with a 9 km high peak in cell (3, 1) that no rover can climb.
+planet map mini-planet.map.txt
+seed 1
+landing-max-elevation 500
+landing-max-latitude 60
+
+# Lands next to the north pole, crosses it, and comes back south on the other side
+rover Polar
+site 22.5 67.5
+heading N
+orders MMM
+
+# Lands east of the peak, turns towards it, and cannot climb it
+rover Climber
+site 22.5 202.5
+heading S
+orders MRM
+
+# Aims at the cell where Polar landed: lost
+rover Twin
+site 22.5 67.5
+heading E
+orders M

@@ -1,6 +1,6 @@
 # Rover
 
-Simulation of Mars rovers exploring a rectangular plateau.
+Simulation of Mars rovers: on a rectangular plateau (the original kata), or landed on the real planet Mars, whose relief comes from NASA data (see [Missions to Mars](#missions-to-mars)).
 
 Each rover has a position `(x, y)` and a direction (`N`, `E`, `S`, `W`). It receives a sequence of instructions:
 
@@ -79,6 +79,65 @@ An unexpected error (a bug) is reported as `Unexpected error: …`, followed by 
 
 The simulation itself has no side effect: it returns its results, sends each turn to a listener given by `Main`, and `ConsoleReport` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
+## Missions to Mars
+
+An input file that starts with a `planet` line describes a mission to a planet. The rovers are first sent down to the surface, then carry out their orders, in any of the three modes, on a sphere with real relief.
+
+```
+planet mars
+seed 2026
+
+rover Curiosity
+site -4.59 137.44
+ellipse 20 7 0
+heading S
+orders MMMLMM
+```
+
+| Line | Meaning |
+|---|---|
+| `planet mars` | the planet: `mars`, or `map <file>` for a small planet drawn in text, in a file next to the mission (see below) |
+| `seed 42` | optional: the seed of the random draws (0 by default). The same seed always gives the same landings |
+| `max-slope 10` | optional: the steepest slope the rovers can drive on, in degrees (10 by default) |
+| `speed 0.04` | optional: the speed of the rovers on flat ground, in m/s (0.04 by default, about Curiosity's top speed) |
+| `landing-max-elevation -1000` | optional: the highest landing site allowed, in meters (-1000 by default) |
+| `landing-max-latitude 30` | optional: the farthest landing site from the equator, in degrees (30 by default) |
+| `rover <name>` | starts the block of a rover |
+| `site <latitude> <longitude>` | where the rover aims: latitude negative in the south, longitude from 0 to 360 to the east |
+| `ellipse <major> <minor> <azimuth>` | optional: the landing ellipse, axes in km, azimuth of the major axis in degrees from north (none by default) |
+| `heading N` | the direction the rover faces once on the ground |
+| `orders MMRM` | optional: the instructions, as on the plateau |
+
+Lines starting with `#` are comments. The whole file is checked before anything lands, and errors give the line number.
+
+**The planet.** `planet mars` uses the topography measured by the MOLA laser altimeter of Mars Global Surveyor (NASA, public domain), at 4 cells per degree: 1440 × 720 cells of about 15 km at the equator, in `src/main/resources/mars/` with the description of its format (`.lbl`). The planet is a sphere cut into a latitude / longitude grid: `x` is the column (the longitude, to the east) and `y` the row (the latitude, from the south pole). Going east or west wraps around the planet; going north from the last row crosses the north pole: the rover arrives on the same row, half a turn of longitude away, now facing south (and likewise at the south pole).
+
+**The landing.** A site is refused if it is too high (the parachute needs enough atmosphere), too far from the equator, or next to a slope the rover could not drive. Each rover then touches down at a random point of its ellipse. A rover that touches down on another rover, or in a cell it cannot leave, is lost: it takes no part in the simulation.
+
+**The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Each rover has its own clock: the time of a rover is the sum of its own moves, plus 5 minutes per turn on the spot. Blocked moves take no time.
+
+The output gives the landing of each rover, then, for each rover that landed, its final position (the center of its cell), its cell and direction, the distance driven and the time taken, in sols (Martian days of 24 h 39 min 35 s):
+
+```
+Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target
+Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target
+Curiosity: 5.38S 137.88E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
+Perseverance: 18.88N 76.88E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
+```
+
+Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, the turns give the cells of the rovers that landed, and the names of the blocked ones.
+
+**Small planets in text.** `planet map mini.txt` reads a planet from a text file next to the mission: its radius, the height of one step, then one row per line, from north to south, one digit per cell (the elevation in steps). Every row has the same, even, number of cells:
+
+```
+radius-km 10
+meters-per-digit 1000
+00000000
+00090000
+```
+
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. The real position of a rover inside its cell is not tracked: a move goes from the center of a cell to the center of the next one.
+
 ## Requirements
 
 - Java 25
@@ -92,6 +151,7 @@ java -jar target/rover.jar src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step src/main/resources/input.txt
 java -jar target/rover.jar --simultaneous src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step --history src/main/resources/input.txt
+java -jar target/rover.jar src/main/resources/mars-mission.txt
 ```
 
 ## Tests
@@ -105,7 +165,7 @@ The tests read input files from `src/test/resources/simulations/`:
 - `valid/<name>.txt`: input of a nominal case, run through the program and compared to the expected result in `<name>.expected.txt` (`MainTest`);
 - `invalid/<name>.txt`: input of an error case, used to check that errors are reported (`TextFileReaderTest`, `MainTest`).
 
-To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest`.
+To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest` and `MarsMissionParserTest`. `mini-planet.txt` is a mission on the small planet drawn in `mini-planet.map.txt`; `mars.txt` is a mission on the real Mars.
 
 `ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else, `domain.simulation` only on `domain`, `input` on both, and only the root package uses everything. The build fails if a dependency goes the wrong way.
 
@@ -113,13 +173,13 @@ To add a nominal case, create both files and add the name to `MainTest.validFile
 
 All classes are in the `fr.paulm.projects.rover` package.
 
-`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its ground, `mars.mission` lands the rovers on it. `input` builds a `SimulationInput` from a text file.
+`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its ground, `mars.mission` lands the rovers on it. `input` reads a text file: rovers on a plateau, or a mission to a planet.
 
 | Package | Class | Role |
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
 | | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` option and the file; each mode with the option that selects it |
-| | `ConsoleReport` | prints the history and the final positions on the standard output, and the warnings through the logger |
+| | `ConsoleReport` | prints the landings, the history and the final positions on the standard output, and the warnings through the logger |
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |
 | | `Plateau` | a rectangular surface that wraps around like a torus |
@@ -140,7 +200,8 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `mars.mission` | `MarsMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
-| `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
-| | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
-| | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |
+| `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
+| | `TextFileReader` | reads a file and passes its content to the parser of its format |
+| | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |
+| | `MarsMissionParser`, `TextMapParser` | read and validate the mission format and the small planets drawn in text |
 | | `MolaFileReader` | reads the MOLA topography of Mars |

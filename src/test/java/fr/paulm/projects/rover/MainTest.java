@@ -52,7 +52,7 @@ class MainTest {
 
     // Each simulations/valid/<name>.txt file is run through the program and compared to <name>.expected.txt
     @ParameterizedTest
-    @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers"})
+    @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers", "mini-planet", "mars"})
     void validFile(String name) throws Exception {
         Path input = TestResources.path("simulations/valid/" + name + ".txt");
         assertEquals(0, main().run(new String[]{input.toString()}));
@@ -69,6 +69,34 @@ class MainTest {
                 "Rover 1: 1 move(s) blocked by another rover.",
                 "Rover 2: 3 move(s) blocked by another rover."),
                 warnings.messages());
+    }
+
+    @Test
+    void movesBlockedByTheTerrainAreReportedByRoverName() throws Exception {
+        Path input = TestResources.path("simulations/valid/mini-planet.txt");
+        main().run(new String[]{input.toString()});
+        assertEquals(List.of("Climber: 1 move(s) blocked by the terrain."), warnings.messages());
+    }
+
+    @Test
+    void historyOnAPlanetNamesTheBlockedRovers() throws Exception {
+        Path input = TestResources.path("simulations/valid/mini-planet.txt");
+        assertEquals(0, main().run(new String[]{"--simultaneous", "--history", input.toString()}));
+        // Polar crosses the north pole in turn 2: it arrives on the other side of the planet, facing south
+        assertEquals(List.of(
+                "Turn 1: 1 3 N | 4 1 S",
+                "Turn 2: 5 3 S | 4 1 W",
+                "Turn 3: 5 2 S | 4 1 W (blocked: Climber)"),
+                outputLines().subList(3, 6));
+    }
+
+    @Test
+    void invalidLandingSiteIsReportedWithItsLine() throws Exception {
+        Path input = TestResources.path("simulations/invalid/landing-site-too-high.txt");
+        assertEquals(1, main().run(new String[]{input.toString()}));
+        assertEquals(List.of("Invalid input: Line 4: Landing site 18.65N 226.20E is too high (20009 m). Expected: at most -1000 m"),
+                logs.messages());
+        assertEquals(List.of(), outputLines());
     }
 
     @Test

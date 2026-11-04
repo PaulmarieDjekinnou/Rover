@@ -1,0 +1,5 @@
+planet mars
+
+rover Tourist
+site 18.65 226.2
+heading N

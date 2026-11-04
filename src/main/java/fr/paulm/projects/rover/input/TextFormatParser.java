@@ -21,15 +21,6 @@ public final class TextFormatParser {
     // where instructions are expected means that the rover above has no instruction line.
     private static final Pattern POSITION_SHAPE = Pattern.compile("-?\\d+\\s+-?\\d+\\s+\\S+");
 
-    // A non-blank line of the content, trimmed, with its line number in the original content (from 1),
-    // so that error messages can point to the right line even when blank lines were skipped.
-    private record Line(int number, String text) {
-
-        InvalidInputException error(String message) {
-            return new InvalidInputException("Line " + number + ": " + message);
-        }
-    }
-
     // Reads and validates the whole content: an error is thrown before any rover moves.
     public SimulationInput parse(String content) {
         List<Line> lines = nonBlankLines(content);
@@ -48,14 +39,7 @@ public final class TextFormatParser {
 
     // Trims each line, removes blank lines and checks that there is a plateau line.
     private List<Line> nonBlankLines(String content) {
-        List<String> rawLines = content.lines().toList();
-        List<Line> lines = new ArrayList<>();
-        for (int i = 0; i < rawLines.size(); i++) {
-            String text = rawLines.get(i).trim();
-            if (!text.isEmpty()) {
-                lines.add(new Line(i + 1, text));
-            }
-        }
+        List<Line> lines = Line.nonBlankLines(content);
         if (lines.isEmpty()) {
             throw new InvalidInputException("Empty file: the first line must give the plateau size, for example \"5 5\"");
         }
