@@ -1,7 +1,5 @@
 package fr.paulm.projects.rover;
 
-import fr.paulm.projects.rover.domain.MissionResult;
-import fr.paulm.projects.rover.domain.Turn;
 import fr.paulm.projects.rover.domain.TurnListener;
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 import fr.paulm.projects.rover.input.SimulationReader;
@@ -15,23 +13,24 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
 
     // Creates the reader of the input file. Replaceable in tests, to simulate an unexpected error.
     private final Function<Path, SimulationReader> readerFactory;
+    // Where the history and the results are shown. Tests give it a buffer instead of the standard output.
+    private final ConsoleReport report;
 
     Main() {
-        this(TextFileReader::new);
+        this(TextFileReader::new, new ConsoleReport(System.out));
     }
 
-    Main(Function<Path, SimulationReader> readerFactory) {
+    Main(Function<Path, SimulationReader> readerFactory, ConsoleReport report) {
         this.readerFactory = readerFactory;
+        this.report = report;
     }
 
     public static void main(String[] args) {
@@ -54,9 +53,8 @@ public class Main {
         try {
             SimulationReader reader = readerFactory.apply(Path.of(file));
             // Each turn is printed as soon as it is over, before the final positions
-            TurnListener listener = commandLine.get().history() ? this::displayTurn : TurnListener.NONE;
-            List<MissionResult> results = commandLine.get().mode().simulation().run(reader.read(), listener);
-            display(results);
+            TurnListener listener = commandLine.get().history() ? report::turn : TurnListener.NONE;
+            report.results(commandLine.get().mode().simulation().run(reader.read(), listener));
             return 0;
         } catch (UncheckedIOException e) {
             LOGGER.error("Cannot read file \"{}\": {}", file, reasonOf(e.getCause()));
@@ -71,26 +69,6 @@ public class Main {
             // A bug: a short message, followed by the stack trace for whoever fixes it
             LOGGER.error("Unexpected error: {}", e.toString(), e);
             return 1;
-        }
-    }
-
-    // One line per turn: "Turn 3: 0 2 N | 0 3 S (blocked: 1)". Rovers are numbered from 1, as in the warnings.
-    private void displayTurn(Turn turn) {
-        String rovers = turn.rovers().stream().map(Object::toString).collect(Collectors.joining(" | "));
-        String blocked = turn.blockedRovers().stream().sorted()
-                .map(i -> String.valueOf(i + 1)).collect(Collectors.joining(", "));
-        System.out.println("Turn " + turn.number() + ": " + rovers + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
-    }
-
-    // The final positions are the result of the program: they go to the standard output.
-    // A warning on the standard error output reports each rover that had moves blocked by another rover.
-    private void display(List<MissionResult> results) {
-        for (int i = 0; i < results.size(); i++) {
-            MissionResult result = results.get(i);
-            if (result.blockedMoves() > 0) {
-                LOGGER.warn("Rover {}: {} move(s) blocked by another rover.", i + 1, result.blockedMoves());
-            }
-            System.out.println(result.finalRover());
         }
     }
 

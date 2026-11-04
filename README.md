@@ -77,7 +77,7 @@ Cannot read file "input.txt": file not found
 
 An unexpected error (a bug) is reported as `Unexpected error: …`, followed by its stack trace.
 
-The simulation itself has no side effect: it returns its results, sends each turn to a listener given by `Main`, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
+The simulation itself has no side effect: it returns its results, sends each turn to a listener given by `Main`, and `ConsoleReport` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
 ## Requirements
 
@@ -113,8 +113,9 @@ All classes are in the `fr.paulm.projects.rover` package.
 
 | Package | Class | Role |
 |---|---|---|
-| *(root)* | `Main` | entry point: reads the file given as argument, prints the history, the results and the warnings, handles errors |
+| *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
 | | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` option and the file; each mode with the option that selects it |
+| | `ConsoleReport` | prints the history and the final positions on the standard output, and the warnings through the logger |
 | `domain.enums` | `Direction` | the four directions, their rotations and the cells ahead of and behind a position |
 | | `Instruction` | the `LEFT`, `RIGHT`, `MOVE` and `BACK` commands (written `L`, `R`, `M` and `B` in the text format) |
 | `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |

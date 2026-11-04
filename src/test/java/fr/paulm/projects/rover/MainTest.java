@@ -1,7 +1,7 @@
 package fr.paulm.projects.rover;
 
-import ch.qos.logback.classic.Level;
 import fr.paulm.projects.rover.input.SimulationReader;
+import fr.paulm.projects.rover.input.TextFileReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,27 +17,33 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 // End-to-end tests of the program: Main.run returns the exit code instead of calling System.exit.
-// The results are read from the standard output, the warnings and errors from Main's logs.
+// The history and the results are written to a buffer given to the ConsoleReport, the errors are read from Main's logs
+// and the warnings from ConsoleReport's logs.
 class MainTest {
 
     @TempDir
     Path tempDir;
 
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    private PrintStream originalOut;
+    private final ConsoleReport report = new ConsoleReport(new PrintStream(output, true));
     private LogCapture logs;
+    private LogCapture warnings;
 
     @BeforeEach
     void capture() {
-        originalOut = System.out;
-        System.setOut(new PrintStream(output, true));
         logs = LogCapture.start(Main.class);
+        warnings = LogCapture.start(ConsoleReport.class);
     }
 
     @AfterEach
     void stopCapture() {
-        System.setOut(originalOut);
         logs.stop();
+        warnings.stop();
+    }
+
+    // The program, writing to the buffer instead of the standard output.
+    private Main main() {
+        return new Main(TextFileReader::new, report);
     }
 
     private List<String> outputLines() {
@@ -49,57 +55,57 @@ class MainTest {
     @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers"})
     void validFile(String name) throws Exception {
         Path input = TestResources.path("simulations/valid/" + name + ".txt");
-        assertEquals(0, new Main().run(new String[]{input.toString()}));
+        assertEquals(0, main().run(new String[]{input.toString()}));
         List<String> expected = TestResources.read("simulations/valid/" + name + ".expected.txt");
         assertEquals(expected, outputLines());
-        assertEquals(List.of(), logs.messages(Level.ERROR));
+        assertEquals(List.of(), logs.messages());
     }
 
     @Test
     void blockedMovesAreReportedPerRover() throws Exception {
         Path input = TestResources.path("simulations/valid/collision.txt");
-        new Main().run(new String[]{input.toString()});
+        main().run(new String[]{input.toString()});
         assertEquals(List.of(
                 "Rover 1: 1 move(s) blocked by another rover.",
                 "Rover 2: 3 move(s) blocked by another rover."),
-                logs.messages(Level.WARN));
+                warnings.messages());
     }
 
     @Test
     void noWarningWithoutCollision() throws Exception {
         Path input = TestResources.path("simulations/valid/sample.txt");
-        new Main().run(new String[]{input.toString()});
-        assertEquals(List.of(), logs.messages());
+        main().run(new String[]{input.toString()});
+        assertEquals(List.of(), warnings.messages());
     }
 
     @Test
     void stepByStepOptionMovesTheRoversTurnByTurn() throws Exception {
         Path input = TestResources.path("simulations/valid/collision.txt");
-        assertEquals(0, new Main().run(new String[]{"--step-by-step", input.toString()}));
+        assertEquals(0, main().run(new String[]{"--step-by-step", input.toString()}));
         // Sequential mode gives "0 2 N" and "0 3 S" (see collision.expected.txt)
         assertEquals(List.of("0 1 N", "0 2 S"), outputLines());
         assertEquals(List.of(
                 "Rover 1: 2 move(s) blocked by another rover.",
                 "Rover 2: 2 move(s) blocked by another rover."),
-                logs.messages(Level.WARN));
+                warnings.messages());
     }
 
     @Test
     void simultaneousOptionMovesTheRoversAtTheSameTime() throws Exception {
         Path input = TestResources.path("simulations/valid/collision.txt");
-        assertEquals(0, new Main().run(new String[]{"--simultaneous", input.toString()}));
+        assertEquals(0, main().run(new String[]{"--simultaneous", input.toString()}));
         // Turn 1: both rovers move; turns 2 and 3: they would swap their cells, so both are blocked
         assertEquals(List.of("0 1 N", "0 2 S"), outputLines());
         assertEquals(List.of(
                 "Rover 1: 2 move(s) blocked by another rover.",
                 "Rover 2: 2 move(s) blocked by another rover."),
-                logs.messages(Level.WARN));
+                warnings.messages());
     }
 
     @Test
     void historyOptionPrintsEachTurnBeforeTheFinalPositions() throws Exception {
         Path input = TestResources.path("simulations/valid/collision.txt");
-        assertEquals(0, new Main().run(new String[]{"--history", input.toString()}));
+        assertEquals(0, main().run(new String[]{"--history", input.toString()}));
         // Sequential mode: one turn per instruction, the first rover's three, then the second rover's three
         assertEquals(List.of(
                 "Turn 1: 0 1 N | 0 3 S",
@@ -115,7 +121,7 @@ class MainTest {
     @Test
     void historyOptionWorksWithAnotherMode() throws Exception {
         Path input = TestResources.path("simulations/valid/collision.txt");
-        assertEquals(0, new Main().run(new String[]{"--simultaneous", "--history", input.toString()}));
+        assertEquals(0, main().run(new String[]{"--simultaneous", "--history", input.toString()}));
         assertEquals(List.of(
                 "Turn 1: 0 1 N | 0 2 S",
                 "Turn 2: 0 1 N | 0 2 S (blocked: 1, 2)",
@@ -129,36 +135,36 @@ class MainTest {
         SimulationReader failingReader = () -> {
             throw new IllegalStateException("boom");
         };
-        assertEquals(1, new Main(path -> failingReader).run(new String[]{"input.txt"}));
-        assertEquals(List.of("Unexpected error: java.lang.IllegalStateException: boom"), logs.messages(Level.ERROR));
+        assertEquals(1, new Main(path -> failingReader, report).run(new String[]{"input.txt"}));
+        assertEquals(List.of("Unexpected error: java.lang.IllegalStateException: boom"), logs.messages());
         assertEquals(List.of(), outputLines());
     }
 
     @Test
     void invalidArgumentsPrintUsage() {
         // Every invalid combination is tested in CommandLineTest
-        assertEquals(1, new Main().run(new String[]{}));
+        assertEquals(1, main().run(new String[]{}));
         assertEquals(List.of(CommandLine.usage()), logs.messages());
     }
 
     @Test
     void missingFileIsReported() {
         Path missing = tempDir.resolve("absent.txt");
-        assertEquals(1, new Main().run(new String[]{missing.toString()}));
+        assertEquals(1, main().run(new String[]{missing.toString()}));
         assertEquals(List.of("Cannot read file \"" + missing + "\": file not found"), logs.messages());
     }
 
     @Test
     void invalidPathIsReported() {
         // A nul character can never be part of a path, on any operating system.
-        assertEquals(1, new Main().run(new String[]{"a\0b"}));
+        assertEquals(1, main().run(new String[]{"a\0b"}));
         assertEquals(List.of("Invalid file path: \"a\0b\". Nul character not allowed"), logs.messages());
     }
 
     @Test
     void invalidContentIsReported() throws Exception {
         Path input = TestResources.path("simulations/invalid/unknown-instruction.txt");
-        assertEquals(1, new Main().run(new String[]{input.toString()}));
+        assertEquals(1, main().run(new String[]{input.toString()}));
         assertEquals(List.of("Invalid input: Line 5: Unknown instruction: \"X\". Expected: L, R, M or B"),
                 logs.messages());
         assertEquals(List.of(), outputLines());
