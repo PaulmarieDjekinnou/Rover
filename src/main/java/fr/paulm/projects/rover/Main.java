@@ -99,11 +99,18 @@ public class Main {
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         Deployment deployment = mission.land();
         missionReport.landings(deployment);
-        TurnListener listener = commandLine.history() ? turn -> missionReport.turn(turn, deployment) : TurnListener.NONE;
+        // The tracks are drawn on the maps; each turn is printed as soon as it is over, with the history option
+        RoverTracks tracks = new RoverTracks();
+        TurnListener listener = turn -> {
+            tracks.onTurn(turn);
+            if (commandLine.history()) {
+                missionReport.turn(turn, deployment);
+            }
+        };
         List<MissionResult> results = new ClockSimulation().run(deployment.input(), listener);
         missionReport.results(deployment, results);
         if (commandLine.map()) {
-            missionReport.maps(deployment, results);
+            missionReport.maps(deployment, results, tracks);
         }
     }
 

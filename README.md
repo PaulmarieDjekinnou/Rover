@@ -132,18 +132,18 @@ Sol 4.10: Curiosity 4.74S 137.45E S | Perseverance 18.34N 77.36E W
 Sol 5.34: Curiosity 4.99S 137.45E S | Perseverance 18.34N 77.36E W
 ```
 
-With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window, and each rover is drawn with the first letter of its name, in capitals where it is and in lower case where it landed. Around Curiosity, the floor of Gale crater appears as dots:
+With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window. Each rover has its own letter (the first letter of its name that no rover before it uses), in capitals where it is, in lower case where it landed, and `~` marks the cells the rovers drove through. Around Curiosity, the floor of Gale crater appears as dots:
 
 ```
-Around Curiosity:
+Around Curiosity (C Curiosity, P Perseverance; lower case where they landed, ~ where they drove):
 Relief from -4511 m (.) to 1165 m (@), north up, 31 x 15 cells:
 =+++**++=--=====--=++*++++=****
 +*+****++====--=====+#*##**+**+
 +++***++**+=:....-+=+++++++===*
 ++*******+=-.c.:..:+*=-==+===-=
-=+*******+-..:+#=..+*+====+==-=
-*###*****+-..=+%+=:=*++++=**+--
-##+#******-:--=C==-+##*******=-
+=+*******+-..~+#=..+*+====+==-=
+*###*****+-..~+%+=:=*++++=**+--
+##+#******-:-~~C==-+##*******=-
 ```
 
 The option is ignored, with a warning, for rovers on a plateau.
@@ -202,7 +202,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
 | | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` and `--map` options and the file; each mode with the option that selects it |
 | | `ConsoleReport`, `MissionReport` | print the results on the standard output, and the warnings through the logger: the history and the final positions on a plateau; the landings, the history, the end of each mission and the maps on a planet |
-| | `ReliefMap` | draws the relief around a cell in text, with the rovers |
+| | `ReliefMap`, `RoverTracks` | draws the relief around a cell in text, with the rovers; the cells each rover drove through |
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |
 | | `Plateau` | a rectangular surface that wraps around like a torus |

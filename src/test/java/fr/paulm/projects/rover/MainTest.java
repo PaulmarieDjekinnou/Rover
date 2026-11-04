@@ -111,12 +111,12 @@ class MainTest {
     void mapOptionDrawsTheReliefAroundEachRoverAfterTheResults() throws Exception {
         Path input = TestResources.path("simulations/valid/mini-planet.txt");
         assertEquals(0, main().run(new String[]{"--map", input.toString()}));
-        // Polar landed in (1, 2) and ended in (5, 2); Climber landed in (4, 2) and ended in (4, 1), next to the peak
+        // Polar crossed the north pole: its path goes through the northern row on both sides of the planet
         assertEquals(List.of(
                 "",
-                "Around Polar:",
+                "Around Polar (P Polar, C Climber; lower case where they landed, ~ where they drove):",
                 "Relief from 0 m (.) to 9000 m (@), north up, 8 x 4 cells:",
-                "........",
+                "~...~...",
                 "p..cP...",
                 "..@C....",
                 "........"), outputLines().subList(5, 12));

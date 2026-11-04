@@ -86,24 +86,49 @@ final class MissionReport {
         }
     }
 
-    // A map of the relief around each rover that landed, at the end of the mission. Each rover is drawn with the
-    // first letter of its name: in capitals where it is, in lower case where it landed.
-    void maps(Deployment deployment, List<MissionResult> results) {
+    // A map of the relief around each rover that landed, at the end of the mission. Each rover is drawn with its
+    // own letter (see labels): in capitals where it is, in lower case where it landed, and ~ on the cells it drove
+    // through.
+    void maps(Deployment deployment, List<MissionResult> results, RoverTracks tracks) {
         List<Touchdown> landed = deployment.landed();
+        List<Character> labels = labels(landed);
         Map<Position, Character> marks = new HashMap<>();
         for (int i = 0; i < results.size(); i++) {
-            char initial = nameOf(landed.get(i)).charAt(0);
-            marks.putIfAbsent(landed.get(i).cell(), Character.toLowerCase(initial));
-            marks.put(results.get(i).finalRover().position(), Character.toUpperCase(initial));
+            tracks.of(i).forEach(cell -> marks.put(cell, '~'));
+        }
+        for (int i = 0; i < results.size(); i++) {
+            marks.put(landed.get(i).cell(), Character.toLowerCase(labels.get(i)));
+        }
+        for (int i = 0; i < results.size(); i++) {
+            marks.put(results.get(i).finalRover().position(), labels.get(i));
+        }
+        List<String> legend = new ArrayList<>();
+        for (int i = 0; i < landed.size(); i++) {
+            legend.add(labels.get(i) + " " + nameOf(landed.get(i)));
         }
         for (int i = 0; i < results.size(); i++) {
             out.println();
-            out.println("Around " + nameOf(landed.get(i)) + ":");
+            out.println("Around " + nameOf(landed.get(i)) + " (" + String.join(", ", legend)
+                    + "; lower case where they landed, ~ where they drove):");
             reliefMap.draw(deployment.planet(), results.get(i).finalRover().position(), marks).forEach(out::println);
         }
     }
 
-    private String nameOf(Touchdown touchdown) {
+    // A capital letter for each rover, different from the others: the first letter of its name that no rover
+    // before it uses, or else the first free letter of the alphabet.
+    static List<Character> labels(List<Touchdown> rovers) {
+        List<Character> labels = new ArrayList<>();
+        for (Touchdown rover : rovers) {
+            String candidates = nameOf(rover).toUpperCase(Locale.ROOT) + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            char label = (char) candidates.chars()
+                    .filter(c -> c >= 'A' && c <= 'Z' && !labels.contains((char) c))
+                    .findFirst().orElse('?');
+            labels.add(label);
+        }
+        return labels;
+    }
+
+    private static String nameOf(Touchdown touchdown) {
         return touchdown.plan().name();
     }
 
