@@ -113,14 +113,15 @@ final class MissionReport {
         }
     }
 
-    // A capital letter for each rover, different from the others: the first letter of its name that no rover
-    // before it uses, or else the first free letter of the alphabet.
+    // A label for each rover, different from the others: the first letter of its name that no rover before it uses,
+    // or else the first free letter of the alphabet, then the first free digit. Beyond 36 rovers, labels run out
+    // and the next rovers are all drawn as ?.
     static List<Character> labels(List<Touchdown> rovers) {
         List<Character> labels = new ArrayList<>();
         for (Touchdown rover : rovers) {
-            String candidates = nameOf(rover).toUpperCase(Locale.ROOT) + "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            char label = (char) candidates.chars()
-                    .filter(c -> c >= 'A' && c <= 'Z' && !labels.contains((char) c))
+            String letters = nameOf(rover).toUpperCase(Locale.ROOT).replaceAll("[^A-Z]", "");
+            char label = (char) (letters + "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789").chars()
+                    .filter(c -> !labels.contains((char) c))
                     .findFirst().orElse('?');
             labels.add(label);
         }

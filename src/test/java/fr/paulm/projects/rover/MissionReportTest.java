@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -41,6 +42,15 @@ class MissionReportTest {
     @Test
     void aNameWithoutAFreeLetterTakesTheFirstFreeLetterOfTheAlphabet() {
         assertEquals(List.of('A', 'B', 'C'), MissionReport.labels(named("A", "A2", "AB")));
+    }
+
+    @Test
+    void afterTheAlphabetRoversTakeDigitsThenQuestionMarks() {
+        String[] names = IntStream.range(0, 38).mapToObj(i -> "R").toArray(String[]::new);
+        List<Character> labels = MissionReport.labels(named(names));
+        assertEquals('R', labels.get(0));
+        assertEquals('Z', labels.get(25));
+        assertEquals(List.of('0', '9', '?', '?'), List.of(labels.get(26), labels.get(35), labels.get(36), labels.get(37)));
     }
 
     @Test
