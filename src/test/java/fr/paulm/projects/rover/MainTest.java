@@ -82,15 +82,28 @@ class MainTest {
     }
 
     @Test
-    void historyOnAPlanetNamesTheBlockedRovers() throws Exception {
+    void historyOnAPlanetFollowsTheCommonClock() throws Exception {
         Path input = TestResources.path("simulations/valid/mini-planet.txt");
-        assertEquals(0, main().run(new String[]{"--simultaneous", "--history", input.toString()}));
-        // Polar crosses the north pole in turn 2: it arrives on the other side of the planet, facing south
+        assertEquals(0, main().run(new String[]{"--history", input.toString()}));
+        // One line each time an instruction ends: both first moves end together, then Climber turns (5 minutes)
+        // and is blocked by the peak at once, and Polar goes on, crossing the north pole
         assertEquals(List.of(
-                "Turn 1: 1 3 N | 4 1 S",
-                "Turn 2: 5 3 S | 4 1 W",
-                "Turn 3: 5 2 S | 4 1 W (blocked: Climber)"),
-                outputLines().subList(3, 6));
+                "Turn 1: 1 3 N | 4 2 S",
+                "Turn 2: 1 3 N | 4 1 S",
+                "Turn 3: 1 3 N | 4 1 W",
+                "Turn 4: 1 3 N | 4 1 W (blocked: Climber)",
+                "Turn 5: 5 3 S | 4 1 W",
+                "Turn 6: 5 2 S | 4 1 W"),
+                outputLines().subList(3, 9));
+    }
+
+    @Test
+    void modeOptionsAreIgnoredOnAPlanet() throws Exception {
+        Path input = TestResources.path("simulations/valid/mini-planet.txt");
+        assertEquals(0, main().run(new String[]{"--step-by-step", input.toString()}));
+        assertEquals(List.of("The --step-by-step option only applies to rovers on a plateau: a mission runs on a common clock."),
+                logs.messages());
+        assertEquals(TestResources.read("simulations/valid/mini-planet.expected.txt"), outputLines());
     }
 
     @Test

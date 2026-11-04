@@ -81,7 +81,7 @@ The simulation itself has no side effect: it returns its results, sends each tur
 
 ## Missions to Mars
 
-An input file that starts with a `planet` line describes a mission to a planet. The rovers are first sent down to the surface, then carry out their orders, in any of the three modes, on a sphere with real relief.
+An input file that starts with a `planet` line describes a mission to a planet. The rovers are first sent down to the surface, then carry out their orders all at the same time, on a common clock, on a sphere with real relief.
 
 ```
 planet mars
@@ -114,7 +114,7 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The landing.** A site is refused if it is too high (the parachute needs enough atmosphere), too far from the equator, or next to a slope the rover could not drive. Each rover then touches down at a random point of its ellipse. A rover that touches down less than 100 m from another rover, or in a cell it cannot leave, is lost: it takes no part in the simulation.
 
-**The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Unlike on the plateau, several rovers can be in the same cell: a cell is about 15 km wide, so they are kilometers apart, and rovers never block each other. Each rover has its own clock: the time of a rover is the sum of its own moves, plus 5 minutes per turn on the spot. Blocked moves take no time.
+**The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Unlike on the plateau, several rovers can be in the same cell: a cell is about 15 km wide, so they are kilometers apart, and rovers never block each other. Each instruction takes its time: a move lasts its distance divided by the speed, a turn on the spot 5 minutes, and a move blocked by the terrain no time. A rover starts its next instruction as soon as the previous one is over, and all the rovers share the same clock: the simulation handles the ends of instructions in time order. The three modes of the plateau do not apply to a mission: their options are ignored, with a warning. On a plateau, where instructions take no time, this clock would give exactly the step-by-step mode.
 
 The output gives the landing of each rover, then, for each rover that landed, its final position, its cell and direction, the distance driven and the time taken, in sols (Martian days of 24 h 39 min 35 s):
 
@@ -125,7 +125,7 @@ Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
 Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
 ```
 
-Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, the turns give the cells of the rovers that landed, and the names of the blocked ones.
+Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order, with the cells of the rovers that landed and the names of the blocked ones.
 
 With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window, and each rover is drawn with the first letter of its name, in capitals where it is and in lower case where it landed. Around Curiosity, the floor of Gale crater appears as dots:
 
@@ -168,7 +168,7 @@ java -jar target/rover.jar --step-by-step src/main/resources/input.txt
 java -jar target/rover.jar --simultaneous src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step --history src/main/resources/input.txt
 java -jar target/rover.jar src/main/resources/mars-mission.txt
-java -jar target/rover.jar --simultaneous --history --map src/main/resources/mars-mission.txt
+java -jar target/rover.jar --history --map src/main/resources/mars-mission.txt
 ```
 
 ## Tests
@@ -209,7 +209,8 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
 | `domain.simulation` | `SimulationInput`, `RoverMission` | the surface, its terrain, and each rover's mission (the rover and its instructions); checks that each rover starts on the surface, on its own cell |
 | | `Simulation` | interface (strategy): runs the missions, sends each turn to a `TurnListener`, and returns the result of each mission |
-| | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
+| | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers on a plateau: one after the other, turn by turn in input order, or turn by turn all at the same time |
+| | `ClockSimulation` | the rovers of a mission, all at the same time on a common clock: each instruction takes its time, and they are handled in time order |
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance and the time; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |

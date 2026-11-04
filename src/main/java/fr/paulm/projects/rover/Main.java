@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.InvalidInputException;
+import fr.paulm.projects.rover.domain.simulation.ClockSimulation;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.domain.simulation.TurnListener;
@@ -92,12 +93,14 @@ public class Main {
         plateauReport.results(commandLine.mode().simulation().run(input, listener));
     }
 
-    // The rovers land first; those that landed then carry out their orders.
+    // The rovers land first; those that landed then carry out their orders, all at the same time, on a common clock.
     private void runOnPlanet(MarsMission mission, CommandLine commandLine) {
+        commandLine.mode().option().ifPresent(option -> LOGGER.warn(
+                "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         Deployment deployment = mission.land();
         missionReport.landings(deployment);
         TurnListener listener = commandLine.history() ? turn -> missionReport.turn(turn, deployment) : TurnListener.NONE;
-        List<MissionResult> results = commandLine.mode().simulation().run(deployment.input(), listener);
+        List<MissionResult> results = new ClockSimulation().run(deployment.input(), listener);
         missionReport.results(deployment, results);
         if (commandLine.map()) {
             missionReport.maps(deployment, results);
