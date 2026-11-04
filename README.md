@@ -1,5 +1,7 @@
 # Rover
 
+[![Build](https://github.com/PaulmarieDjekinnou/Rover/actions/workflows/build.yml/badge.svg)](https://github.com/PaulmarieDjekinnou/Rover/actions/workflows/build.yml)
+
 Simulation of Mars rovers: on a rectangular plateau (the original kata), or landed on the real planet Mars, whose relief comes from NASA data (see [Missions to Mars](#missions-to-mars)).
 
 Each rover has a position `(x, y)` and a direction (`N`, `E`, `S`, `W`). It receives a sequence of instructions:
@@ -187,12 +189,14 @@ meters-per-digit 1000
 ## Requirements
 
 - Java 25
-- Maven
+- Maven is not needed: the Maven Wrapper (`./mvnw`) downloads the right version (3.9.16).
+
+Every push is built and tested by GitHub Actions (`.github/workflows/build.yml`).
 
 ## Usage
 
 ```bash
-mvn package
+./mvnw package
 java -jar target/rover.jar src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step src/main/resources/input.txt
 java -jar target/rover.jar --simultaneous src/main/resources/input.txt
@@ -204,7 +208,7 @@ java -jar target/rover.jar --history --map src/main/resources/mars-mission.txt
 ## Tests
 
 ```bash
-mvn test
+./mvnw test
 ```
 
 The tests read input files from `src/test/resources/simulations/`:
