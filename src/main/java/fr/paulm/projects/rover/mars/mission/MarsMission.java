@@ -42,29 +42,33 @@ public record MarsMission(Planet planet, Mobility mobility, LandingRules landing
         return new Landing(planet, terrain(), landingRules);
     }
 
-    // Lands the rovers one after the other, in input order. A rover that touches down on a rover already there,
-    // or in a cell it cannot leave, is lost: it takes no part in the simulation.
+    // Lands the rovers one after the other, in input order. A rover that touches down too close to a rover already
+    // there, or in a cell it cannot leave, is lost: it takes no part in the simulation. Rovers can share a cell:
+    // a cell is several kilometers wide.
     public Deployment land() {
         SplittableRandom random = new SplittableRandom(seed);
         Landing landing = landing();
-        Set<Position> occupied = new HashSet<>();
+        List<Coordinates> landedPoints = new ArrayList<>();
         List<Touchdown> touchdowns = new ArrayList<>();
         List<RoverMission> missions = new ArrayList<>();
         for (RoverPlan plan : rovers) {
             Coordinates point = landing.touchdown(plan.site(), random);
             Position cell = planet.cellAt(point);
-            Optional<LandingFailure> failure = failureAt(cell, occupied, landing);
+            Optional<LandingFailure> failure = failureAt(point, cell, landedPoints, landing);
             touchdowns.add(new Touchdown(plan, point, cell, failure));
             if (failure.isEmpty()) {
-                occupied.add(cell);
+                landedPoints.add(point);
                 missions.add(new RoverMission(new Rover(cell, plan.heading()), plan.orders()));
             }
         }
-        return new Deployment(planet, touchdowns, new SimulationInput(planet.grid(), terrain(), missions));
+        return new Deployment(planet, touchdowns, new SimulationInput(planet.grid(), terrain(), false, missions));
     }
 
-    private Optional<LandingFailure> failureAt(Position cell, Set<Position> occupied, Landing landing) {
-        if (occupied.contains(cell)) {
+    private Optional<LandingFailure> failureAt(Coordinates point, Position cell, List<Coordinates> landedPoints,
+                                               Landing landing) {
+        boolean tooClose = landedPoints.stream()
+                .anyMatch(other -> point.distanceTo(other, planet.radiusMeters()) < Landing.CLEARANCE_METERS);
+        if (tooClose) {
             return Optional.of(LandingFailure.ON_ANOTHER_ROVER);
         }
         return landing.canLeave(cell) ? Optional.empty() : Optional.of(LandingFailure.NO_WAY_OUT);

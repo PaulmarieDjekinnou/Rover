@@ -51,7 +51,10 @@ public final class SimultaneousSimulation implements Simulation {
                 arrivals.add(input.surface().next(rover.position(), departure).direction());
             }
             boolean[] blockedByTerrain = blockedByTerrain(rovers, wanted, input.terrain());
-            boolean[] blocked = blockedMovesOfTurn(rovers, wanted, departures, arrivals, blockedByTerrain);
+            // When rovers can share cells, only the terrain blocks them
+            boolean[] blocked = input.oneRoverPerCell()
+                    ? blockedMovesOfTurn(rovers, wanted, departures, arrivals, blockedByTerrain)
+                    : blockedByTerrain;
             Set<Integer> blockedRovers = new HashSet<>();
             for (int i = 0; i < rovers.size(); i++) {
                 if (blocked[i]) {

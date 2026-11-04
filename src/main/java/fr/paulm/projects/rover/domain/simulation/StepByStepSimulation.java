@@ -22,6 +22,8 @@ public final class StepByStepSimulation implements Simulation {
         MissionLog log = new MissionLog(missions.size(), input.terrain());
         Set<Position> occupiedCells = new HashSet<>();
         rovers.forEach(rover -> occupiedCells.add(rover.position()));
+        // Empty when rovers can share cells: they never block each other
+        Set<Position> roversCells = input.oneRoverPerCell() ? occupiedCells : Set.of();
 
         int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
         for (int turn = 0; turn < turns; turn++) {
@@ -33,7 +35,7 @@ public final class StepByStepSimulation implements Simulation {
                 }
                 Rover rover = rovers.get(i);
                 Rover next = rover.apply(instructions.get(turn), input.surface());
-                Optional<Obstacle> obstacle = rover.obstacleTo(next, input.terrain(), occupiedCells);
+                Optional<Obstacle> obstacle = rover.obstacleTo(next, input.terrain(), roversCells);
                 if (obstacle.isEmpty()) {
                     occupiedCells.remove(rover.position());
                     occupiedCells.add(next.position());

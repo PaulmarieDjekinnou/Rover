@@ -17,7 +17,7 @@ site 22.5 202.5
 heading S
 orders MRM
 
-# Aims at the cell where Polar landed: lost
+# Aims at the point where Polar landed: lost
 rover Twin
 site 22.5 67.5
 heading E

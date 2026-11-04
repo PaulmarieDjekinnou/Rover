@@ -6,6 +6,7 @@ import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Plateau;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.Terrain;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -54,5 +55,10 @@ class SimulationInputTest {
         missions.add(missionAt(10, 10));
         assertEquals(1, input.missions().size());
         assertThrows(UnsupportedOperationException.class, () -> input.missions().add(missionAt(2, 2)));
+    }
+
+    @Test
+    void roversCanStartOnTheSameCellWhenCellsAreShared() {
+        assertDoesNotThrow(() -> new SimulationInput(plateau, Terrain.FLAT, false, List.of(missionAt(1, 1), missionAt(1, 1))));
     }
 }

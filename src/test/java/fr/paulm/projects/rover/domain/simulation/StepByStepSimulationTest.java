@@ -5,6 +5,7 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Plateau;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.Terrain;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -91,5 +92,14 @@ class StepByStepSimulationTest {
                 mission(1, 1, Direction.S, "M")));
         // The second rover is blocked by the first one, which is blocked by the cliff
         assertEquals(List.of(result(1, 0, Direction.E, 0, 2), result(1, 1, Direction.S, 1, 0)), simulation.run(input));
+    }
+
+    @Test
+    void roversSharingCellsNeverBlockEachOther() {
+        // Two rovers start in the same cell, then the second one drives onto the cell of the first one and back
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), Terrain.FLAT, false, List.of(
+                mission(0, 0, Direction.E, "M"),
+                mission(0, 0, Direction.N, "RMMBB")));
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 0), result(0, 0, Direction.E, 0, 0)), simulation.run(input));
     }
 }

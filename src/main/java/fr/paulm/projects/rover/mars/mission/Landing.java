@@ -13,6 +13,9 @@ import java.util.random.RandomGenerator;
 
 // Sending a rover down to the surface: checking the site it aims at, then drawing where it really touches down.
 public final class Landing {
+
+    // A rover that touches down closer than this to another rover lands on it, and is lost
+    public static final double CLEARANCE_METERS = 100;
     private final Planet planet;
     private final MarsTerrain terrain;
     private final LandingRules rules;

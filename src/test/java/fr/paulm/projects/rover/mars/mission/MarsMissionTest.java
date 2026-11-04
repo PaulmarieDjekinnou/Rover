@@ -4,6 +4,7 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.stream.LongStream;
 import static fr.paulm.projects.rover.mars.mission.LandingTest.PLANET;
 import static fr.paulm.projects.rover.mars.mission.LandingTest.RULES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MarsMissionTest {
@@ -42,6 +44,18 @@ class MarsMissionTest {
         // Only the rovers that landed take part in the simulation, in input order
         assertEquals(List.of("One", "Three"), deployment.landed().stream().map(touchdown -> touchdown.plan().name()).toList());
         assertEquals(2, deployment.input().missions().size());
+    }
+
+    @Test
+    void roversCanLandInTheSameCellAFewKilometersApart() {
+        Coordinates center = PLANET.centerOf(new Position(6, 2));
+        RoverPlan near = new RoverPlan("Near", new LandingSite(center.shiftedBy(2_000, 0, PLANET.radiusMeters()), Ellipse.NONE),
+                Direction.N, List.of());
+        Deployment deployment = mission(1, plan("One", 6, 2), near).land();
+        assertEquals(List.of(new Position(6, 2), new Position(6, 2)),
+                deployment.touchdowns().stream().map(Touchdown::cell).toList());
+        assertEquals(2, deployment.landed().size());
+        assertFalse(deployment.input().oneRoverPerCell());
     }
 
     @Test

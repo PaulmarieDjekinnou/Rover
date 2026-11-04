@@ -177,4 +177,13 @@ class SequentialSimulationTest {
                 results.get(0));
         assertEquals(new MissionResult(new Rover(new Position(4, 4), Direction.S), 0, 0, 0, Duration.ZERO), results.get(1));
     }
+
+    @Test
+    void roversSharingCellsNeverBlockEachOther() {
+        // Two rovers start in the same cell, then the second one drives onto the cell of the first one and back
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), Terrain.FLAT, false, List.of(
+                mission(0, 0, Direction.E, "M"),
+                mission(0, 0, Direction.N, "RMMBB")));
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 0), result(0, 0, Direction.E, 0, 0)), simulation.run(input));
+    }
 }

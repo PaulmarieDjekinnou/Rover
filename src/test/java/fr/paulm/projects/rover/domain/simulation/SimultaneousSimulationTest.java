@@ -5,6 +5,7 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Plateau;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.Terrain;
 import fr.paulm.projects.rover.domain.SphereGrid;
 import org.junit.jupiter.api.Test;
 
@@ -157,5 +158,14 @@ class SimultaneousSimulationTest {
                 mission(1, 0, Direction.E, "M"),
                 mission(3, 0, Direction.W, "M")));
         assertEquals(List.of(result(1, 0, Direction.E, 0, 1), result(2, 0, Direction.W, 0, 0)), simulation.run(input));
+    }
+
+    @Test
+    void roversSharingCellsNeverBlockEachOther() {
+        // Two rovers start in the same cell, then the second one drives onto the cell of the first one and back
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), Terrain.FLAT, false, List.of(
+                mission(0, 0, Direction.E, "M"),
+                mission(0, 0, Direction.N, "RMMBB")));
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 0), result(0, 0, Direction.E, 0, 0)), simulation.run(input));
     }
 }
