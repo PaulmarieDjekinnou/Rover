@@ -6,7 +6,7 @@ import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.RoverMission;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.rover.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 
@@ -19,12 +19,12 @@ import java.util.SplittableRandom;
 
 // A mission to a planet: the planet, how the rovers drive, the landing rules, the seed of the random draws,
 // and the plan of each rover. The same seed always gives the same landings, so a mission can be replayed.
-public record MarsMission(Planet planet, Mobility mobility, LandingRules landingRules, long seed, List<RoverPlan> rovers) {
+public record PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, long seed, List<RoverPlan> rovers) {
 
     // Every rover has its own name, and aims at a site that the landing rules accept.
-    public MarsMission {
+    public PlanetMission {
         rovers = List.copyOf(rovers);
-        Landing landing = new Landing(planet, new MarsTerrain(planet, mobility), landingRules);
+        Landing landing = new Landing(planet, new ReliefTerrain(planet, mobility), landingRules);
         Set<String> names = new HashSet<>();
         for (RoverPlan rover : rovers) {
             if (!names.add(rover.name())) {
@@ -34,8 +34,8 @@ public record MarsMission(Planet planet, Mobility mobility, LandingRules landing
         }
     }
 
-    public MarsTerrain terrain() {
-        return new MarsTerrain(planet, mobility);
+    public ReliefTerrain terrain() {
+        return new ReliefTerrain(planet, mobility);
     }
 
     public Landing landing() {

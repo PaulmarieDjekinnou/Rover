@@ -9,7 +9,7 @@ import fr.paulm.projects.rover.input.Scenario;
 import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
 import fr.paulm.projects.rover.mars.mission.Deployment;
-import fr.paulm.projects.rover.mars.mission.MarsMission;
+import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,7 @@ public class Main {
             SimulationReader reader = readerFactory.apply(Path.of(file));
             switch (reader.read()) {
                 case Scenario.OnPlateau(SimulationInput input) -> runOnPlateau(input, commandLine.get());
-                case Scenario.OnMars(MarsMission mission) -> runOnPlanet(mission, commandLine.get());
+                case Scenario.OnPlanet(PlanetMission mission) -> runOnPlanet(mission, commandLine.get());
             }
             return 0;
         } catch (UncheckedIOException e) {
@@ -94,7 +94,7 @@ public class Main {
     }
 
     // The rovers land first; those that landed then carry out their orders, all at the same time, on a common clock.
-    private void runOnPlanet(MarsMission mission, CommandLine commandLine) {
+    private void runOnPlanet(PlanetMission mission, CommandLine commandLine) {
         commandLine.mode().option().ifPresent(option -> LOGGER.warn(
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         Deployment deployment = mission.land();

@@ -6,7 +6,7 @@ import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.mars.mission.Ellipse;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
-import fr.paulm.projects.rover.mars.mission.MarsMission;
+import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.rover.Mobility;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class MarsMissionParserTest {
+class MissionParserTest {
 
     // A flat planet at 0 m: rows centered on 67.5S, 22.5S, 22.5N and 67.5N
     private final Planet flat = TestPlanets.planet(10_000, 100,
@@ -33,7 +33,7 @@ class MarsMissionParserTest {
             "00000000",
             "00000000",
             "00000000");
-    private final MarsMissionParser parser = new MarsMissionParser(name -> {
+    private final MissionParser parser = new MissionParser(name -> {
         if (!name.equals("flat")) {
             throw new InvalidInputException("Unknown planet: \"" + name + "\"");
         }
@@ -41,7 +41,7 @@ class MarsMissionParserTest {
     });
 
     // The settings needed to land on the flat planet, then the given lines
-    private MarsMission parse(String... lines) {
+    private PlanetMission parse(String... lines) {
         return parser.parse("planet flat\nlanding-max-elevation 0\nlanding-max-latitude 60\n" + String.join("\n", lines));
     }
 
@@ -51,7 +51,7 @@ class MarsMissionParserTest {
 
     @Test
     void readsTheSettingsAndTheRoversInOrder() {
-        MarsMission mission = parse("seed 42", "max-slope 15", "speed 0.1",
+        PlanetMission mission = parse("seed 42", "max-slope 15", "speed 0.1",
                 "rover One", "site 22.5 67.5", "ellipse 2 1 30", "heading N", "orders LMB",
                 "rover Two", "heading E", "site -22.5 10");
         assertSame(flat, mission.planet());
@@ -67,7 +67,7 @@ class MarsMissionParserTest {
 
     @Test
     void settingsHaveDefaults() {
-        MarsMission mission = parser.parse("planet flat\nlanding-max-elevation 0");
+        PlanetMission mission = parser.parse("planet flat\nlanding-max-elevation 0");
         assertEquals(0, mission.seed());
         assertEquals(Mobility.DEFAULT, mission.mobility());
         assertEquals(LandingRules.DEFAULT.withMaxElevation(0), mission.landingRules());
@@ -76,15 +76,15 @@ class MarsMissionParserTest {
 
     @Test
     void commentsAndBlankLinesAreIgnored() {
-        MarsMission mission = parser.parse("# A test mission\n\nplanet flat\n# no rover\n\nseed 7\n");
+        PlanetMission mission = parser.parse("# A test mission\n\nplanet flat\n# no rover\n\nseed 7\n");
         assertEquals(7, mission.seed());
     }
 
     @Test
     void acceptsOnlyContentStartingWithAPlanetLine() {
-        assertTrue(MarsMissionParser.accepts("# comment\n\nplanet mars\n"));
-        assertFalse(MarsMissionParser.accepts("5 5\n1 2 N\nM\n"));
-        assertFalse(MarsMissionParser.accepts(""));
+        assertTrue(MissionParser.accepts("# comment\n\nplanet mars\n"));
+        assertFalse(MissionParser.accepts("5 5\n1 2 N\nM\n"));
+        assertFalse(MissionParser.accepts(""));
     }
 
     @Test

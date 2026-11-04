@@ -9,11 +9,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 // Reads a simulation from a file in text format: a mission to a planet when the file starts with a planet line
-// (MarsMissionParser), rovers on a plateau otherwise (TextFormatParser).
+// (MissionParser), rovers on a plateau otherwise (TextFormatParser).
 public final class TextFileReader implements SimulationReader {
     private final Path path;
     private final TextFormatParser parser = new TextFormatParser();
-    private final MarsMissionParser missionParser = new MarsMissionParser(this::planet);
+    private final MissionParser missionParser = new MissionParser(this::planet);
 
     public TextFileReader(Path path) {
         this.path = path;
@@ -27,8 +27,8 @@ public final class TextFileReader implements SimulationReader {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
-        if (MarsMissionParser.accepts(content)) {
-            return new Scenario.OnMars(missionParser.parse(content));
+        if (MissionParser.accepts(content)) {
+            return new Scenario.OnPlanet(missionParser.parse(content));
         }
         return new Scenario.OnPlateau(parser.parse(content));
     }

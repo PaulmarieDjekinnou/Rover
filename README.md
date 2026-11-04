@@ -187,7 +187,7 @@ The tests read input files from `src/test/resources/simulations/`:
 - `valid/<name>.txt`: input of a nominal case, run through the program and compared to the expected result in `<name>.expected.txt` (`MainTest`);
 - `invalid/<name>.txt`: input of an error case, used to check that errors are reported (`TextFileReaderTest`, `MainTest`).
 
-To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest` and `MarsMissionParserTest`. `mini-planet.txt` is a mission on the small planet drawn in `mini-planet.map.txt`; `mars.txt` is a mission on the real Mars.
+To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest` and `MissionParserTest`. `mini-planet.txt` is a mission on the small planet drawn in `mini-planet.map.txt`; `mars.txt` is a mission on the real Mars.
 
 `ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else; `domain.simulation` and `mars.planet` only on `domain`, and never on each other; `mars.rover` on `mars.planet`; `mars.mission` on all these; `input` on all of them; and only the root package uses everything. The build fails if a dependency goes the wrong way.
 
@@ -220,12 +220,12 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance and the time; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius cut into the grid of its elevation map; the height of each cell |
-| `mars.rover` | `MarsTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
-| `mars.mission` | `MarsMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
+| `mars.rover` | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
+| `mars.mission` | `PlanetMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
 | | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |
-| | `MarsMissionParser`, `TextMapParser` | read and validate the mission format and the small planets drawn in text |
+| | `MissionParser`, `TextMapParser` | read and validate the mission format and the small planets drawn in text |
 | | `MolaFileReader` | reads the MOLA topography of Mars |

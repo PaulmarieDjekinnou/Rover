@@ -7,7 +7,7 @@ import fr.paulm.projects.rover.mars.mission.Ellipse;
 import fr.paulm.projects.rover.mars.mission.Landing;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
-import fr.paulm.projects.rover.mars.mission.MarsMission;
+import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
@@ -36,9 +36,9 @@ import java.util.function.Function;
 //   heading N                     the direction the rover faces once on the ground
 //   orders MMRMM                  optional: the instructions, as in the plateau format
 //
-// The whole file is read and checked before anything lands. MarsMission checks the landing sites again
+// The whole file is read and checked before anything lands. PlanetMission checks the landing sites again
 // on construction; they are checked here first, to report the line of the site.
-public final class MarsMissionParser {
+public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "max-slope", "speed", "landing-max-elevation", "landing-max-latitude");
@@ -51,7 +51,7 @@ public final class MarsMissionParser {
     // Finds the planet named on the planet line ("mars" or "map <file>"): the reader knows where files are
     private final Function<String, Planet> planets;
 
-    public MarsMissionParser(Function<String, Planet> planets) {
+    public MissionParser(Function<String, Planet> planets) {
         this.planets = planets;
     }
 
@@ -61,7 +61,7 @@ public final class MarsMissionParser {
                 .findFirst().map(line -> line.startsWith("planet ")).orElse(false);
     }
 
-    public MarsMission parse(String content) {
+    public PlanetMission parse(String content) {
         List<Line> lines = Line.nonBlankLines(content).stream().filter(line -> !line.text().startsWith("#")).toList();
         if (lines.isEmpty()) {
             throw new InvalidInputException("Empty mission: the first line must name the planet, for example \"planet mars\"");
@@ -73,7 +73,7 @@ public final class MarsMissionParser {
         LandingRules rules = landingRules(mission.settings());
         long seed = mission.settings().containsKey("seed") ? mission.settings().get("seed").integer() : 0;
 
-        Landing landing = new MarsMission(planet, mobility, rules, seed, List.of()).landing();
+        Landing landing = new PlanetMission(planet, mobility, rules, seed, List.of()).landing();
         List<RoverPlan> rovers = new ArrayList<>();
         Set<String> names = new HashSet<>();
         for (Block block : blocks.subList(1, blocks.size())) {
@@ -83,7 +83,7 @@ public final class MarsMissionParser {
             }
             rovers.add(rover);
         }
-        return new MarsMission(planet, mobility, rules, seed, rovers);
+        return new PlanetMission(planet, mobility, rules, seed, rovers);
     }
 
     // The planet block, then one block per rover. Each block holds known settings, each given once.

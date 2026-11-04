@@ -4,7 +4,7 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.rover.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 import fr.paulm.projects.rover.mars.planet.Planet;
 
 import java.util.Arrays;
@@ -17,10 +17,10 @@ public final class Landing {
     // A rover that touches down closer than this to another rover lands on it, and is lost
     public static final double CLEARANCE_METERS = 100;
     private final Planet planet;
-    private final MarsTerrain terrain;
+    private final ReliefTerrain terrain;
     private final LandingRules rules;
 
-    public Landing(Planet planet, MarsTerrain terrain, LandingRules rules) {
+    public Landing(Planet planet, ReliefTerrain terrain, LandingRules rules) {
         this.planet = planet;
         this.terrain = terrain;
         this.rules = rules;

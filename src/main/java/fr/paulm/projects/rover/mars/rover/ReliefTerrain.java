@@ -10,11 +10,11 @@ import java.time.Duration;
 // The slope of a move is computed from the elevation of the two cells and the distance between their centers,
 // so the same cell can be reachable from one side and not from another. The distance is the one along the surface;
 // the slope makes the drive slower, not longer.
-public final class MarsTerrain implements Terrain {
+public final class ReliefTerrain implements Terrain {
     private final Planet planet;
     private final Mobility mobility;
 
-    public MarsTerrain(Planet planet, Mobility mobility) {
+    public ReliefTerrain(Planet planet, Mobility mobility) {
         this.planet = planet;
         this.mobility = mobility;
     }

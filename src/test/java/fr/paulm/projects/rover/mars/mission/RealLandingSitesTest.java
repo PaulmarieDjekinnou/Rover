@@ -2,7 +2,7 @@ package fr.paulm.projects.rover.mars.mission;
 
 import fr.paulm.projects.rover.input.MolaFileReader;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.rover.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.domain.InvalidInputException;
@@ -21,7 +21,7 @@ class RealLandingSitesTest {
     @BeforeAll
     static void readMars() {
         Planet mars = new MolaFileReader().mars();
-        landing = new Landing(mars, new MarsTerrain(mars, Mobility.DEFAULT), LandingRules.DEFAULT);
+        landing = new Landing(mars, new ReliefTerrain(mars, Mobility.DEFAULT), LandingRules.DEFAULT);
     }
 
     @ParameterizedTest(name = "{0}")

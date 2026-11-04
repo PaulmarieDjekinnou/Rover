@@ -18,14 +18,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class MarsMissionTest {
+class PlanetMissionTest {
 
     private static RoverPlan plan(String name, int x, int y) {
         return new RoverPlan(name, new LandingSite(PLANET.centerOf(new Position(x, y)), Ellipse.NONE), Direction.N, List.of());
     }
 
-    private static MarsMission mission(long seed, RoverPlan... rovers) {
-        return new MarsMission(PLANET, Mobility.DEFAULT, RULES, seed, List.of(rovers));
+    private static PlanetMission mission(long seed, RoverPlan... rovers) {
+        return new PlanetMission(PLANET, Mobility.DEFAULT, RULES, seed, List.of(rovers));
     }
 
     @Test

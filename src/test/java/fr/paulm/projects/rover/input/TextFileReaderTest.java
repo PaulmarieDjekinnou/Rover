@@ -6,7 +6,7 @@ import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
-import fr.paulm.projects.rover.mars.mission.MarsMission;
+import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -51,7 +51,7 @@ class TextFileReaderTest {
     @Test
     void aFileStartingWithAPlanetIsAMission() throws Exception {
         Scenario scenario = new TextFileReader(TestResources.path("simulations/valid/mini-planet.txt")).read();
-        MarsMission mission = assertInstanceOf(Scenario.OnMars.class, scenario).mission();
+        PlanetMission mission = assertInstanceOf(Scenario.OnPlanet.class, scenario).mission();
         // The map is read from the file named in the mission, next to it
         assertEquals("mini-planet.map.txt", mission.planet().name());
         assertEquals(List.of("Polar", "Climber", "Twin"), mission.rovers().stream().map(RoverPlan::name).toList());

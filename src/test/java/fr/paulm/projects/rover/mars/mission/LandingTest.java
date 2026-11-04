@@ -3,7 +3,7 @@ package fr.paulm.projects.rover.mars.mission;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.rover.MarsTerrain;
+import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.TestPlanets;
@@ -28,7 +28,7 @@ class LandingTest {
             "00000000");
     static final LandingRules RULES = new LandingRules(500, 60);
 
-    private final Landing landing = new Landing(PLANET, new MarsTerrain(PLANET, Mobility.DEFAULT), RULES);
+    private final Landing landing = new Landing(PLANET, new ReliefTerrain(PLANET, Mobility.DEFAULT), RULES);
 
     private static Coordinates centerOf(int x, int y) {
         return PLANET.centerOf(new Position(x, y));
