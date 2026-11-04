@@ -44,14 +44,9 @@ public final class TextMapParser {
     }
 
     private double number(Line line, String key) {
-        String[] parts = line.text().split("\\s+");
-        if (parts.length != 2 || !parts[0].equals(key)) {
+        if (!line.keyword().equals(key)) {
             throw line.error("Expected: " + key + " followed by a number");
         }
-        try {
-            return Double.parseDouble(parts[1]);
-        } catch (NumberFormatException e) {
-            throw line.error("Invalid number: \"" + parts[1] + "\"");
-        }
+        return line.decimal();
     }
 }

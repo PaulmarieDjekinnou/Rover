@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.mars.mission;
 
 import fr.paulm.projects.rover.domain.Direction;
+import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.mars.rover.Mobility;
@@ -8,10 +9,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.LongStream;
 
 import static fr.paulm.projects.rover.mars.mission.LandingTest.PLANET;
 import static fr.paulm.projects.rover.mars.mission.LandingTest.RULES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class MarsMissionTest {
 
@@ -43,10 +46,26 @@ class MarsMissionTest {
 
     @Test
     void aRoverLandingWhereItCannotDriveIsLost() {
-        // The target is not checked here: the ellipse can bring a rover to such a cell
-        Deployment deployment = mission(1, plan("Cliff", 3, 1)).land();
-        assertEquals(Optional.of(LandingFailure.NO_WAY_OUT), deployment.touchdowns().get(0).failure());
+        // The rover aims at a flat site two cells east of the peak, with a 40 km wide ellipse:
+        // the first seed that brings it onto the peak loses it
+        RoverPlan wide = new RoverPlan("Unlucky", new LandingSite(PLANET.centerOf(new Position(5, 1)), new Ellipse(40, 2, 90)),
+                Direction.N, List.of());
+        Deployment deployment = LongStream.range(0, 1_000)
+                .mapToObj(seed -> mission(seed, wide).land())
+                .filter(landing -> landing.touchdowns().getFirst().cell().equals(new Position(3, 1)))
+                .findFirst().orElseThrow();
+        assertEquals(Optional.of(LandingFailure.NO_WAY_OUT), deployment.touchdowns().getFirst().failure());
         assertEquals(List.of(), deployment.input().missions());
+    }
+
+    @Test
+    void theMissionRefusesASiteTheLandingRulesRefuse() {
+        assertThrows(InvalidInputException.class, () -> mission(1, plan("Peak", 3, 1)));
+    }
+
+    @Test
+    void theMissionRefusesTwoRoversWithTheSameName() {
+        assertThrows(InvalidInputException.class, () -> mission(1, plan("One", 6, 2), plan("One", 5, 1)));
     }
 
     @Test

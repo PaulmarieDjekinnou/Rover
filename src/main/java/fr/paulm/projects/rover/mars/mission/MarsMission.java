@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover.mars.mission;
 
+import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.RoverMission;
@@ -20,8 +21,17 @@ import java.util.SplittableRandom;
 // and the plan of each rover. The same seed always gives the same landings, so a mission can be replayed.
 public record MarsMission(Planet planet, Mobility mobility, LandingRules landingRules, long seed, List<RoverPlan> rovers) {
 
+    // Every rover has its own name, and aims at a site that the landing rules accept.
     public MarsMission {
         rovers = List.copyOf(rovers);
+        Landing landing = new Landing(planet, new MarsTerrain(planet, mobility), landingRules);
+        Set<String> names = new HashSet<>();
+        for (RoverPlan rover : rovers) {
+            if (!names.add(rover.name())) {
+                throw new InvalidInputException("Two rovers are named \"" + rover.name() + "\"");
+            }
+            landing.check(rover.site().target());
+        }
     }
 
     public MarsTerrain terrain() {
