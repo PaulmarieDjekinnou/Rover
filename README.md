@@ -140,3 +140,4 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
 | | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |
+| | `MolaFileReader` | reads the MOLA topography of Mars |
