@@ -1,4 +1,5 @@
 radius-km 10
+day-hours 24.6597
 meters-per-digit 1000
 00000000
 00000000

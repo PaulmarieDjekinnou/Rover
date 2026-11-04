@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -16,9 +18,10 @@ class TextMapParserTest {
 
     @Test
     void readsTheRadiusAndTheRowsFromNorthToSouth() {
-        Planet planet = parser.parse("mini", "radius-km 10\nmeters-per-digit 500\n0012\n3000\n");
+        Planet planet = parser.parse("mini", "radius-km 10\nday-hours 12\nmeters-per-digit 500\n0012\n3000\n");
         assertEquals("mini", planet.name());
         assertEquals(10_000, planet.radiusMeters());
+        assertEquals(Duration.ofHours(12), planet.dayLength());
         assertEquals(4, planet.grid().columns());
         assertEquals(2, planet.grid().rows());
         assertEquals(1000, planet.elevation(new Position(3, 1)));
@@ -27,13 +30,15 @@ class TextMapParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "radius-km 10\\nmeters-per-digit 500                  | Empty map: expected radius-km, meters-per-digit, then the rows of the map",
-            "radius 10\\nmeters-per-digit 500\\n00               | Line 1: Expected: radius-km followed by a number",
-            "radius-km -1\\nmeters-per-digit 500\\n00            | Line 1: Invalid radius: expected a positive number of km",
-            "radius-km 10\\nmeters-per-digit high\\n00           | Line 2: Invalid number: \"high\"",
-            "radius-km 10\\nmeters-per-digit 500\\n00\\n000      | Line 4: Invalid map row: \"000\". Expected: 2 digits",
-            "radius-km 10\\nmeters-per-digit 500\\n0x            | Line 3: Invalid map row: \"0x\". Expected: 2 digits",
-            "radius-km 10\\nmeters-per-digit 500\\n000           | Line 3: Invalid sphere grid: 3 columns and 1 rows. Expected: an even number of columns and at least one row",
+            "radius-km 10\\nday-hours 24\\nmeters-per-digit 500                 | Empty map: expected radius-km, day-hours, meters-per-digit, then the rows of the map",
+            "radius 10\\nday-hours 24\\nmeters-per-digit 500\\n00              | Line 1: Expected: radius-km followed by a number",
+            "radius-km -1\\nday-hours 24\\nmeters-per-digit 500\\n00           | Line 1: Invalid radius: expected a positive number of km",
+            "radius-km 10\\nday-hours 0\\nmeters-per-digit 500\\n00             | Line 2: Invalid day length: expected a positive number of hours",
+            "radius-km 10\\nmeters-per-digit 500\\nday-hours 24\\n00             | Line 2: Expected: day-hours followed by a number",
+            "radius-km 10\\nday-hours 24\\nmeters-per-digit high\\n00          | Line 3: Invalid number: \"high\"",
+            "radius-km 10\\nday-hours 24\\nmeters-per-digit 500\\n00\\n000     | Line 5: Invalid map row: \"000\". Expected: 2 digits",
+            "radius-km 10\\nday-hours 24\\nmeters-per-digit 500\\n0x           | Line 4: Invalid map row: \"0x\". Expected: 2 digits",
+            "radius-km 10\\nday-hours 24\\nmeters-per-digit 500\\n000          | Line 4: Invalid sphere grid: 3 columns and 1 rows. Expected: an even number of columns and at least one row",
     })
     void invalidMapsAreRejected(String content, String message) {
         assertEquals(message, assertThrows(InvalidInputException.class,

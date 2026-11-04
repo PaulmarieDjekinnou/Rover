@@ -6,7 +6,6 @@ import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Turn;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.Touchdown;
-import fr.paulm.projects.rover.mars.planet.Mars;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +60,7 @@ final class MissionReport {
         }
         String blocked = turn.blockedRovers().stream().sorted()
                 .map(i -> nameOf(landed.get(i))).collect(Collectors.joining(", "));
-        out.println(String.format(Locale.ROOT, "Sol %.2f: ", sols(turn.time())) + String.join(" | ", rovers)
+        out.println(String.format(Locale.ROOT, "Sol %.2f: ", sols(turn.time(), deployment.planet())) + String.join(" | ", rovers)
                 + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
@@ -82,7 +81,7 @@ final class MissionReport {
             }
             out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s, %.1f km driven in %.1f sols",
                     name, landed.get(i).positionIn(result.finalRover().position(), planet), result.finalRover().position(),
-                    result.finalRover().direction(), result.distanceMeters() / 1_000, sols(result.drivingTime())));
+                    result.finalRover().direction(), result.distanceMeters() / 1_000, sols(result.drivingTime(), planet)));
         }
     }
 
@@ -132,7 +131,8 @@ final class MissionReport {
         return touchdown.plan().name();
     }
 
-    private double sols(Duration duration) {
-        return duration.toMillis() / (double) Mars.SOL.toMillis();
+    // A duration in days of the planet (sols).
+    private double sols(Duration duration, Planet planet) {
+        return duration.toMillis() / (double) planet.dayLength().toMillis();
     }
 }

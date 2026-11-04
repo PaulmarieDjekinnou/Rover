@@ -4,6 +4,7 @@ import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -46,6 +47,12 @@ class PlanetTest {
     void mapInDigitsRejectsRowsOfDifferentLengthsOrOtherCharacters() {
         assertThrows(InvalidInputException.class, () -> ElevationMap.fromDigits(List.of("00", "000"), 100));
         assertThrows(InvalidInputException.class, () -> ElevationMap.fromDigits(List.of("0x"), 100));
+    }
+
+    @Test
+    void theDayMustLastSomeTime() {
+        ElevationMap map = new ElevationMap(2, 1, new short[2]);
+        assertThrows(InvalidInputException.class, () -> new Planet("still", 10_000, Duration.ZERO, map));
     }
 
     @Test

@@ -148,10 +148,11 @@ Relief from -4511 m (.) to 1165 m (@), north up, 31 x 15 cells:
 
 The option is ignored, with a warning, for rovers on a plateau.
 
-**Small planets in text.** `planet map mini.txt` reads a planet from a text file next to the mission: its radius, the height of one step, then one row per line, from north to south, one digit per cell (the elevation in steps). Every row has the same, even, number of cells:
+**Small planets in text.** `planet map mini.txt` reads a planet from a text file next to the mission: its radius, the length of its day (its sol, in which its durations are given), the height of one step, then one row per line, from north to south, one digit per cell (the elevation in steps). Every row has the same, even, number of cells:
 
 ```
 radius-km 10
+day-hours 24.6597
 meters-per-digit 1000
 00000000
 00090000
@@ -219,7 +220,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance and the time; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
-| | `Planet`, `ElevationMap` | a sphere of a given radius cut into the grid of its elevation map; the height of each cell |
+| | `Planet`, `ElevationMap` | a sphere of a given radius and day length, cut into the grid of its elevation map; the height of each cell |
 | `mars.rover` | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
 | `mars.mission` | `PlanetMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
