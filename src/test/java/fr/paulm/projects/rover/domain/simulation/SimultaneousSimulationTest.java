@@ -5,6 +5,7 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Plateau;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.SphereGrid;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -63,6 +64,23 @@ class SimultaneousSimulationTest {
         assertEquals(List.of(result(0, 0, Direction.W, 1), result(1, 0, Direction.E, 1)),
                 simulation.run(new SimulationInput(new Plateau(1, 5), List.of(
                         mission(0, 0, Direction.W, "M"), mission(1, 0, Direction.E, "M")))));
+    }
+
+    @Test
+    void roversMeetingHeadOnAcrossAPoleAreBlocked() {
+        // Both rovers leave northwards, on opposite sides of the north pole: each wants the cell of the other,
+        // and they would cross over the pole
+        assertEquals(List.of(result(1, 3, Direction.N, 1), result(5, 3, Direction.N, 1)),
+                simulation.run(new SimulationInput(new SphereGrid(8, 4), List.of(
+                        mission(1, 3, Direction.N, "M"), mission(5, 3, Direction.N, "M")))));
+    }
+
+    @Test
+    void roverCanFollowARoverAcrossAPole() {
+        // The first rover crosses the pole onto the cell the second one leaves southwards
+        assertEquals(List.of(result(5, 3, Direction.S, 0), result(5, 2, Direction.S, 0)),
+                simulation.run(new SimulationInput(new SphereGrid(8, 4), List.of(
+                        mission(1, 3, Direction.N, "M"), mission(5, 3, Direction.S, "M")))));
     }
 
     @Test

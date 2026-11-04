@@ -123,6 +123,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |
 | | `Plateau` | a rectangular surface that wraps around like a torus |
+| | `SphereGrid` | a latitude / longitude grid on a sphere: the longitude wraps around, and crossing a pole turns the rover around |
 | | `Direction` | the four directions, their rotations and the cell ahead of a position |
 | | `Instruction` | the `LEFT`, `RIGHT`, `MOVE` and `BACK` commands (written `L`, `R`, `M` and `B` in the text format) |
 | | `Rover` | position and direction; executes one instruction, unless it would collide with another rover |
