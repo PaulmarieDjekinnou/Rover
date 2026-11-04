@@ -54,7 +54,8 @@ final class MissionReport {
         out.println("Turn " + turn.number() + ": " + rovers + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
-    // The end of the mission of each rover that landed, in input order:
+    // The end of the mission of each rover that landed, in input order: its exact position (see
+    // Touchdown.positionIn), its cell and direction, the distance and the time:
     // "Curiosity: 4.54S 137.81E (cell 551 341) facing N, 59.2 km driven in 17.3 sols".
     void results(Deployment deployment, List<MissionResult> results) {
         Planet planet = deployment.planet();
@@ -69,7 +70,7 @@ final class MissionReport {
                 LOGGER.warn("{}: {} move(s) blocked by the terrain.", name, result.blockedByTerrain());
             }
             out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s, %.1f km driven in %.1f sols",
-                    name, planet.centerOf(result.finalRover().position()), result.finalRover().position(),
+                    name, landed.get(i).positionIn(result.finalRover().position(), planet), result.finalRover().position(),
                     result.finalRover().direction(), result.distanceMeters() / 1_000, sols(result.drivingTime())));
         }
     }

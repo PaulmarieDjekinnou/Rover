@@ -116,13 +116,13 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Unlike on the plateau, several rovers can be in the same cell: a cell is about 15 km wide, so they are kilometers apart, and rovers never block each other. Each rover has its own clock: the time of a rover is the sum of its own moves, plus 5 minutes per turn on the spot. Blocked moves take no time.
 
-The output gives the landing of each rover, then, for each rover that landed, its final position (the center of its cell), its cell and direction, the distance driven and the time taken, in sols (Martian days of 24 h 39 min 35 s):
+The output gives the landing of each rover, then, for each rover that landed, its final position, its cell and direction, the distance driven and the time taken, in sols (Martian days of 24 h 39 min 35 s):
 
 ```
 Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target
 Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target
-Curiosity: 5.38S 137.88E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
-Perseverance: 18.88N 76.88E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
+Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
+Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
 ```
 
 Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, the turns give the cells of the rovers that landed, and the names of the blocked ones.
@@ -152,7 +152,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. The real position of a rover inside its cell is not tracked: a move goes from the center of a cell to the center of the next one.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell (its offset from the center, in meters north and east): its position is exact in its landing cell, and stays inside its cell everywhere else.
 
 ## Requirements
 

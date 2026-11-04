@@ -1,4 +1,4 @@
 Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target
 Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target
-Curiosity: 5.38S 137.88E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
-Perseverance: 18.88N 76.88E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
+Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
+Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
