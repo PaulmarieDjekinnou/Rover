@@ -13,6 +13,7 @@ import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import java.util.function.Function;
 //   seed 42                       optional: the seed of the random draws (0 by default)
 //   max-slope 10                  optional: the steepest slope the rovers can drive on, in degrees
 //   speed 0.04                    optional: the speed of the rovers on flat ground, in m/s
+//   turn-minutes 5                optional: how long a turn on the spot takes, in minutes
 //   landing-max-elevation -1000   optional: the highest landing site allowed, in meters
 //   landing-max-latitude 30       optional: the farthest landing site from the equator, in degrees
 //
@@ -41,7 +43,7 @@ import java.util.function.Function;
 public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
-            Set.of("seed", "max-slope", "speed", "landing-max-elevation", "landing-max-latitude");
+            Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude");
     private static final Set<String> ROVER_KEYS = Set.of("site", "ellipse", "heading", "orders");
 
     // A block of lines: its first line (the planet or a rover), then its settings by keyword
@@ -111,17 +113,28 @@ public final class MissionParser {
         return blocks;
     }
 
-    // The mobility given by the speed and max-slope settings. An invalid one is reported on the first of them.
+    // The mobility given by the speed, max-slope and turn-minutes settings, each checked on its own line.
     private Mobility mobility(Map<String, Line> settings) {
-        if (!settings.containsKey("speed") && !settings.containsKey("max-slope")) {
-            return Mobility.DEFAULT;
+        Mobility mobility = Mobility.DEFAULT;
+        if (settings.containsKey("speed")) {
+            Line line = settings.get("speed");
+            double speed = line.decimal();
+            Mobility current = mobility;
+            mobility = line.check(() -> current.withFlatSpeed(speed));
         }
-        double speed = settings.containsKey("speed")
-                ? settings.get("speed").decimal() : Mobility.DEFAULT.flatSpeedMetersPerSecond();
-        double maxSlope = settings.containsKey("max-slope")
-                ? settings.get("max-slope").decimal() : Mobility.DEFAULT.maxSlopeDegrees();
-        Line line = settings.getOrDefault("speed", settings.get("max-slope"));
-        return line.check(() -> new Mobility(speed, maxSlope, Mobility.DEFAULT.turnTime()));
+        if (settings.containsKey("max-slope")) {
+            Line line = settings.get("max-slope");
+            double maxSlope = line.decimal();
+            Mobility current = mobility;
+            mobility = line.check(() -> current.withMaxSlope(maxSlope));
+        }
+        if (settings.containsKey("turn-minutes")) {
+            Line line = settings.get("turn-minutes");
+            Duration turnTime = Duration.ofSeconds(Math.round(line.decimal() * 60));
+            Mobility current = mobility;
+            mobility = line.check(() -> current.withTurnTime(turnTime));
+        }
+        return mobility;
     }
 
     private LandingRules landingRules(Map<String, Line> settings) {

@@ -21,14 +21,15 @@ class MobilityTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"0, 10", "-1, 10", "0.04, -1", "0.04, 90"})
-    void rejectsAnImpossibleMobility(double speed, double maxSlope) {
-        assertThrows(InvalidInputException.class, () -> new Mobility(speed, maxSlope, Duration.ZERO));
+    @CsvSource({"0, 10, 0", "-1, 10, 0", "0.04, -1, 0", "0.04, 90, 0", "0.04, 10, -1"})
+    void rejectsAnImpossibleMobility(double speed, double maxSlope, long turnSeconds) {
+        assertThrows(InvalidInputException.class, () -> new Mobility(speed, maxSlope, Duration.ofSeconds(turnSeconds)));
     }
 
     @Test
     void withersChangeOneValue() {
         assertEquals(new Mobility(0.1, 10, Duration.ofMinutes(5)), mobility.withFlatSpeed(0.1));
         assertEquals(new Mobility(0.04, 20, Duration.ofMinutes(5)), mobility.withMaxSlope(20));
+        assertEquals(new Mobility(0.04, 10, Duration.ofMinutes(2)), mobility.withTurnTime(Duration.ofMinutes(2)));
     }
 }

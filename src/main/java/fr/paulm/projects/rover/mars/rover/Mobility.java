@@ -4,17 +4,20 @@ import fr.paulm.projects.rover.domain.InvalidInputException;
 
 import java.time.Duration;
 
-// How a rover drives (the same for all the rovers of a mission): its speed on flat ground, the steepest slope it can drive on, and the time a turn takes.
+// How a rover drives (the same for all the rovers of a mission): its speed on flat ground, the steepest slope
+// it can drive on, and the time a turn on the spot takes.
 public record Mobility(double flatSpeedMetersPerSecond, double maxSlopeDegrees, Duration turnTime) {
 
     // About the top speed of Curiosity (4 cm/s). The slope limit is low because the 4 cells per degree map
     // smooths slopes over about 15 km: only the strongest relief goes beyond 10 degrees at that scale.
+    // A turn takes a few minutes: the rover stops, turns its wheels and checks its heading.
     public static final Mobility DEFAULT = new Mobility(0.04, 10, Duration.ofMinutes(5));
 
     public Mobility {
-        if (!(flatSpeedMetersPerSecond > 0) || !(maxSlopeDegrees >= 0 && maxSlopeDegrees < 90)) {
+        if (!(flatSpeedMetersPerSecond > 0) || !(maxSlopeDegrees >= 0 && maxSlopeDegrees < 90) || turnTime.isNegative()) {
             throw new InvalidInputException("Invalid mobility: speed " + flatSpeedMetersPerSecond
-                    + " m/s, max slope " + maxSlopeDegrees + " degrees. Expected: a positive speed and a slope below 90");
+                    + " m/s, max slope " + maxSlopeDegrees + " degrees, turn time " + turnTime
+                    + ". Expected: a positive speed, a slope below 90 and a turn time that is not negative");
         }
     }
 
@@ -24,6 +27,10 @@ public record Mobility(double flatSpeedMetersPerSecond, double maxSlopeDegrees, 
 
     public Mobility withMaxSlope(double degrees) {
         return new Mobility(flatSpeedMetersPerSecond, degrees, turnTime);
+    }
+
+    public Mobility withTurnTime(Duration time) {
+        return new Mobility(flatSpeedMetersPerSecond, maxSlopeDegrees, time);
     }
 
     // The speed on a slope (in degrees, positive uphill). Climbing slows the rover down, linearly, down to

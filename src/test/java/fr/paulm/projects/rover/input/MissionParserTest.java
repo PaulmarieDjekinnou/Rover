@@ -51,12 +51,12 @@ class MissionParserTest {
 
     @Test
     void readsTheSettingsAndTheRoversInOrder() {
-        PlanetMission mission = parse("seed 42", "max-slope 15", "speed 0.1",
+        PlanetMission mission = parse("seed 42", "max-slope 15", "speed 0.1", "turn-minutes 2.5",
                 "rover One", "site 22.5 67.5", "ellipse 2 1 30", "heading N", "orders LMB",
                 "rover Two", "heading E", "site -22.5 10");
         assertSame(flat, mission.planet());
         assertEquals(42, mission.seed());
-        assertEquals(new Mobility(0.1, 15, Duration.ofMinutes(5)), mission.mobility());
+        assertEquals(new Mobility(0.1, 15, Duration.ofSeconds(150)), mission.mobility());
         assertEquals(new LandingRules(0, 60), mission.landingRules());
         assertEquals(List.of(
                 new RoverPlan("One", new LandingSite(new Coordinates(22.5, 67.5), new Ellipse(2, 1, 30)), Direction.N,
@@ -96,11 +96,13 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: landing-max-elevation, landing-max-latitude, max-slope, seed, speed",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: landing-max-elevation, landing-max-latitude, max-slope, seed, speed, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
             "speed fast                         | Line 4: Invalid number: \"fast\"",
-            "speed 0                            | Line 4: Invalid mobility: speed 0.0 m/s, max slope 10.0 degrees. Expected: a positive speed and a slope below 90",
+            "speed 0                            | Line 4: Invalid mobility: speed 0.0 m/s, max slope 10.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",
+            "max-slope 90                       | Line 4: Invalid mobility: speed 0.04 m/s, max slope 90.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",
+            "turn-minutes -1                    | Line 4: Invalid mobility: speed 0.04 m/s, max slope 10.0 degrees, turn time PT-1M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",
             "max-slope 10 20                    | Line 4: Expected: max-slope followed by 1 number(s)",
             "rover                              | Line 4: Expected: rover followed by a value",
             "rover A\\nheading N                 | Line 4: Rover \"A\" has no site line",
