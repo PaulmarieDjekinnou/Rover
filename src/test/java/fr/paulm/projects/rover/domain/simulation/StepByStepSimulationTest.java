@@ -11,22 +11,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.result;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class StepByStepSimulationTest {
 
     private final Simulation simulation = new StepByStepSimulation();
 
-    private static RoverMission mission(int x, int y, Direction direction, String instructions) {
-        return new RoverMission(new Rover(new Position(x, y), direction), TestInstructions.of(instructions));
-    }
-
     private List<MissionResult> run(RoverMission... missions) {
         return simulation.run(new SimulationInput(new Plateau(5, 5), List.of(missions)));
-    }
-
-    private static MissionResult result(int x, int y, Direction direction, int blockedMoves) {
-        return new MissionResult(new Rover(new Position(x, y), direction), blockedMoves);
     }
 
     @Test

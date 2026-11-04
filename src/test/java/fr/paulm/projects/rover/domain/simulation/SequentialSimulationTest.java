@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SequentialSimulationTest {
@@ -28,8 +29,8 @@ class SequentialSimulationTest {
     @Test
     void returnsFinalPositionOfEachRoverInOrder() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(1, 2), Direction.N), TestInstructions.of("LMLMLMLMM")),
-                new RoverMission(new Rover(new Position(3, 3), Direction.E), TestInstructions.of("MMRMMRMRRM"))));
+                mission(1, 2, Direction.N, "LMLMLMLMM"),
+                mission(3, 3, Direction.E, "MMRMMRMRRM")));
         List<MissionResult> results = simulation.run(input);
         assertEquals(List.of("1 3 N", "5 1 E"), finalRovers(results));
         assertEquals(List.of(0, 0), blockedMoves(results));
@@ -38,8 +39,8 @@ class SequentialSimulationTest {
     @Test
     void roversWrapAroundThePlateau() {
         SimulationInput input = new SimulationInput(new Plateau(2, 2), List.of(
-                new RoverMission(new Rover(new Position(0, 0), Direction.N), TestInstructions.of("MMMM")),
-                new RoverMission(new Rover(new Position(1, 0), Direction.E), TestInstructions.of("MMMM"))));
+                mission(0, 0, Direction.N, "MMMM"),
+                mission(1, 0, Direction.E, "MMMM")));
         // On a 3x3 plateau, 4 moves wrap around once
         assertEquals(List.of("0 1 N", "2 0 E"), finalRovers(simulation.run(input)));
     }
@@ -49,8 +50,8 @@ class SequentialSimulationTest {
     @Test
     void roverCannotMoveOntoTheFinalPositionOfAPreviousRover() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(0, 0), Direction.N), TestInstructions.of("MMM")),
-                new RoverMission(new Rover(new Position(0, 5), Direction.S), TestInstructions.of("MMM"))));
+                mission(0, 0, Direction.N, "MMM"),
+                mission(0, 5, Direction.S, "MMM")));
         List<MissionResult> results = simulation.run(input);
         // The first rover ends in (0, 3): the second one stops just above it, its last 2 moves are blocked
         assertEquals(List.of("0 3 N", "0 4 S"), finalRovers(results));
@@ -60,8 +61,8 @@ class SequentialSimulationTest {
     @Test
     void roverCannotMoveOntoTheStartingPositionOfANextRover() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(0, 0), Direction.E), TestInstructions.of("MMMM")),
-                new RoverMission(new Rover(new Position(3, 0), Direction.N), TestInstructions.of("M"))));
+                mission(0, 0, Direction.E, "MMMM"),
+                mission(3, 0, Direction.N, "M")));
         List<MissionResult> results = simulation.run(input);
         // The second rover has not moved yet when the first one runs: it blocks the cell (3, 0)
         assertEquals(List.of("2 0 E", "3 1 N"), finalRovers(results));
@@ -71,8 +72,8 @@ class SequentialSimulationTest {
     @Test
     void roverCanMoveOntoTheStartingPositionOfAPreviousRover() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(0, 0), Direction.N), TestInstructions.of("MM")),
-                new RoverMission(new Rover(new Position(1, 0), Direction.W), TestInstructions.of("M"))));
+                mission(0, 0, Direction.N, "MM"),
+                mission(1, 0, Direction.W, "M")));
         List<MissionResult> results = simulation.run(input);
         // The first rover has left (0, 0): the cell is free again
         assertEquals(List.of("0 2 N", "0 0 W"), finalRovers(results));
@@ -82,7 +83,7 @@ class SequentialSimulationTest {
     @Test
     void runCanBeReplayedWithTheSameResult() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(1, 2), Direction.N), TestInstructions.of("LMLMLMLMM"))));
+                mission(1, 2, Direction.N, "LMLMLMLMM")));
         assertEquals(simulation.run(input), simulation.run(input));
     }
 
@@ -95,8 +96,8 @@ class SequentialSimulationTest {
     void roverGoesAroundAnotherRover() {
         // Blocked to the north by the second rover in (2, 3), then goes around it by the east
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(2, 2), Direction.N), TestInstructions.of("MRMLMM")),
-                new RoverMission(new Rover(new Position(2, 3), Direction.N), TestInstructions.of(""))));
+                mission(2, 2, Direction.N, "MRMLMM"),
+                mission(2, 3, Direction.N, "")));
         List<MissionResult> results = simulation.run(input);
         assertEquals(List.of("3 4 N", "2 3 N"), finalRovers(results));
         assertEquals(List.of(1, 0), blockedMoves(results));
@@ -107,8 +108,8 @@ class SequentialSimulationTest {
     @Test
     void historyHasOneTurnPerInstruction() {
         SimulationInput input = new SimulationInput(new Plateau(3, 3), List.of(
-                new RoverMission(new Rover(new Position(0, 0), Direction.N), TestInstructions.of("MMM")),
-                new RoverMission(new Rover(new Position(0, 3), Direction.S), TestInstructions.of("MMM"))));
+                mission(0, 0, Direction.N, "MMM"),
+                mission(0, 3, Direction.S, "MMM")));
         List<Turn> history = new ArrayList<>();
         simulation.run(input, history::add);
         Rover first = new Rover(new Position(0, 2), Direction.N);
@@ -124,8 +125,8 @@ class SequentialSimulationTest {
     @Test
     void lastTurnOfHistoryMatchesTheResults() {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
-                new RoverMission(new Rover(new Position(1, 2), Direction.N), TestInstructions.of("LMLMLMLMM")),
-                new RoverMission(new Rover(new Position(3, 3), Direction.E), TestInstructions.of("MMRMMRMRRM"))));
+                mission(1, 2, Direction.N, "LMLMLMLMM"),
+                mission(3, 3, Direction.E, "MMRMMRMRRM")));
         List<Turn> history = new ArrayList<>();
         List<MissionResult> results = simulation.run(input, history::add);
         assertEquals(19, history.size());
