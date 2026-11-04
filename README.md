@@ -186,6 +186,22 @@ meters-per-digit 1000
 
 **Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The orbit is taken as a circle: the seasons go at a steady pace, whereas the eccentric orbit of Mars makes its southern summers shorter and hotter. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its consumption does not depend on the slope or the temperature, and dust does not settle on its panels.
 
+## Telemetry with Kafka
+
+With the `--telemetry server:port` option, a mission to a planet also sends its telemetry to Kafka, as the rovers would send it, in JSON:
+
+| Topic | Key | Messages |
+|---|---|---|
+| `rover.telemetry` | the rover's name | one message each time a rover ends an instruction: mission time, position, cell, direction, battery, day or night, distance driven, and a sequence number per rover |
+| `rover.events` | the rover's name | landed, lost at landing, move blocked, stopped for good |
+| `mission.status` | the mission id | the start and the end of the mission (file, planet, seed) |
+
+Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning.
+
+```bash
+java -jar target/rover.jar --telemetry localhost:9092 src/main/resources/mars-mission.txt
+```
+
 ## Requirements
 
 - Java 25
@@ -229,7 +245,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | Package | Class | Role |
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
-| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` and `--map` options and the file; each mode with the option that selects it |
+| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history`, `--map` and `--telemetry` options and the file; each mode with the option that selects it |
 | | `ConsoleReport`, `MissionReport` | print the results on the standard output, and the warnings through the logger: the history and the final positions on a plateau; the landings, the history, the end of each mission and the maps on a planet |
 | | `ReliefMap`, `RoverTracks` | draws the relief around a cell in text, with the rovers; the cells each rover drove through |
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
@@ -259,6 +275,9 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
 | | `Batteries` | the batteries of the rovers through the mission: the pace that makes them wait to recharge, or stop |
 | | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
+| `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
+| | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
+| | `TelemetrySink`, `KafkaSink`, `TelemetryJson` | where the messages go (Kafka, or a list in tests), and their JSON |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
 | | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |

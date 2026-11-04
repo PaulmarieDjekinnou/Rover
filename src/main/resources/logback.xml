@@ -8,6 +8,9 @@
         </encoder>
     </appender>
 
+    <!-- The Kafka client logs its configuration and connections in INFO: only its problems are shown -->
+    <logger name="org.apache.kafka" level="WARN"/>
+
     <root level="INFO">
         <appender-ref ref="STDERR"/>
     </root>

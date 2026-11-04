@@ -12,6 +12,9 @@ import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
+import fr.paulm.projects.rover.telemetry.KafkaSink;
+import fr.paulm.projects.rover.telemetry.TelemetryListener;
+import fr.paulm.projects.rover.telemetry.TelemetrySink;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,8 +25,10 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 
 public class Main {
@@ -35,15 +40,18 @@ public class Main {
     // Tests give them a buffer instead of the standard output.
     private final ConsoleReport plateauReport;
     private final MissionReport missionReport;
+    // Creates where the telemetry goes, from the server given with --telemetry. Tests keep the messages in memory.
+    private final Function<String, TelemetrySink> telemetryFactory;
 
     Main() {
-        this(TextFileReader::new, System.out);
+        this(TextFileReader::new, System.out, KafkaSink::new);
     }
 
-    Main(Function<Path, SimulationReader> readerFactory, PrintStream out) {
+    Main(Function<Path, SimulationReader> readerFactory, PrintStream out, Function<String, TelemetrySink> telemetryFactory) {
         this.readerFactory = readerFactory;
         this.plateauReport = new ConsoleReport(out);
         this.missionReport = new MissionReport(out);
+        this.telemetryFactory = telemetryFactory;
     }
 
     public static void main(String[] args) {
@@ -90,6 +98,9 @@ public class Main {
         if (commandLine.map()) {
             LOGGER.warn("The {} option only applies to missions to a planet: ignored.", CommandLine.MAP_OPTION);
         }
+        if (commandLine.telemetry().isPresent()) {
+            LOGGER.warn("The {} option only applies to missions to a planet: ignored.", CommandLine.TELEMETRY_OPTION);
+        }
         // Each turn is printed as soon as it is over, before the final positions
         TurnListener listener = commandLine.history() ? plateauReport::turn : TurnListener.NONE;
         plateauReport.results(commandLine.mode().simulation().run(input, listener));
@@ -107,14 +118,26 @@ public class Main {
         // as soon as it is over, with the history option
         RoverPositions positions = new RoverPositions(deployment);
         RoverTracks tracks = new RoverTracks();
+        // With --telemetry, the mission is also sent to Kafka, as the rovers would send it
+        Optional<TelemetrySink> sink = commandLine.telemetry().map(telemetryFactory);
+        Optional<TelemetryListener> telemetry = sink.map(target -> new TelemetryListener(
+                UUID.randomUUID().toString(), deployment, positions, batteries, target, Clock.systemUTC()));
+        telemetry.ifPresent(emitter -> emitter.missionStarted(commandLine.file(), mission.seed()));
         TurnListener listener = turn -> {
             positions.onTurn(turn);
             tracks.onTurn(turn);
+            telemetry.ifPresent(emitter -> emitter.onTurn(turn));
             if (commandLine.history()) {
                 missionReport.turn(turn, deployment, positions, batteries);
             }
         };
-        List<MissionResult> results = new ClockSimulation(batteries).run(deployment.input(), listener);
+        List<MissionResult> results;
+        try {
+            results = new ClockSimulation(batteries).run(deployment.input(), listener);
+            telemetry.ifPresent(emitter -> emitter.missionEnded(results, commandLine.file(), mission.seed()));
+        } finally {
+            sink.ifPresent(TelemetrySink::close);
+        }
         missionReport.results(deployment, results, positions, batteries);
         if (commandLine.map()) {
             missionReport.maps(deployment, results, tracks);

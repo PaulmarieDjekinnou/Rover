@@ -41,6 +41,9 @@ class CommandLineTest {
             "--fast input.txt",                           // unknown option
             "--history --history input.txt",              // repeated option
             "--map --map input.txt",
+            "--telemetry input.txt",                      // no server
+            "--telemetry --map input.txt",
+            "--telemetry a:1 --telemetry b:2 input.txt",
             "--step-by-step --step-by-step input.txt",
             "--step-by-step --simultaneous input.txt",    // two modes
             "input.txt --history"})                       // option after the file name
@@ -55,12 +58,18 @@ class CommandLineTest {
     }
 
     @Test
+    void telemetryOptionTakesTheKafkaServer() {
+        assertEquals(Optional.of(new CommandLine(Mode.SEQUENTIAL, false, true, Optional.of("localhost:9092"), "mission.txt")),
+                parse("--telemetry localhost:9092 --map mission.txt"));
+    }
+
+    @Test
     void noArgumentIsRejected() {
         assertEquals(Optional.empty(), CommandLine.parse(new String[]{}));
     }
 
     @Test
     void usageListsEveryModeOption() {
-        assertEquals("Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] [--map] input.txt", CommandLine.usage());
+        assertEquals("Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] [--map] [--telemetry server:port] input.txt", CommandLine.usage());
     }
 }

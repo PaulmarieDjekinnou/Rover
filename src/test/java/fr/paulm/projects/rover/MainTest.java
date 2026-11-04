@@ -2,6 +2,10 @@ package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
+import fr.paulm.projects.rover.telemetry.InMemorySink;
+import fr.paulm.projects.rover.telemetry.MissionStatus;
+import fr.paulm.projects.rover.telemetry.RoverEvent;
+import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,6 +31,7 @@ class MainTest {
 
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
     private final PrintStream out = new PrintStream(output, true);
+    private final InMemorySink sink = new InMemorySink();
     private LogCapture logs;
     private LogCapture warnings;
     private LogCapture missionWarnings;
@@ -47,7 +52,7 @@ class MainTest {
 
     // The program, writing to the buffer instead of the standard output.
     private Main main() {
-        return new Main(TextFileReader::new, out);
+        return new Main(TextFileReader::new, out, server -> sink);
     }
 
     private List<String> outputLines() {
@@ -217,7 +222,7 @@ class MainTest {
         SimulationReader failingReader = () -> {
             throw new IllegalStateException("boom");
         };
-        assertEquals(1, new Main(path -> failingReader, out).run(new String[]{"input.txt"}));
+        assertEquals(1, new Main(path -> failingReader, out, server -> sink).run(new String[]{"input.txt"}));
         assertEquals(List.of("Unexpected error: java.lang.IllegalStateException: boom"), logs.messages());
         assertEquals(List.of(), outputLines());
     }
@@ -250,5 +255,33 @@ class MainTest {
         assertEquals(List.of("Invalid input: Line 5: Unknown instruction: \"X\". Expected: L, R, M or B"),
                 logs.messages());
         assertEquals(List.of(), outputLines());
+    }
+
+    @Test
+    void telemetryOptionSendsTheMissionAsTheRoversWould() throws Exception {
+        Path input = TestResources.path("simulations/valid/mini-planet.txt");
+        assertEquals(0, main().run(new String[]{"--telemetry", "kafka:9092", input.toString()}));
+        // The results are the same as without telemetry
+        assertEquals(TestResources.read("simulations/valid/mini-planet.expected.txt"), outputLines());
+        assertEquals(List.of(MissionStatus.Type.STARTED, MissionStatus.Type.ENDED),
+                sink.statuses.stream().map(MissionStatus::type).toList());
+        assertEquals(List.of(RoverEvent.Type.LANDED, RoverEvent.Type.LANDED, RoverEvent.Type.LOST, RoverEvent.Type.BLOCKED),
+                sink.events.stream().map(RoverEvent::type).toList());
+        // One message per instruction ended: Polar's 3 moves, Climber's move, turn and blocked move
+        List<RoverTelemetry> polar = sink.telemetry.stream().filter(message -> message.rover().equals("Polar")).toList();
+        assertEquals(List.of(0L, 1L, 2L), polar.stream().map(RoverTelemetry::sequence).toList());
+        assertEquals(3, sink.telemetry.stream().filter(message -> message.rover().equals("Climber")).count());
+        // Polar crossed the north pole: 3 moves of 7.9 km
+        assertEquals(23_562, polar.getLast().distanceMeters(), 1);
+        assertEquals("S", polar.getLast().direction());
+        assertTrue(sink.closed);
+    }
+
+    @Test
+    void telemetryOptionIsIgnoredOnAPlateau() throws Exception {
+        Path input = TestResources.path("simulations/valid/sample.txt");
+        assertEquals(0, main().run(new String[]{"--telemetry", "kafka:9092", input.toString()}));
+        assertEquals(List.of("The --telemetry option only applies to missions to a planet: ignored."), logs.messages());
+        assertEquals(List.of(), sink.telemetry);
     }
 }
