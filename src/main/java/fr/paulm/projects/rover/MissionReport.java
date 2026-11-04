@@ -47,9 +47,9 @@ final class MissionReport {
         }
     }
 
-    // One line each time an instruction ends, on the common clock: the time in sols, then each rover that landed
+    // One line each time an instruction ends, on the common clock: the time (see clock), then each rover that landed
     // with its position and direction, and the rovers whose move was blocked:
-    // "Sol 2.21: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S (blocked: Climber)".
+    // "Sol 2 05:12: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S (blocked: Climber)".
     void turn(Turn turn, Deployment deployment, RoverPositions positions) {
         List<Touchdown> landed = deployment.landed();
         List<String> rovers = new ArrayList<>();
@@ -58,7 +58,7 @@ final class MissionReport {
         }
         String blocked = turn.blockedRovers().stream().sorted()
                 .map(i -> nameOf(landed.get(i))).collect(Collectors.joining(", "));
-        out.println(String.format(Locale.ROOT, "Sol %.2f: ", sols(turn.time(), deployment.planet())) + String.join(" | ", rovers)
+        out.println(clock(turn.time(), deployment.planet()) + ": " + String.join(" | ", rovers)
                 + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
@@ -128,6 +128,15 @@ final class MissionReport {
 
     private static String nameOf(Touchdown touchdown) {
         return touchdown.plan().name();
+    }
+
+    // The time since the landing as missions give it: the sol (from 0), then the time of day in hours and minutes
+    // of the planet, a sol being cut into 24 hours, like the local time on Mars. "Sol 2 05:12".
+    private String clock(Duration time, Planet planet) {
+        long day = planet.dayLength().toMillis();
+        long sol = time.toMillis() / day;
+        long minutes = (time.toMillis() % day) * 24 * 60 / day;
+        return String.format(Locale.ROOT, "Sol %d %02d:%02d", sol, minutes / 60, minutes % 60);
     }
 
     // A duration in days of the planet (sols).

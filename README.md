@@ -126,11 +126,11 @@ Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
 Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
 ```
 
-Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock in sols, then each rover that landed with its position and direction, and the names of the blocked rovers:
+Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the landing (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that landed with its position and direction, and the names of the blocked rovers:
 
 ```
-Sol 4.10: Curiosity 4.74S 137.45E S | Perseverance 18.34N 77.36E W
-Sol 5.34: Curiosity 4.99S 137.45E S | Perseverance 18.34N 77.36E W
+Sol 4 02:19: Curiosity 4.74S 137.45E S | Perseverance 18.34N 77.36E W
+Sol 5 08:03: Curiosity 4.99S 137.45E S | Perseverance 18.34N 77.36E W
 ```
 
 With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window. Each rover has its own letter (the first letter of its name that no rover before it uses, or else a free letter, then a digit: up to 36 rovers), in capitals where it is, in lower case where it landed, and `~` marks the cells the rovers drove through. Around Curiosity, the floor of Gale crater appears as dots:

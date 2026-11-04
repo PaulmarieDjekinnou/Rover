@@ -87,14 +87,14 @@ class MainTest {
         assertEquals(0, main().run(new String[]{"--history", input.toString()}));
         // One line each time an instruction ends: both first moves end together, then Climber turns (5 minutes)
         // and is blocked by the peak at once, and Polar goes on, crossing the north pole
-        // Each move is 7.9 km long (2.21 sols at 4 cm/s)
+        // Each move is 7.9 km long (2.21 sols at 4 cm/s); the turn takes 5 minutes
         assertEquals(List.of(
-                "Sol 2.21: Polar 67.50N 67.50E N | Climber 22.50N 202.50E S",
-                "Sol 2.21: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S",
-                "Sol 2.22: Polar 67.50N 67.50E N | Climber 22.50S 202.50E W",
-                "Sol 2.22: Polar 67.50N 67.50E N | Climber 22.50S 202.50E W (blocked: Climber)",
-                "Sol 4.42: Polar 67.50N 247.50E S | Climber 22.50S 202.50E W",
-                "Sol 6.64: Polar 22.50N 247.50E S | Climber 22.50S 202.50E W"),
+                "Sol 2 05:04: Polar 67.50N 67.50E N | Climber 22.50N 202.50E S",
+                "Sol 2 05:04: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S",
+                "Sol 2 05:09: Polar 67.50N 67.50E N | Climber 22.50S 202.50E W",
+                "Sol 2 05:09: Polar 67.50N 67.50E N | Climber 22.50S 202.50E W (blocked: Climber)",
+                "Sol 4 10:09: Polar 67.50N 247.50E S | Climber 22.50S 202.50E W",
+                "Sol 6 15:14: Polar 22.50N 247.50E S | Climber 22.50S 202.50E W"),
                 outputLines().subList(3, 9));
     }
 
