@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 // The rovers move turn by turn, all at the same time: in each turn, every rover executes its next instruction,
 // and the order of the rovers in the input gives no priority. A move is blocked when:
@@ -15,36 +16,37 @@ import java.util.Set;
 // - two rovers want to swap their cells (they would cross each other);
 // - the cell is occupied by a rover that does not leave it during this turn.
 // A rover can follow another one that leaves its cell in the same turn.
-// A rover that has no instruction left stays on its cell until the end. Each turn is sent to the listener.
+// A rover that has no instruction left stays on its cell until the end.
 public final class SimultaneousSimulation implements Simulation {
 
     @Override
-    public List<MissionResult> run(SimulationInput input, TurnListener listener) {
-        List<RoverMission> missions = input.missions();
-        List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
-        int[] blockedMoves = new int[missions.size()];
+    public Stream<Turn> turns(SimulationInput input) {
+        int turns = input.missions().stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
+        // Turn 0 is the starting state; each turn is computed from the previous one, only when it is read
+        Turn start = new Turn(0, input.missions().stream().map(RoverMission::rover).toList(), Set.of());
+        return Stream.iterate(start, turn -> next(turn, input)).skip(1).limit(turns);
+    }
 
-        int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
-        for (int turn = 0; turn < turns; turn++) {
-            List<Rover> wanted = new ArrayList<>();
-            for (int i = 0; i < missions.size(); i++) {
-                List<Instruction> instructions = missions.get(i).instructions();
-                Rover rover = rovers.get(i);
-                wanted.add(turn < instructions.size() ? rover.apply(instructions.get(turn), input.plateau()) : rover);
-            }
-            boolean[] blocked = blockedMovesOfTurn(rovers, wanted);
-            Set<Integer> blockedRovers = new HashSet<>();
-            for (int i = 0; i < rovers.size(); i++) {
-                if (blocked[i]) {
-                    blockedMoves[i]++;
-                    blockedRovers.add(i);
-                } else {
-                    rovers.set(i, wanted.get(i));
-                }
-            }
-            listener.onTurn(new Turn(turn + 1, rovers, blockedRovers));
+    private Turn next(Turn previous, SimulationInput input) {
+        // The turn numbered n plays the instruction of index n - 1 of each rover
+        int index = previous.number();
+        List<Rover> rovers = new ArrayList<>(previous.rovers());
+        List<Rover> wanted = new ArrayList<>();
+        for (int i = 0; i < rovers.size(); i++) {
+            List<Instruction> instructions = input.missions().get(i).instructions();
+            Rover rover = rovers.get(i);
+            wanted.add(index < instructions.size() ? rover.apply(instructions.get(index), input.plateau()) : rover);
         }
-        return MissionResult.of(rovers, blockedMoves);
+        boolean[] blocked = blockedMovesOfTurn(rovers, wanted);
+        Set<Integer> blockedRovers = new HashSet<>();
+        for (int i = 0; i < rovers.size(); i++) {
+            if (blocked[i]) {
+                blockedRovers.add(i);
+            } else {
+                rovers.set(i, wanted.get(i));
+            }
+        }
+        return new Turn(index + 1, rovers, blockedRovers);
     }
 
     // Which rovers cannot make the move they want in this turn. A rover that turns or stays never is.

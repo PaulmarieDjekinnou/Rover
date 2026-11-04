@@ -4,7 +4,6 @@ import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -99,15 +98,14 @@ class SequentialSimulationTest {
         assertEquals(List.of(1, 0), blockedMoves(results));
     }
 
-    // History: in sequential mode, each instruction executed is a turn, sent to the listener
+    // History: in sequential mode, each instruction executed is a turn
 
     @Test
     void historyHasOneTurnPerInstruction() {
         SimulationInput input = new SimulationInput(new Plateau(3, 3), List.of(
                 new RoverMission(new Rover(new Position(0, 0), Direction.N), TestInstructions.of("MMM")),
                 new RoverMission(new Rover(new Position(0, 3), Direction.S), TestInstructions.of("MMM"))));
-        List<Turn> history = new ArrayList<>();
-        simulation.run(input, history::add);
+        List<Turn> history = simulation.turns(input).toList();
         Rover first = new Rover(new Position(0, 2), Direction.N);
         Rover second = new Rover(new Position(0, 3), Direction.S);
         assertEquals(6, history.size());
@@ -123,9 +121,17 @@ class SequentialSimulationTest {
         SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
                 new RoverMission(new Rover(new Position(1, 2), Direction.N), TestInstructions.of("LMLMLMLMM")),
                 new RoverMission(new Rover(new Position(3, 3), Direction.E), TestInstructions.of("MMRMMRMRRM"))));
-        List<Turn> history = new ArrayList<>();
-        List<MissionResult> results = simulation.run(input, history::add);
+        List<Turn> history = simulation.turns(input).toList();
+        List<MissionResult> results = simulation.run(input);
         assertEquals(19, history.size());
         assertEquals(results.stream().map(MissionResult::finalRover).toList(), history.getLast().rovers());
+    }
+
+    @Test
+    void turnsCanBeReadOnlyInPart() {
+        // Each turn is computed from the previous one when it is read: the first turns do not depend on the next ones
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), List.of(
+                new RoverMission(new Rover(new Position(1, 2), Direction.N), TestInstructions.of("LMLMLMLMM"))));
+        assertEquals(simulation.turns(input).toList().subList(0, 3), simulation.turns(input).limit(3).toList());
     }
 }

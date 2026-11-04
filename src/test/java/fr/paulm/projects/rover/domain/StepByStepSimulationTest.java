@@ -4,7 +4,6 @@ import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -75,9 +74,8 @@ class StepByStepSimulationTest {
 
     @Test
     void historyHasOneTurnPerRoundOfInstructions() {
-        List<Turn> history = new ArrayList<>();
-        simulation.run(new SimulationInput(new Plateau(5, 5), List.of(
-                mission(0, 0, Direction.N, "MMM"), mission(1, 1, Direction.W, "M"))), history::add);
+        List<Turn> history = simulation.turns(new SimulationInput(new Plateau(5, 5), List.of(
+                mission(0, 0, Direction.N, "MMM"), mission(1, 1, Direction.W, "M")))).toList();
         Rover second = new Rover(new Position(1, 1), Direction.W);
         assertEquals(List.of(
                 new Turn(1, List.of(new Rover(new Position(0, 1), Direction.N), second), Set.of(1)),
