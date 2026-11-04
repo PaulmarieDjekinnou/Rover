@@ -64,6 +64,8 @@ Invalid input: Line 4: Invalid direction: "X". Expected: N, E, S or W
 Cannot read file "input.txt": file not found
 ```
 
+An unexpected error (a bug) is reported as `Unexpected error: …`, followed by its stack trace.
+
 The simulation itself has no side effect: it returns its results, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
 ## Requirements

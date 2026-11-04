@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover;
 
 import ch.qos.logback.classic.Level;
+import fr.paulm.projects.rover.input.SimulationReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,16 @@ class MainTest {
                 "Rover 1: 2 move(s) ignored because the cell is occupied by another rover.",
                 "Rover 2: 2 move(s) ignored because the cell is occupied by another rover."),
                 logs.messages(Level.WARN));
+    }
+
+    @Test
+    void unexpectedErrorIsReported() {
+        SimulationReader failingReader = () -> {
+            throw new IllegalStateException("boom");
+        };
+        assertEquals(1, new Main(path -> failingReader).run(new String[]{"input.txt"}));
+        assertEquals(List.of("Unexpected error: java.lang.IllegalStateException: boom"), logs.messages(Level.ERROR));
+        assertEquals(List.of(), outputLines());
     }
 
     @Test

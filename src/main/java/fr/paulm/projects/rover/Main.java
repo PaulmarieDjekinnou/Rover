@@ -17,10 +17,22 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.function.Function;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     private static final String STEP_BY_STEP_OPTION = "--step-by-step";
+
+    // Creates the reader of the input file. Replaceable in tests, to simulate an unexpected error.
+    private final Function<Path, SimulationReader> readerFactory;
+
+    Main() {
+        this(TextFileReader::new);
+    }
+
+    Main(Function<Path, SimulationReader> readerFactory) {
+        this.readerFactory = readerFactory;
+    }
 
     public static void main(String[] args) {
         int exitCode = new Main().run(args);
@@ -41,7 +53,7 @@ public class Main {
         String file = args[args.length - 1];
         Simulation simulation = stepByStep ? new StepByStepSimulation() : new SequentialSimulation();
         try {
-            SimulationReader reader = new TextFileReader(Path.of(file));
+            SimulationReader reader = readerFactory.apply(Path.of(file));
             List<MissionResult> results = simulation.run(reader.read());
             display(results);
             return 0;
@@ -53,6 +65,10 @@ public class Main {
             return 1;
         } catch (InvalidInputException e) {
             LOGGER.error("Invalid input: {}", e.getMessage());
+            return 1;
+        } catch (RuntimeException e) {
+            // A bug: a short message, followed by the stack trace for whoever fixes it
+            LOGGER.error("Unexpected error: {}", e.toString(), e);
             return 1;
         }
     }
