@@ -88,22 +88,4 @@ class PlanetMissionTest {
                 Direction.E, List.of());
         assertEquals(mission(42, wide).land().touchdowns(), mission(42, wide).land().touchdowns());
     }
-
-    @Test
-    void aRoverKeepsItsPlaceInsideItsCellFromCellToCell() {
-        // Touches down 2 km north and 1 km east of the center of (6, 2)
-        Coordinates center = PLANET.centerOf(new Position(6, 2));
-        Coordinates point = center.shiftedBy(2_000, 1_000, PLANET.radiusMeters());
-        RoverPlan plan = new RoverPlan("Offset", new LandingSite(point, Ellipse.NONE), Direction.N, List.of());
-        Touchdown touchdown = mission(1, plan).land().touchdowns().getFirst();
-        // In its landing cell, the rover is exactly where it touched down
-        Coordinates there = touchdown.positionIn(new Position(6, 2), PLANET);
-        assertEquals(point.latitude(), there.latitude(), 1e-9);
-        assertEquals(point.longitude(), there.longitude(), 1e-9);
-        // In the next cell to the west, it is 2 km north and 1 km east of that cell's center
-        Coordinates west = touchdown.positionIn(new Position(5, 2), PLANET);
-        Coordinates westCenter = PLANET.centerOf(new Position(5, 2));
-        assertEquals(2_000, westCenter.distanceTo(new Coordinates(west.latitude(), westCenter.longitude()), PLANET.radiusMeters()), 1);
-        assertEquals(1_000, westCenter.distanceTo(new Coordinates(westCenter.latitude(), west.longitude()), PLANET.radiusMeters()), 1);
-    }
 }

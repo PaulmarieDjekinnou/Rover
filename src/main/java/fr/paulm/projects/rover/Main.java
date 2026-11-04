@@ -10,6 +10,7 @@ import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
+import fr.paulm.projects.rover.mars.mission.RoverPositions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,16 +100,19 @@ public class Main {
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         Deployment deployment = mission.land();
         missionReport.landings(deployment);
-        // The tracks are drawn on the maps; each turn is printed as soon as it is over, with the history option
+        // The exact positions follow each turn, the tracks are drawn on the maps; each turn is printed
+        // as soon as it is over, with the history option
+        RoverPositions positions = new RoverPositions(deployment);
         RoverTracks tracks = new RoverTracks();
         TurnListener listener = turn -> {
+            positions.onTurn(turn);
             tracks.onTurn(turn);
             if (commandLine.history()) {
-                missionReport.turn(turn, deployment);
+                missionReport.turn(turn, deployment, positions);
             }
         };
         List<MissionResult> results = new ClockSimulation().run(deployment.input(), listener);
-        missionReport.results(deployment, results);
+        missionReport.results(deployment, results, positions);
         if (commandLine.map()) {
             missionReport.maps(deployment, results, tracks);
         }

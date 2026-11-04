@@ -159,7 +159,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell (its offset from the center, in meters north and east): its position is exact in its landing cell, and stays inside its cell everywhere else.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one.
 
 ## Requirements
 
@@ -226,6 +226,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `mars.mission` | `PlanetMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
+| | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
 | | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |

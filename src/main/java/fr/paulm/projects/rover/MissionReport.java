@@ -1,10 +1,10 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.Position;
-import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Turn;
 import fr.paulm.projects.rover.mars.mission.Deployment;
+import fr.paulm.projects.rover.mars.mission.RoverPositions;
 import fr.paulm.projects.rover.mars.mission.Touchdown;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import org.slf4j.Logger;
@@ -50,13 +50,11 @@ final class MissionReport {
     // One line each time an instruction ends, on the common clock: the time in sols, then each rover that landed
     // with its position and direction, and the rovers whose move was blocked:
     // "Sol 2.21: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S (blocked: Climber)".
-    void turn(Turn turn, Deployment deployment) {
+    void turn(Turn turn, Deployment deployment, RoverPositions positions) {
         List<Touchdown> landed = deployment.landed();
         List<String> rovers = new ArrayList<>();
         for (int i = 0; i < turn.rovers().size(); i++) {
-            Rover rover = turn.rovers().get(i);
-            rovers.add(nameOf(landed.get(i)) + " " + landed.get(i).positionIn(rover.position(), deployment.planet())
-                    + " " + rover.direction());
+            rovers.add(nameOf(landed.get(i)) + " " + positions.of(i) + " " + turn.rovers().get(i).direction());
         }
         String blocked = turn.blockedRovers().stream().sorted()
                 .map(i -> nameOf(landed.get(i))).collect(Collectors.joining(", "));
@@ -64,10 +62,10 @@ final class MissionReport {
                 + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
-    // The end of the mission of each rover that landed, in input order: its exact position (see
-    // Touchdown.positionIn), its cell and direction, the distance and the time:
+    // The end of the mission of each rover that landed, in input order: its exact position (see RoverPositions),
+    // its cell and direction, the distance and the time:
     // "Curiosity: 4.54S 137.81E (cell 551 341) facing N, 59.2 km driven in 17.3 sols".
-    void results(Deployment deployment, List<MissionResult> results) {
+    void results(Deployment deployment, List<MissionResult> results, RoverPositions positions) {
         Planet planet = deployment.planet();
         List<Touchdown> landed = deployment.landed();
         for (int i = 0; i < results.size(); i++) {
@@ -80,7 +78,7 @@ final class MissionReport {
                 LOGGER.warn("{}: {} move(s) blocked by the terrain.", name, result.blockedByTerrain());
             }
             out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s, %.1f km driven in %.1f sols",
-                    name, landed.get(i).positionIn(result.finalRover().position(), planet), result.finalRover().position(),
+                    name, positions.of(i), result.finalRover().position(),
                     result.finalRover().direction(), result.distanceMeters() / 1_000, sols(result.drivingTime(), planet)));
         }
     }
