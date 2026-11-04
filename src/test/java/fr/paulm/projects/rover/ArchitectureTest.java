@@ -10,8 +10,9 @@ import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
 // Checks the direction of the dependencies between packages, so that the build fails if one goes the wrong way:
 // the model depends on nothing else; the simulation and the planet only on the model, and never on each other;
 // the rover (how it drives on a planet) on the planet; the mission (landing the rovers on a planet) on the
-// simulation, the rover and the planet; the input on all of them;
-// and only the application (Main and its helpers) uses everything.
+// simulation, the rover and the planet; the input on all of them; the telemetry (the messages of a mission)
+// on the mission; and only the application (Main and its helpers) uses everything.
+// The ground station is another application: it only knows the messages, never the simulator.
 @AnalyzeClasses(packages = "fr.paulm.projects.rover", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 
@@ -19,6 +20,8 @@ class ArchitectureTest {
     static final ArchRule dependenciesGoFromTheApplicationToTheModel = layeredArchitecture()
             .consideringOnlyDependenciesInLayers()
             .layer("Application").definedBy("fr.paulm.projects.rover")
+            .layer("Ground").definedBy("fr.paulm.projects.rover.ground")
+            .layer("Telemetry").definedBy("fr.paulm.projects.rover.telemetry")
             .layer("Input").definedBy("fr.paulm.projects.rover.input")
             .layer("Mission").definedBy("fr.paulm.projects.rover.mars.mission")
             .layer("Simulation").definedBy("fr.paulm.projects.rover.domain.simulation")
@@ -26,10 +29,13 @@ class ArchitectureTest {
             .layer("Planet").definedBy("fr.paulm.projects.rover.mars.planet")
             .layer("Model").definedBy("fr.paulm.projects.rover.domain")
             .whereLayer("Application").mayNotBeAccessedByAnyLayer()
+            .whereLayer("Ground").mayNotBeAccessedByAnyLayer()
+            .whereLayer("Telemetry").mayOnlyBeAccessedByLayers("Application", "Ground")
             .whereLayer("Input").mayOnlyBeAccessedByLayers("Application")
-            .whereLayer("Mission").mayOnlyBeAccessedByLayers("Input", "Application")
-            .whereLayer("Simulation").mayOnlyBeAccessedByLayers("Mission", "Input", "Application")
+            .whereLayer("Mission").mayOnlyBeAccessedByLayers("Telemetry", "Input", "Application")
+            .whereLayer("Simulation").mayOnlyBeAccessedByLayers("Mission", "Telemetry", "Input", "Application")
             .whereLayer("Rover").mayOnlyBeAccessedByLayers("Mission", "Input", "Application")
-            .whereLayer("Planet").mayOnlyBeAccessedByLayers("Rover", "Mission", "Input", "Application")
-            .whereLayer("Model").mayOnlyBeAccessedByLayers("Simulation", "Planet", "Rover", "Mission", "Input", "Application");
+            .whereLayer("Planet").mayOnlyBeAccessedByLayers("Rover", "Mission", "Telemetry", "Input", "Application")
+            .whereLayer("Model").mayOnlyBeAccessedByLayers("Simulation", "Planet", "Rover", "Mission", "Telemetry",
+                    "Input", "Application");
 }

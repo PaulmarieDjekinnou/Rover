@@ -1,0 +1,48 @@
+# The infrastructure of the telemetry: Kafka (one broker in KRaft mode, its own controller) and PostgreSQL.
+#   docker compose up -d
+# Kafka has two addresses: kafka:29092 inside Docker (for the topics service), localhost:9092 from the host
+# (for the simulator and the ground station). Each one is announced to the clients that connect through it.
+services:
+  kafka:
+    image: apache/kafka:4.4.0
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:29092,EXTERNAL://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # The topics are created on purpose below, with their number of partitions
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+
+  # Creates the topics once Kafka answers, then stops
+  topics:
+    image: apache/kafka:4.4.0
+    depends_on:
+      - kafka
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --list > /dev/null 2>&1; do sleep 1; done
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic rover.telemetry --partitions 3
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic rover.events --partitions 3
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic mission.status --partitions 1
+
+  postgres:
+    image: postgres:17
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: rover
+      POSTGRES_USER: ${ROVER_DB_USER:-rover}
+      POSTGRES_PASSWORD: ${ROVER_DB_PASSWORD:-rover}
+    volumes:
+      # Run once, when the database is created
+      - ./src/main/resources/ground/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro

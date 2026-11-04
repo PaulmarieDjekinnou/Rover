@@ -198,9 +198,15 @@ With the `--telemetry server:port` option, a mission to a planet also sends its 
 
 Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning.
 
+**The ground station** is a second application, in the same jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`, see `src/main/resources/ground/schema.sql`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and telemetry read twice is written once.
+
 ```bash
+docker compose up -d     # Kafka (KRaft, with its topics) and PostgreSQL
 java -jar target/rover.jar --telemetry localhost:9092 src/main/resources/mars-mission.txt
+java -cp target/rover.jar fr.paulm.projects.rover.ground.GroundStation localhost:9092 jdbc:postgresql://localhost:5432/rover --until-idle 10
 ```
+
+The database user and password come from `ROVER_DB_USER` and `ROVER_DB_PASSWORD` (`rover` by default).
 
 ## Requirements
 
@@ -278,6 +284,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
 | | `TelemetrySink`, `KafkaSink`, `TelemetryJson` | where the messages go (Kafka, or a list in tests), and their JSON |
+| `ground` | `GroundStation`, `Receiver`, `Archive`, `JdbcArchive` | the ground station: reads the topics and archives the messages in PostgreSQL |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
 | | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |
