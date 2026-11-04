@@ -113,7 +113,7 @@ To add a nominal case, create both files and add the name to `MainTest.validFile
 
 All classes are in the `fr.paulm.projects.rover` package.
 
-`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `input` builds a `SimulationInput` from a text file.
+`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its ground. `input` builds a `SimulationInput` from a text file.
 
 | Package | Class | Role |
 |---|---|---|
@@ -133,6 +133,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
 | | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
+| `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
 | | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |
