@@ -26,8 +26,9 @@ import java.util.Set;
 // Starts and ends are handled in time order, then by rank (all the first instructions, then all the second ones…),
 // then in input order, an end before a start. Without durations, as on a plateau, this is exactly the step-by-step
 // mode: each rover sees the moves of the rovers before it in the same round.
-// The pace may make a rover wait before it acts (to recharge, for instance), or stop it for good: a rover that
-// stops leaves its cell to nobody else, and its other instructions undone.
+// The pace says when each rover starts (all at once by default). It may make a rover wait before it acts
+// (to recharge, for instance), or stop it for good: a rover that stops leaves its cell to nobody else, and its other
+// instructions undone. The driving and waiting times of a rover count from its start.
 public final class ClockSimulation implements Simulation {
 
     private final Pace pace;
@@ -64,7 +65,7 @@ public final class ClockSimulation implements Simulation {
                 .thenComparing(Event::start));
         for (int i = 0; i < missions.size(); i++) {
             if (!missions.get(i).instructions().isEmpty()) {
-                events.add(new Event(Duration.ZERO, 0, i, true));
+                events.add(new Event(pace.start(i), 0, i, true));
             }
         }
         int turn = 0;

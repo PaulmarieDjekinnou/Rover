@@ -1,5 +1,5 @@
-# Three rovers on the real Mars (MOLA map, 4 cells per degree: about 15 km per cell),
-# landing at the season and the local time of Curiosity's landing.
+# Three rovers on the real Mars (MOLA map, 4 cells per degree: about 15 km per cell), in the season
+# of Curiosity's landing. Each rover lands at the local time its real model landed at.
 planet mars
 start-ls 150
 landing-time 15:00
@@ -20,11 +20,13 @@ site 18.38 77.58
 ellipse 7.7 6.6 0
 heading W
 orders MMMRMM
+landing 2 15:53
 
 # Opportunity, on Meridiani Planum: solar panels, so it drives by day and waits at night
 rover Opportunity
 site -1.95 354.47
 heading E
 orders MM
+landing 5 13:15
 power solar 1.3
 battery 600

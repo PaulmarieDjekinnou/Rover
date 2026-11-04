@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // End-to-end tests of the program: Main.run returns the exit code instead of calling System.exit.
 // The history and the results are written to a buffer given to Main, the errors are read from Main's logs
@@ -55,7 +56,7 @@ class MainTest {
 
     // Each simulations/valid/<name>.txt file is run through the program and compared to <name>.expected.txt
     @ParameterizedTest
-    @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers", "mini-planet", "mars"})
+    @ValueSource(strings = {"sample", "blank-lines", "collision", "wrap-around", "no-rovers", "mini-planet", "late-landing", "mars"})
     void validFile(String name) throws Exception {
         Path input = TestResources.path("simulations/valid/" + name + ".txt");
         assertEquals(0, main().run(new String[]{input.toString()}));
@@ -97,6 +98,16 @@ class MainTest {
                 "Sol 5 23:28: Polar 67.50N 247.50E S | Climber 22.50S 202.50E W",
                 "Sol 9 05:22: Polar 22.50N 247.50E S | Climber 22.50S 202.50E W"),
                 outputLines().subList(3, 9));
+    }
+
+    @Test
+    void aRoverAppearsInTheHistoryOnceItHasLanded() throws Exception {
+        Path input = TestResources.path("simulations/valid/late-landing.txt");
+        assertEquals(0, main().run(new String[]{"--history", input.toString()}));
+        // Early ends its first move on sol 2, before Late lands on sol 3
+        List<String> history = outputLines().stream().filter(line -> line.startsWith("Sol ")).toList();
+        assertEquals("Sol 2 13:10: Early 22.50N 112.50E E", history.getFirst());
+        assertTrue(history.getLast().contains("| Late "));
     }
 
     @Test

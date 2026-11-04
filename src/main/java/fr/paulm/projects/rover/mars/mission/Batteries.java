@@ -28,6 +28,7 @@ public final class Batteries implements Pace {
     private final Planet planet;
     private final Sun sun;
     private final List<PowerSystem> systems;
+    private final List<Duration> starts;
     private final double[] levels;
     private final boolean[] charging;
 
@@ -35,8 +36,15 @@ public final class Batteries implements Pace {
         this.planet = deployment.planet();
         this.sun = deployment.sun();
         this.systems = deployment.landed().stream().map(touchdown -> touchdown.plan().power()).toList();
+        this.starts = deployment.landed().stream().map(Touchdown::time).toList();
         this.levels = systems.stream().mapToDouble(PowerSystem::batteryWattHours).toArray();
         this.charging = new boolean[systems.size()];
+    }
+
+    // A rover starts when it lands.
+    @Override
+    public Duration start(int rover) {
+        return starts.get(rover);
     }
 
     // How full the battery of a rover is after its last instruction, from 0 to 1.

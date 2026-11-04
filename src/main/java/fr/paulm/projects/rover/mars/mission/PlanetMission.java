@@ -6,11 +6,12 @@ import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.RoverMission;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
-import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
-import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.Sun;
+import fr.paulm.projects.rover.mars.rover.Mobility;
+import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -56,7 +57,7 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
         return new Landing(planet, terrain(), landingRules);
     }
 
-    // Lands the rovers one after the other, in input order. A rover that touches down too close to a rover already
+    // Lands the rovers one after the other, in input order, each at its own date (see RoverPlan). A rover that touches down too close to a rover already
     // there, or in a cell it cannot leave, is lost: it takes no part in the simulation. Rovers can share a cell:
     // a cell is several kilometers wide.
     public Deployment land() {
@@ -65,17 +66,21 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
         List<Coordinates> landedPoints = new ArrayList<>();
         List<Touchdown> touchdowns = new ArrayList<>();
         List<RoverMission> missions = new ArrayList<>();
+        Sun sun = sun();
         for (RoverPlan plan : rovers) {
             Coordinates point = landing.touchdown(plan.site(), random);
             Position cell = planet.cellAt(point);
             Optional<LandingFailure> failure = failureAt(point, cell, landedPoints, landing);
-            touchdowns.add(new Touchdown(plan, point, cell, failure));
+            Duration time = plan.landingDate()
+                    .map(date -> date.time(sun, plan.site().target(), planet.dayLength()))
+                    .orElse(Duration.ZERO);
+            touchdowns.add(new Touchdown(plan, time, point, cell, failure));
             if (failure.isEmpty()) {
                 landedPoints.add(point);
                 missions.add(new RoverMission(new Rover(cell, plan.heading()), plan.orders()));
             }
         }
-        return new Deployment(planet, sun(), touchdowns,
+        return new Deployment(planet, sun, touchdowns,
                 new SimulationInput(planet.grid(), terrain(), false, missions));
     }
 

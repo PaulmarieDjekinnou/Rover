@@ -5,6 +5,7 @@ import fr.paulm.projects.rover.domain.Instruction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.mars.mission.Ellipse;
 import fr.paulm.projects.rover.mars.mission.Landing;
+import fr.paulm.projects.rover.mars.mission.LandingDate;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -45,6 +47,7 @@ import java.util.function.Function;
 //   orders MMRMM                  optional: the instructions, as in the plateau format
 //   power rtg 110                 optional: a radioisotope generator of 110 W, or "solar 1.3" for 1.3 m2 of panels
 //   battery 2000                  optional: the capacity of the battery, in Wh (a 110 W generator and 2000 Wh by default)
+//   landing 3 14:00               optional: lands on sol 3 of the mission at 14:00 local time (at the start by default)
 //
 // The whole file is read and checked before anything lands. PlanetMission checks the landing sites again
 // on construction; they are checked here first, to report the line of the site.
@@ -53,7 +56,8 @@ public final class MissionParser {
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
                     "start-ls", "landing-time", "dust-opacity");
-    private static final Set<String> ROVER_KEYS = Set.of("site", "ellipse", "heading", "orders", "power", "battery");
+    private static final Set<String> ROVER_KEYS =
+            Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing");
 
     // A block of lines: its first line (the planet or a rover), then its settings by keyword
     private record Block(Line first, Map<String, Line> settings) {
@@ -161,9 +165,30 @@ public final class MissionParser {
         return new Sky(startLs, hours, dust);
     }
 
+    // "3 14:00": sol 3 of the mission, at 14:00 local time.
+    private LandingDate landingDate(Line line) {
+        String[] parts = line.value("landing").split("\\s+");
+        int sol;
+        try {
+            sol = Integer.parseInt(parts[0]);
+        } catch (NumberFormatException e) {
+            sol = -1;
+        }
+        if (parts.length != 2 || sol < 0) {
+            throw line.error("Invalid landing: \"" + line.value("landing") + "\". Expected: a sol from 0 and a time,"
+                    + " for example 3 14:00");
+        }
+        int landingSol = sol;
+        double hours = hours(line, parts[1]);
+        return line.check(() -> new LandingDate(landingSol, hours));
+    }
+
     // A local time written hh:mm, in hours.
     private double hours(Line line) {
-        String value = line.value(line.keyword());
+        return hours(line, line.value(line.keyword()));
+    }
+
+    private double hours(Line line, String value) {
         String[] parts = value.split(":");
         try {
             if (parts.length == 2 && parts[1].length() == 2) {
@@ -216,7 +241,9 @@ public final class MissionParser {
         Direction heading = Direction.fromCode(code)
                 .orElseThrow(() -> headingLine.error("Invalid direction: \"" + code + "\". Expected: N, E, S or W"));
         List<Instruction> orders = settings.containsKey("orders") ? orders(settings.get("orders")) : List.of();
-        return new RoverPlan(name, new LandingSite(target, ellipse), heading, orders, power(settings));
+        Optional<LandingDate> date = settings.containsKey("landing")
+                ? Optional.of(landingDate(settings.get("landing"))) : Optional.empty();
+        return new RoverPlan(name, new LandingSite(target, ellipse), heading, orders, power(settings), date);
     }
 
     // The power source and the battery of a rover, each checked on its own line.

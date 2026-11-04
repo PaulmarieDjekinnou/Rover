@@ -43,23 +43,25 @@ final class MissionReport {
             if (touchdown.landed()) {
                 double fromTarget = touchdown.plan().site().target().distanceTo(touchdown.point(),
                         deployment.planet().radiusMeters());
-                out.println(String.format(Locale.ROOT, "%s landed at %s (cell %s), %.1f km from its target, %s",
-                        nameOf(touchdown), touchdown.point(), touchdown.cell(), fromTarget / 1_000,
-                        sky(deployment.sun(), touchdown.point(), Duration.ZERO)));
+                out.println(String.format(Locale.ROOT, "%s landed on %s at %s (cell %s), %.1f km from its target, %s",
+                        nameOf(touchdown), clock(touchdown.time(), deployment.planet()), touchdown.point(),
+                        touchdown.cell(), fromTarget / 1_000, sky(deployment.sun(), touchdown.point(), touchdown.time())));
             } else {
                 out.println(nameOf(touchdown) + " was lost at landing: " + touchdown.failure().orElseThrow().description());
             }
         }
     }
 
-    // One line each time an instruction ends, on the common clock: the time (see clock), then each rover that landed
-    // with its position and direction, and the rovers whose move was blocked:
+    // One line each time an instruction ends, on the common clock: the time (see clock), then each rover that has
+    // landed by then, with its position and direction, and the rovers whose move was blocked:
     // "Sol 2 05:12: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S (blocked: Climber)".
     void turn(Turn turn, Deployment deployment, RoverPositions positions) {
         List<Touchdown> landed = deployment.landed();
         List<String> rovers = new ArrayList<>();
         for (int i = 0; i < turn.rovers().size(); i++) {
-            rovers.add(nameOf(landed.get(i)) + " " + positions.of(i) + " " + turn.rovers().get(i).direction());
+            if (landed.get(i).time().compareTo(turn.time()) <= 0) {
+                rovers.add(nameOf(landed.get(i)) + " " + positions.of(i) + " " + turn.rovers().get(i).direction());
+            }
         }
         String blocked = turn.blockedRovers().stream().sorted()
                 .map(i -> nameOf(landed.get(i))).collect(Collectors.joining(", "));
@@ -89,7 +91,7 @@ final class MissionReport {
                     name, result.stopped() ? " stopped, out of energy:" : ":", positions.of(i),
                     result.finalRover().position(), result.finalRover().direction(), result.distanceMeters() / 1_000,
                     sols(result.drivingTime(), planet), sols(result.waitingTime(), planet), 100 * batteries.charge(i),
-                    sky(deployment.sun(), positions.of(i), result.totalTime())));
+                    sky(deployment.sun(), positions.of(i), landed.get(i).time().plus(result.totalTime()))));
         }
     }
 

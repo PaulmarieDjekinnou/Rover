@@ -4,6 +4,7 @@ import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.mars.mission.Ellipse;
+import fr.paulm.projects.rover.mars.mission.LandingDate;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
@@ -21,6 +22,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -80,6 +82,12 @@ class MissionParserTest {
     }
 
     @Test
+    void readsTheLandingDateOfARover() {
+        PlanetMission mission = parse("rover Late", "site 22.5 67.5", "heading N", "landing 3 14:30");
+        assertEquals(Optional.of(new LandingDate(3, 14.5)), mission.rovers().getFirst().landingDate());
+    }
+
+    @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
         assertEquals(new Sky(150, 15.5, 2), mission.sky());
@@ -111,7 +119,7 @@ class MissionParserTest {
     @Test
     void errorsGiveTheLineInTheFile() {
         // The three lines added by parse come first: the rover line is line 4
-        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, ellipse, heading, orders, power, site",
+        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, ellipse, heading, landing, orders, power, site",
                 error("rover One", "color red"));
     }
 
@@ -142,6 +150,8 @@ class MissionParserTest {
             "rover A\\nsite 0 0\\nheading N\\npower rtg lots | Line 7: Invalid number: \"lots\"",
             "rover A\\nsite 0 0\\nheading N\\npower solar 0 | Line 7: Invalid solar panels: 0.0 m2. Expected: a positive area",
             "rover A\\nsite 0 0\\nheading N\\nbattery 0 | Line 7: Invalid battery: 0.0 Wh. Expected: a positive capacity",
+            "rover A\\nsite 0 0\\nheading N\\nlanding -1 12:00 | Line 7: Invalid landing: \"-1 12:00\". Expected: a sol from 0 and a time, for example 3 14:00",
+            "rover A\\nsite 0 0\\nheading N\\nlanding 2 noon | Line 7: Invalid time: \"noon\". Expected: hh:mm, for example 15:00",
     })
     void invalidMissionsAreRejected(String lines, String message) {
         assertEquals(message, error(lines.replace("\\n", "\n")));

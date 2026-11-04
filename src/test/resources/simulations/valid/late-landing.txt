@@ -1,0 +1,15 @@
+# Two rovers on the small planet of mini-planet.map.txt: the second one lands on sol 3, after the first move of the first one
+planet map mini-planet.map.txt
+landing-max-elevation 500
+landing-max-latitude 60
+
+rover Early
+site 22.5 67.5
+heading E
+orders MM
+
+rover Late
+site 22.5 292.5
+heading W
+orders M
+landing 3 08:00

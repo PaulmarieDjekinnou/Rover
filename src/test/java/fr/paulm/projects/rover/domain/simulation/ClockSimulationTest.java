@@ -124,6 +124,28 @@ class ClockSimulationTest {
     }
 
     @Test
+    void eachRoverStartsWhenThePaceSays() {
+        // The second rover starts 10 minutes after the first one
+        Pace lateSecond = new Pace() {
+            @Override
+            public Optional<Duration> duration(int rover, Rover state, Duration start, Duration busy) {
+                return Optional.of(busy);
+            }
+
+            @Override
+            public Duration start(int rover) {
+                return rover == 1 ? Duration.ofMinutes(10) : Duration.ZERO;
+            }
+        };
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, false, List.of(
+                mission(0, 2, Direction.N, "M"),
+                mission(4, 2, Direction.N, "M")));
+        List<Turn> turns = new ArrayList<>();
+        new ClockSimulation(lateSecond).run(input, turns::add);
+        assertEquals(List.of(Duration.ofMinutes(1), Duration.ofMinutes(11)), turns.stream().map(Turn::time).toList());
+    }
+
+    @Test
     void thePaceCanMakeARoverWait() {
         // The second rover waits 10 minutes before each instruction
         Pace slowSecond = (rover, state, start, busy) -> Optional.of(rover == 1 ? busy.plusMinutes(10) : busy);
