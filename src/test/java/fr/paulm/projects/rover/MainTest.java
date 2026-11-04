@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 // The results are read from the standard output, the warnings and errors from Main's logs.
 class MainTest {
 
-    private static final String USAGE = "Usage: java -jar rover.jar [--step-by-step] input.txt";
+    private static final String USAGE = "Usage: java -jar rover.jar [--step-by-step | --simultaneous] input.txt";
 
     @TempDir
     Path tempDir;
@@ -62,8 +62,8 @@ class MainTest {
         Path input = TestResources.path("simulations/valid/collision.txt");
         new Main().run(new String[]{input.toString()});
         assertEquals(List.of(
-                "Rover 1: 1 move(s) ignored because the cell is occupied by another rover.",
-                "Rover 2: 3 move(s) ignored because the cell is occupied by another rover."),
+                "Rover 1: 1 move(s) blocked by another rover.",
+                "Rover 2: 3 move(s) blocked by another rover."),
                 logs.messages(Level.WARN));
     }
 
@@ -81,9 +81,28 @@ class MainTest {
         // Sequential mode gives "0 2 N" and "0 3 S" (see collision.expected.txt)
         assertEquals(List.of("0 1 N", "0 2 S"), outputLines());
         assertEquals(List.of(
-                "Rover 1: 2 move(s) ignored because the cell is occupied by another rover.",
-                "Rover 2: 2 move(s) ignored because the cell is occupied by another rover."),
+                "Rover 1: 2 move(s) blocked by another rover.",
+                "Rover 2: 2 move(s) blocked by another rover."),
                 logs.messages(Level.WARN));
+    }
+
+    @Test
+    void simultaneousOptionMovesTheRoversAtTheSameTime() throws Exception {
+        Path input = TestResources.path("simulations/valid/collision.txt");
+        assertEquals(0, new Main().run(new String[]{"--simultaneous", input.toString()}));
+        // Turn 1: both rovers move; turns 2 and 3: they would swap their cells, so both are blocked
+        assertEquals(List.of("0 1 N", "0 2 S"), outputLines());
+        assertEquals(List.of(
+                "Rover 1: 2 move(s) blocked by another rover.",
+                "Rover 2: 2 move(s) blocked by another rover."),
+                logs.messages(Level.WARN));
+    }
+
+    @Test
+    void optionWithoutFilePrintsUsage() {
+        assertEquals(1, new Main().run(new String[]{"--simultaneous"}));
+        assertEquals(1, new Main().run(new String[]{"--step-by-step", "a.txt", "b.txt"}));
+        assertEquals(List.of(USAGE, USAGE), logs.messages());
     }
 
     @Test

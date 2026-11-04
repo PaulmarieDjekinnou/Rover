@@ -17,20 +17,21 @@ The plateau is a small planet: it **wraps around**, like a torus. A rover that m
 
 All rovers are on the plateau from the start, and two rovers can never be on the same cell:
 
-- a move (forward or back) onto a cell **occupied by another rover** is ignored. This also holds across an edge;
+- a move (forward or back) that would **collide with another rover** is blocked. This also holds across an edge;
 - two rovers that **start on the same cell** make the input invalid.
 
-The rovers can move in two ways:
+The rovers can move in three ways:
 
 - **sequential** (default): one after the other, in input order. Each rover executes all its instructions before the next one starts, so a rover that has finished occupies its final cell, and a rover that has not started yet occupies its starting cell;
-- **step by step** (`--step-by-step` option): turn by turn. In each turn, every rover executes its next instruction, in input order. A rover that has no instruction left stays on its cell.
+- **step by step** (`--step-by-step` option): turn by turn. In each turn, every rover executes its next instruction, in input order. A rover that has no instruction left stays on its cell;
+- **simultaneous** (`--simultaneous` option): turn by turn, all rovers at the same time, with no priority given by the input order. In each turn, a move is blocked when several rovers want the same cell, when two rovers would swap their cells, or when the cell is occupied by a rover that stays there. A rover can follow another one that leaves its cell in the same turn.
 
-The two modes give the same result as long as the rovers never get in each other's way.
+The three modes give the same result as long as the rovers never get in each other's way.
 
-After an ignored move, the rover stays where it is and goes on to the next instruction. Ignored moves are counted, and one warning per blocked rover is printed on the standard error output, with the rover's number in input order, for example:
+After a blocked move, the rover stays where it is and goes on to the next instruction. Blocked moves are counted, and one warning per blocked rover is printed on the standard error output, with the rover's number in input order, for example:
 
 ```
-Rover 2: 3 move(s) ignored because the cell is occupied by another rover.
+Rover 2: 3 move(s) blocked by another rover.
 ```
 
 ## Input file format
@@ -79,6 +80,7 @@ The simulation itself has no side effect: it returns its results, and `Main` pri
 mvn package
 java -jar target/rover.jar src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step src/main/resources/input.txt
+java -jar target/rover.jar --simultaneous src/main/resources/input.txt
 ```
 
 ## Tests
@@ -109,7 +111,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau, on its own cell |
 | | `Simulation` | interface (strategy): runs the missions and returns the result of each one |
-| | `SequentialSimulation`, `StepByStepSimulation` | the two ways of moving the rovers: one after the other, or turn by turn |
+| | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
 | `domain.exceptions` | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |

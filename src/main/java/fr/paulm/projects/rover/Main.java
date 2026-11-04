@@ -2,6 +2,7 @@ package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.MissionResult;
 import fr.paulm.projects.rover.domain.SequentialSimulation;
+import fr.paulm.projects.rover.domain.SimultaneousSimulation;
 import fr.paulm.projects.rover.domain.Simulation;
 import fr.paulm.projects.rover.domain.StepByStepSimulation;
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
@@ -17,11 +18,15 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 
 public class Main {
     private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
     private static final String STEP_BY_STEP_OPTION = "--step-by-step";
+    private static final String SIMULTANEOUS_OPTION = "--simultaneous";
+    private static final String USAGE =
+            "Usage: java -jar rover.jar [" + STEP_BY_STEP_OPTION + " | " + SIMULTANEOUS_OPTION + "] input.txt";
 
     // Creates the reader of the input file. Replaceable in tests, to simulate an unexpected error.
     private final Function<Path, SimulationReader> readerFactory;
@@ -43,18 +48,17 @@ public class Main {
 
     // Runs the program and returns its exit code (0 on success, 1 on any error) instead of exiting,
     // so that error cases can be tested.
-    // Arguments: the input file, optionally preceded by --step-by-step to move the rovers turn by turn.
+    // Arguments: the input file, optionally preceded by the simulation mode.
     int run(String[] args) {
-        boolean stepByStep = args.length == 2 && args[0].equals(STEP_BY_STEP_OPTION);
-        if (args.length != 1 && !stepByStep) {
-            LOGGER.error("Usage: java -jar rover.jar [" + STEP_BY_STEP_OPTION + "] input.txt");
+        Optional<Simulation> simulation = simulationFor(args);
+        if (simulation.isEmpty()) {
+            LOGGER.error(USAGE);
             return 1;
         }
         String file = args[args.length - 1];
-        Simulation simulation = stepByStep ? new StepByStepSimulation() : new SequentialSimulation();
         try {
             SimulationReader reader = readerFactory.apply(Path.of(file));
-            List<MissionResult> results = simulation.run(reader.read());
+            List<MissionResult> results = simulation.get().run(reader.read());
             display(results);
             return 0;
         } catch (UncheckedIOException e) {
@@ -73,14 +77,29 @@ public class Main {
         }
     }
 
+    // The simulation mode: sequential by default, or the one given by the option before the file name.
+    // Empty when the arguments are not valid, including an option without a file name.
+    private Optional<Simulation> simulationFor(String[] args) {
+        if (args.length == 1 && !args[0].startsWith("--")) {
+            return Optional.of(new SequentialSimulation());
+        }
+        if (args.length != 2) {
+            return Optional.empty();
+        }
+        return switch (args[0]) {
+            case STEP_BY_STEP_OPTION -> Optional.of(new StepByStepSimulation());
+            case SIMULTANEOUS_OPTION -> Optional.of(new SimultaneousSimulation());
+            default -> Optional.empty();
+        };
+    }
+
     // The final positions are the result of the program: they go to the standard output.
     // A warning on the standard error output reports each rover that had moves blocked by another rover.
     private void display(List<MissionResult> results) {
         for (int i = 0; i < results.size(); i++) {
             MissionResult result = results.get(i);
             if (result.blockedMoves() > 0) {
-                LOGGER.warn("Rover {}: {} move(s) ignored because the cell is occupied by another rover.",
-                        i + 1, result.blockedMoves());
+                LOGGER.warn("Rover {}: {} move(s) blocked by another rover.", i + 1, result.blockedMoves());
             }
             System.out.println(result.finalRover());
         }

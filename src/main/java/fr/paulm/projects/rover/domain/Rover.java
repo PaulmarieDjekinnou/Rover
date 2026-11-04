@@ -36,7 +36,8 @@ public record Rover(Position position, Direction direction) {
         return occupiedCells.contains(next.position) ? Optional.empty() : Optional.of(next);
     }
 
-    private Rover apply(Instruction instruction, Plateau plateau) {
+    // The rover after one instruction, without looking at the other rovers.
+    Rover apply(Instruction instruction, Plateau plateau) {
         return switch (instruction) {
             case LEFT -> new Rover(position, direction.left());
             case RIGHT -> new Rover(position, direction.right());
