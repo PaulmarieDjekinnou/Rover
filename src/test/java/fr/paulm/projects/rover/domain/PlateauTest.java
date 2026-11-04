@@ -39,6 +39,13 @@ class PlateauTest {
         assertEquals(new Position(expectedX, expectedY), plateau.wrap(new Position(x, y)));
     }
 
+    // next is the cell ahead, wrapped around; the direction never changes on a plateau
+    @ParameterizedTest
+    @CsvSource({"2, 1, N, 2, 2", "5, 1, E, 0, 1", "2, 0, S, 2, 3", "0, 1, W, 5, 1"})
+    void nextIsTheWrappedCellAheadWithTheSameDirection(int x, int y, Direction direction, int expectedX, int expectedY) {
+        assertEquals(new Heading(new Position(expectedX, expectedY), direction), plateau.next(new Position(x, y), direction));
+    }
+
     @Test
     void wrapWorksOnTheLargestPossiblePlateau() {
         Plateau huge = new Plateau(Integer.MAX_VALUE, 0);

@@ -70,11 +70,6 @@ public enum Direction {
         return position.shiftedBy(dx, dy);
     }
 
-    // The cell behind the given position, one step in the opposite direction.
-    public Position behind(Position position) {
-        return position.shiftedBy(-dx, -dy);
-    }
-
     // The direction after a half turn.
     public Direction opposite() {
         return right().right();

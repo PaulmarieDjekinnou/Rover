@@ -21,13 +21,6 @@ class DirectionTest {
 
     @ParameterizedTest
     @EnumSource(Direction.class)
-    void behindIsAheadOfTheOppositeDirection(Direction direction) {
-        Direction opposite = direction.right().right();
-        assertEquals(opposite.ahead(origin), direction.behind(origin));
-    }
-
-    @ParameterizedTest
-    @EnumSource(Direction.class)
     void fromCodeFindsEachDirection(Direction direction) {
         assertEquals(Optional.of(direction), Direction.fromCode(direction.name()));
     }

@@ -31,7 +31,7 @@ public final class StepByStepSimulation implements Simulation {
                     continue;
                 }
                 Rover rover = rovers.get(i);
-                Optional<Rover> next = rover.step(instructions.get(turn), input.plateau(), occupiedCells);
+                Optional<Rover> next = rover.step(instructions.get(turn), input.surface(), occupiedCells);
                 if (next.isPresent()) {
                     occupiedCells.remove(rover.position());
                     occupiedCells.add(next.get().position());

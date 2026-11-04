@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.domain;
 
-public final class Plateau {
+// A rectangular grid that wraps around like a torus (see wrap).
+public final class Plateau implements Surface {
     private final int maxX;
     private final int maxY;
 
@@ -12,9 +13,16 @@ public final class Plateau {
         this.maxY = maxY;
     }
 
+    @Override
     public boolean contains(Position position) {
         return position.x() >= 0 && position.x() <= maxX
                 && position.y() >= 0 && position.y() <= maxY;
+    }
+
+    // Going beyond an edge leads to the opposite edge, with the same direction.
+    @Override
+    public Heading next(Position position, Direction direction) {
+        return new Heading(wrap(direction.ahead(position)), direction);
     }
 
     // The plateau is a torus, like a small planet: a position beyond one edge comes back on the

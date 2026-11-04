@@ -31,7 +31,7 @@ public final class SequentialSimulation implements Simulation {
         for (int i = 0; i < missions.size(); i++) {
             for (Instruction instruction : missions.get(i).instructions()) {
                 Rover rover = rovers.get(i);
-                Optional<Rover> next = rover.step(instruction, input.plateau(), roversCells);
+                Optional<Rover> next = rover.step(instruction, input.surface(), roversCells);
                 if (next.isPresent()) {
                     occupiedCells.remove(rover.position());
                     occupiedCells.add(next.get().position());

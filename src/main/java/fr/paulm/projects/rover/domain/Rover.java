@@ -8,22 +8,30 @@ import java.util.Set;
 public record Rover(Position position, Direction direction) {
 
     // The rover after one instruction, or empty when the instruction would move it onto an occupied cell,
-    // so two rovers never collide. The plateau wraps around (see Plateau.wrap), so a rover never leaves it.
+    // so two rovers never collide. The surface decides where a move leads, so a rover never leaves it.
     // occupiedCells holds the positions of the rovers; it is only read, never modified. It may contain
     // the rover's own cell: a rover that stays on its cell (a turn) is never blocked.
-    public Optional<Rover> step(Instruction instruction, Plateau plateau, Set<Position> occupiedCells) {
-        Rover next = apply(instruction, plateau);
+    public Optional<Rover> step(Instruction instruction, Surface surface, Set<Position> occupiedCells) {
+        Rover next = apply(instruction, surface);
         boolean blocked = !next.position.equals(position) && occupiedCells.contains(next.position);
         return blocked ? Optional.empty() : Optional.of(next);
     }
 
     // The rover after one instruction, without looking at the other rovers.
-    public Rover apply(Instruction instruction, Plateau plateau) {
+    public Rover apply(Instruction instruction, Surface surface) {
         return switch (instruction) {
             case LEFT -> new Rover(position, direction.left());
             case RIGHT -> new Rover(position, direction.right());
-            case MOVE -> new Rover(plateau.wrap(direction.ahead(position)), direction);
-            case BACK -> new Rover(plateau.wrap(direction.behind(position)), direction);
+            case MOVE -> {
+                Heading heading = surface.next(position, direction);
+                yield new Rover(heading.position(), heading.direction());
+            }
+            // The rover drives backwards: it travels the opposite way and keeps facing away from where it goes,
+            // so if the surface turns its travel around (across a pole), it turns the rover around too
+            case BACK -> {
+                Heading heading = surface.next(position, direction.opposite());
+                yield new Rover(heading.position(), heading.direction().opposite());
+            }
         };
     }
 

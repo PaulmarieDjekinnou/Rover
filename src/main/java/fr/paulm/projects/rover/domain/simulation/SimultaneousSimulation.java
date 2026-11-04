@@ -37,7 +37,7 @@ public final class SimultaneousSimulation implements Simulation {
                 List<Instruction> instructions = missions.get(i).instructions();
                 Rover rover = rovers.get(i);
                 boolean finished = turn >= instructions.size();
-                wanted.add(finished ? rover : rover.apply(instructions.get(turn), input.plateau()));
+                wanted.add(finished ? rover : rover.apply(instructions.get(turn), input.surface()));
                 // The way the rover moves: backwards for BACK, forward otherwise (only used if it changes cell)
                 boolean back = !finished && instructions.get(turn) == Instruction.BACK;
                 travels.add(back ? rover.direction().opposite() : rover.direction());

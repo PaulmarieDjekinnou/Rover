@@ -113,20 +113,21 @@ To add a nominal case, create both files and add the name to `MainTest.validFile
 
 All classes are in the `fr.paulm.projects.rover` package.
 
-`domain` holds the model (how a rover moves on the plateau) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `input` builds a `SimulationInput` from a text file.
+`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `input` builds a `SimulationInput` from a text file.
 
 | Package | Class | Role |
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
 | | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` option and the file; each mode with the option that selects it |
 | | `ConsoleReport` | prints the history and the final positions on the standard output, and the warnings through the logger |
-| `domain` | `Position` | a cell of the plateau (`x`, `y`); independent of rovers |
-| | `Plateau` | the grid boundaries; wraps positions around its edges |
-| | `Direction` | the four directions, their rotations and the cells ahead of and behind a position |
+| `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
+| | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |
+| | `Plateau` | a rectangular surface that wraps around like a torus |
+| | `Direction` | the four directions, their rotations and the cell ahead of a position |
 | | `Instruction` | the `LEFT`, `RIGHT`, `MOVE` and `BACK` commands (written `L`, `R`, `M` and `B` in the text format) |
 | | `Rover` | position and direction; executes one instruction, unless it would collide with another rover |
 | | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
-| `domain.simulation` | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau, on its own cell |
+| `domain.simulation` | `SimulationInput`, `RoverMission` | the surface, and each rover's mission (the rover and its instructions); checks that each rover starts on the surface, on its own cell |
 | | `Simulation` | interface (strategy): runs the missions, sends each turn to a `TurnListener`, and returns the result of each mission |
 | | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |

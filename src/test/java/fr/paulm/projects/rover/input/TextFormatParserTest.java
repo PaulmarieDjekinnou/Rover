@@ -43,8 +43,8 @@ class TextFormatParserTest {
                 MMRMMRMRRM
                 """);
 
-        assertTrue(input.plateau().contains(new Position(5, 3)));
-        assertFalse(input.plateau().contains(new Position(5, 4)));
+        assertTrue(input.surface().contains(new Position(5, 3)));
+        assertFalse(input.surface().contains(new Position(5, 4)));
 
         List<RoverMission> missions = input.missions();
         assertEquals(2, missions.size());
