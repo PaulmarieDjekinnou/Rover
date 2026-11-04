@@ -43,6 +43,29 @@ class SimultaneousSimulationTest {
     }
 
     @Test
+    void roverMovingBackCanCrossAnotherRoverToo() {
+        // The second rover faces east but moves back, to the west: the two rovers would cross
+        assertEquals(List.of(result(0, 0, Direction.E, 1), result(1, 0, Direction.E, 1)),
+                run(mission(0, 0, Direction.E, "M"), mission(1, 0, Direction.E, "B")));
+    }
+
+    @Test
+    void roversGoingTheSameWayAroundANarrowPlanetBothMove() {
+        // Two cells wide: each rover takes the cell of the other, but both move east, so they do not cross
+        assertEquals(List.of(result(1, 0, Direction.E, 0), result(0, 0, Direction.E, 0)),
+                simulation.run(new SimulationInput(new Plateau(1, 5), List.of(
+                        mission(0, 0, Direction.E, "M"), mission(1, 0, Direction.E, "M")))));
+    }
+
+    @Test
+    void roversCrossingAcrossTheEdgeOfANarrowPlanetAreBlocked() {
+        // The first rover goes west across the edge, the second one east across the same edge: they would cross
+        assertEquals(List.of(result(0, 0, Direction.W, 1), result(1, 0, Direction.E, 1)),
+                simulation.run(new SimulationInput(new Plateau(1, 5), List.of(
+                        mission(0, 0, Direction.W, "M"), mission(1, 0, Direction.E, "M")))));
+    }
+
+    @Test
     void roverCanFollowARoverThatLeavesItsCell() {
         // The first rover moves onto (1, 0) while the second one leaves it.
         // In step-by-step mode, the first rover would be blocked, because the second one has not moved yet.

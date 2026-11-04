@@ -75,6 +75,11 @@ public enum Direction {
         return position.shiftedBy(-dx, -dy);
     }
 
+    // The direction after a half turn.
+    public Direction opposite() {
+        return right().right();
+    }
+
     // The direction after a 90° turn to the left.
     public abstract Direction left();
 

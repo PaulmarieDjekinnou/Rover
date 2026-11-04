@@ -37,4 +37,10 @@ class DirectionTest {
     void fromCodeFindsNothingForAnUnknownCode(String code) {
         assertEquals(Optional.empty(), Direction.fromCode(code));
     }
+
+    @ParameterizedTest
+    @CsvSource({"N, S", "E, W", "S, N", "W, E"})
+    void oppositeIsTheDirectionAfterAHalfTurn(Direction direction, Direction opposite) {
+        assertEquals(opposite, direction.opposite());
+    }
 }

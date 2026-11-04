@@ -24,7 +24,7 @@ The rovers can move in three ways:
 
 - **sequential** (default): one after the other, in input order. Each rover executes all its instructions before the next one starts, so a rover that has finished occupies its final cell, and a rover that has not started yet occupies its starting cell;
 - **step by step** (`--step-by-step` option): turn by turn. In each turn, every rover executes its next instruction, in input order. A rover that has no instruction left stays on its cell;
-- **simultaneous** (`--simultaneous` option): turn by turn, all rovers at the same time, with no priority given by the input order. In each turn, a move is blocked when several rovers want the same cell, when two rovers would swap their cells, or when the cell is occupied by a rover that stays there. A rover can follow another one that leaves its cell in the same turn.
+- **simultaneous** (`--simultaneous` option): turn by turn, all rovers at the same time, with no priority given by the input order. In each turn, a move is blocked when several rovers want the same cell, when two rovers would cross each other (swap their cells by moving in opposite directions), or when the cell is occupied by a rover that stays there. A rover can follow another one that leaves its cell in the same turn.
 
 The three modes give the same result as long as the rovers never get in each other's way.
 
