@@ -1,4 +1,4 @@
-package fr.paulm.projects.rover.domain.exceptions;
+package fr.paulm.projects.rover.domain;
 
 // The input content is invalid (format or simulation rule).
 // It is the only exception Main reports as invalid input: its message explains the error to the user.

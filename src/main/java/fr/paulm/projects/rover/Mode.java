@@ -1,9 +1,9 @@
 package fr.paulm.projects.rover;
 
-import fr.paulm.projects.rover.domain.SequentialSimulation;
-import fr.paulm.projects.rover.domain.SimultaneousSimulation;
-import fr.paulm.projects.rover.domain.Simulation;
-import fr.paulm.projects.rover.domain.StepByStepSimulation;
+import fr.paulm.projects.rover.domain.simulation.SequentialSimulation;
+import fr.paulm.projects.rover.domain.simulation.Simulation;
+import fr.paulm.projects.rover.domain.simulation.SimultaneousSimulation;
+import fr.paulm.projects.rover.domain.simulation.StepByStepSimulation;
 
 import java.util.Arrays;
 import java.util.Optional;

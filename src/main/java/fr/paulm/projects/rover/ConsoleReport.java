@@ -1,7 +1,7 @@
 package fr.paulm.projects.rover;
 
-import fr.paulm.projects.rover.domain.MissionResult;
-import fr.paulm.projects.rover.domain.Turn;
+import fr.paulm.projects.rover.domain.simulation.MissionResult;
+import fr.paulm.projects.rover.domain.simulation.Turn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

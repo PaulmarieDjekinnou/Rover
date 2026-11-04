@@ -1,6 +1,9 @@
-package fr.paulm.projects.rover.domain;
+package fr.paulm.projects.rover.domain.simulation;
 
-import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
+import fr.paulm.projects.rover.domain.InvalidInputException;
+import fr.paulm.projects.rover.domain.Plateau;
+import fr.paulm.projects.rover.domain.Position;
+import fr.paulm.projects.rover.domain.Rover;
 
 import java.util.HashSet;
 import java.util.List;

@@ -1,4 +1,6 @@
-package fr.paulm.projects.rover.domain;
+package fr.paulm.projects.rover.domain.simulation;
+
+import fr.paulm.projects.rover.domain.Rover;
 
 import java.util.List;
 import java.util.Set;

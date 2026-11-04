@@ -1,7 +1,7 @@
 package fr.paulm.projects.rover;
 
-import fr.paulm.projects.rover.domain.TurnListener;
-import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
+import fr.paulm.projects.rover.domain.InvalidInputException;
+import fr.paulm.projects.rover.domain.simulation.TurnListener;
 import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
 import org.slf4j.Logger;

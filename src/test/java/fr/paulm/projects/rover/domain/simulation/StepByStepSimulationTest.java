@@ -1,7 +1,10 @@
-package fr.paulm.projects.rover.domain;
+package fr.paulm.projects.rover.domain.simulation;
 
 import fr.paulm.projects.rover.TestInstructions;
-import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.domain.Direction;
+import fr.paulm.projects.rover.domain.Plateau;
+import fr.paulm.projects.rover.domain.Position;
+import fr.paulm.projects.rover.domain.Rover;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

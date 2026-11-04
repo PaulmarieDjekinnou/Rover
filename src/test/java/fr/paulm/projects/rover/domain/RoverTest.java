@@ -1,8 +1,6 @@
 package fr.paulm.projects.rover.domain;
 
 import fr.paulm.projects.rover.TestInstructions;
-import fr.paulm.projects.rover.domain.enums.Direction;
-import fr.paulm.projects.rover.domain.enums.Instruction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -10,10 +8,10 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.util.Optional;
 import java.util.Set;
 
-import static fr.paulm.projects.rover.domain.enums.Direction.E;
-import static fr.paulm.projects.rover.domain.enums.Direction.N;
-import static fr.paulm.projects.rover.domain.enums.Direction.S;
-import static fr.paulm.projects.rover.domain.enums.Direction.W;
+import static fr.paulm.projects.rover.domain.Direction.E;
+import static fr.paulm.projects.rover.domain.Direction.N;
+import static fr.paulm.projects.rover.domain.Direction.S;
+import static fr.paulm.projects.rover.domain.Direction.W;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class RoverTest {

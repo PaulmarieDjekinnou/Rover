@@ -1,6 +1,6 @@
 package fr.paulm.projects.rover.input;
 
-import fr.paulm.projects.rover.domain.SimulationInput;
+import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

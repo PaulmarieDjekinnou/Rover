@@ -1,12 +1,12 @@
 package fr.paulm.projects.rover.input;
 
 import fr.paulm.projects.rover.TestInstructions;
+import fr.paulm.projects.rover.domain.Direction;
+import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
-import fr.paulm.projects.rover.domain.RoverMission;
-import fr.paulm.projects.rover.domain.SimulationInput;
-import fr.paulm.projects.rover.domain.enums.Direction;
-import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
+import fr.paulm.projects.rover.domain.simulation.RoverMission;
+import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;

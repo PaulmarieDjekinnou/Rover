@@ -1,7 +1,5 @@
 package fr.paulm.projects.rover.domain;
 
-import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
-
 public final class Plateau {
     private final int maxX;
     private final int maxY;

@@ -1,6 +1,5 @@
-package fr.paulm.projects.rover.domain.enums;
+package fr.paulm.projects.rover.domain;
 
-import fr.paulm.projects.rover.domain.Position;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;

@@ -1,4 +1,4 @@
-package fr.paulm.projects.rover.domain;
+package fr.paulm.projects.rover.domain.simulation;
 
 // Receives the state of the rovers after each turn, while the simulation runs (observer).
 // The domain does not know what the listener does with it: display it, store it, send it…

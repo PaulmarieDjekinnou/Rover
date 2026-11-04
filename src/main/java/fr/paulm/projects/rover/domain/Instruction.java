@@ -1,4 +1,4 @@
-package fr.paulm.projects.rover.domain.enums;
+package fr.paulm.projects.rover.domain;
 
 import java.util.Arrays;
 import java.util.Optional;

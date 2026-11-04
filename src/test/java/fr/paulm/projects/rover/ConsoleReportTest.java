@@ -1,10 +1,10 @@
 package fr.paulm.projects.rover;
 
-import fr.paulm.projects.rover.domain.MissionResult;
+import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
-import fr.paulm.projects.rover.domain.Turn;
-import fr.paulm.projects.rover.domain.enums.Direction;
+import fr.paulm.projects.rover.domain.simulation.MissionResult;
+import fr.paulm.projects.rover.domain.simulation.Turn;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
