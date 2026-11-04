@@ -95,4 +95,15 @@ class BatteriesTest {
                 Duration.ZERO, busy);
         assertTrue(towardsTheSun.charge(0) > onTheSpot.charge(0));
     }
+
+    @Test
+    void theChargeIsKnownAtAnyTime() {
+        Batteries batteries = batteries(PowerSystem.DEFAULT, 0.5);
+        drive(batteries, Duration.ZERO, Duration.ofHours(10));
+        // 40 Wh less per hour of driving, out of 2000
+        assertEquals(1, batteries.charge(0, Duration.ZERO), 1e-9);
+        assertEquals(0.9, batteries.charge(0, Duration.ofHours(5)), 1e-9);
+        assertEquals(0.8, batteries.charge(0, Duration.ofHours(10)), 1e-9);
+        assertEquals(0.8, batteries.charge(0), 1e-9);
+    }
 }

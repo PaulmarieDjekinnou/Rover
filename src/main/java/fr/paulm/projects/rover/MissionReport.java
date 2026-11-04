@@ -53,14 +53,17 @@ final class MissionReport {
     }
 
     // One line each time an instruction ends, on the common clock: the time (see clock), then each rover that has
-    // landed by then, with its position and direction, and the rovers whose move was blocked:
-    // "Sol 2 05:12: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S (blocked: Climber)".
-    void turn(Turn turn, Deployment deployment, RoverPositions positions) {
+    // landed by then, with its position, direction and battery charge, and whether it is night where it is,
+    // and the rovers whose move was blocked:
+    // "Sol 2 05:12: Polar 67.50N 67.50E N 82% | Climber 22.50S 202.50E S 40% (night) (blocked: Climber)".
+    void turn(Turn turn, Deployment deployment, RoverPositions positions, Batteries batteries) {
         List<Touchdown> landed = deployment.landed();
         List<String> rovers = new ArrayList<>();
         for (int i = 0; i < turn.rovers().size(); i++) {
             if (landed.get(i).time().compareTo(turn.time()) <= 0) {
-                rovers.add(nameOf(landed.get(i)) + " " + positions.of(i) + " " + turn.rovers().get(i).direction());
+                boolean night = deployment.sun().elevation(positions.of(i), turn.time()) <= 0;
+                rovers.add(String.format(Locale.ROOT, "%s %s %s %.0f%%%s", nameOf(landed.get(i)), positions.of(i),
+                        turn.rovers().get(i).direction(), 100 * batteries.charge(i, turn.time()), night ? " (night)" : ""));
             }
         }
         String blocked = turn.blockedRovers().stream().sorted()

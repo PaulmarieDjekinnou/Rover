@@ -8,7 +8,10 @@ import fr.paulm.projects.rover.mars.planet.Sun;
 import fr.paulm.projects.rover.mars.rover.PowerSystem;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 // The batteries of the rovers that landed, followed through the mission: the pace of the rovers on the clock.
 // Each battery starts full. It is charged by the power source of its rover, and drained by the rover: more when it
@@ -32,6 +35,8 @@ public final class Batteries implements Pace {
     private final List<Duration> starts;
     private final double[] levels;
     private final boolean[] charging;
+    // The level of each battery as it went, at each step: the history needs it at any time
+    private final List<TreeMap<Duration, Double>> histories = new ArrayList<>();
 
     public Batteries(Deployment deployment) {
         this.planet = deployment.planet();
@@ -40,6 +45,11 @@ public final class Batteries implements Pace {
         this.starts = deployment.landed().stream().map(Touchdown::time).toList();
         this.levels = systems.stream().mapToDouble(PowerSystem::batteryWattHours).toArray();
         this.charging = new boolean[systems.size()];
+        for (int i = 0; i < systems.size(); i++) {
+            TreeMap<Duration, Double> history = new TreeMap<>();
+            history.put(starts.get(i), levels[i]);
+            histories.add(history);
+        }
     }
 
     // A rover starts when it lands.
@@ -51,6 +61,13 @@ public final class Batteries implements Pace {
     // How full the battery of a rover is after its last instruction, from 0 to 1.
     public double charge(int rover) {
         return levels[rover] / systems.get(rover).batteryWattHours();
+    }
+
+    // How full the battery of a rover was at a time of the clock, from 0 to 1 (full before it landed).
+    // Known up to the end of the last instruction the clock asked about.
+    public double charge(int rover, Duration time) {
+        Map.Entry<Duration, Double> level = histories.get(rover).floorEntry(time);
+        return level == null ? 1 : level.getValue() / systems.get(rover).batteryWattHours();
     }
 
     @Override
@@ -75,6 +92,7 @@ public final class Batteries implements Pace {
             double produced = system.source().watts(sun, along(from, to, done), time);
             double hours = step.toMillis() / 3_600_000.0;
             levels[rover] = Math.clamp(levels[rover] + (produced - used) * hours, 0, capacity);
+            histories.get(rover).put(time.plus(step), levels[rover]);
             if (charging[rover]) {
                 waiting = waiting.plus(step);
                 waited = waited.plus(step);

@@ -101,6 +101,8 @@ public class Main {
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         Deployment deployment = mission.land();
         missionReport.landings(deployment);
+        // The batteries set the pace: a rover waits when it must recharge
+        Batteries batteries = new Batteries(deployment);
         // The exact positions follow each turn, the tracks are drawn on the maps; each turn is printed
         // as soon as it is over, with the history option
         RoverPositions positions = new RoverPositions(deployment);
@@ -109,11 +111,9 @@ public class Main {
             positions.onTurn(turn);
             tracks.onTurn(turn);
             if (commandLine.history()) {
-                missionReport.turn(turn, deployment, positions);
+                missionReport.turn(turn, deployment, positions, batteries);
             }
         };
-        // The batteries set the pace: a rover waits when it must recharge
-        Batteries batteries = new Batteries(deployment);
         List<MissionResult> results = new ClockSimulation(batteries).run(deployment.input(), listener);
         missionReport.results(deployment, results, positions, batteries);
         if (commandLine.map()) {
