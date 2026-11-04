@@ -113,7 +113,7 @@ To add a nominal case, create both files and add the name to `MainTest.validFile
 
 All classes are in the `fr.paulm.projects.rover` package.
 
-`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its ground. `input` builds a `SimulationInput` from a text file.
+`domain` holds the model (how a rover moves on a surface) and does not depend on the rest. `domain.simulation` uses it to run several rovers together and report on them. `mars.planet` describes a planet and its ground, `mars.mission` lands the rovers on it. `input` builds a `SimulationInput` from a text file.
 
 | Package | Class | Role |
 |---|---|---|
@@ -137,6 +137,9 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius cut into the grid of its elevation map; the height of each cell |
 | | `MarsTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
+| `mars.mission` | `MarsMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
+| | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
+| | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
 | | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |
