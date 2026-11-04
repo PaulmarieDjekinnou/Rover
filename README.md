@@ -217,7 +217,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `domain.simulation` | `SimulationInput`, `RoverMission` | the surface, its terrain, and each rover's mission (the rover and its instructions); checks that each rover starts on the surface, on its own cell |
 | | `Simulation` | interface (strategy): runs the missions, sends each turn to a `TurnListener`, and returns the result of each mission |
 | | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers on a plateau: one after the other, turn by turn in input order, or turn by turn all at the same time |
-| | `ClockSimulation` | the rovers of a mission, all at the same time on a common clock: each instruction takes its time, and they are handled in time order |
+| | `ClockSimulation` | the rovers of a mission, all at the same time on a common clock: each instruction is decided when it starts, holds its cells while it lasts, and takes effect when it ends |
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance and the time; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |

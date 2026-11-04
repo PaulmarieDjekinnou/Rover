@@ -9,22 +9,31 @@ import fr.paulm.projects.rover.domain.Terrain;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 
 // The rovers act at the same time, on a common clock. Each instruction takes the time the terrain gives it
-// (a drive, a turn on the spot, or nothing for a move the terrain blocks), and a rover starts its next
-// instruction as soon as the previous one is over. An instruction takes effect when it ends: the simulation
-// handles the ends of instructions in time order and sends each one to the listener, as a turn with its time.
-// At the same time, instructions are handled by rank (all the first instructions, then all the second ones…),
-// then in input order. Without durations, as on a plateau, this is exactly the step-by-step mode.
+// (a drive, a turn on the spot, or nothing for a blocked move), and a rover starts its next instruction as soon
+// as the previous one is over.
+// An instruction is decided when it starts: blocked or not, from where the rovers are and where they are going.
+// A move then holds both cells until it ends: the rover still occupies the cell it leaves, and the cell it goes to
+// is reserved, so that no other rover drives into it meanwhile. The move takes effect when it ends, and each end is
+// sent to the listener, as a turn with its time.
+// Starts and ends are handled in time order, then by rank (all the first instructions, then all the second ones…),
+// then in input order, an end before a start. Without durations, as on a plateau, this is exactly the step-by-step
+// mode: each rover sees the moves of the rovers before it in the same round.
 public final class ClockSimulation implements Simulation {
 
-    // The end of the rank-th instruction of a rover (rank from 0), at the given time
-    private record End(Duration time, int rank, int rover) {
+    // The start or the end of the rank-th instruction of a rover (rank from 0), at the given time
+    private record Event(Duration time, int rank, int rover, boolean start) {
+    }
+
+    // The instruction a rover is carrying out: the state it will be in at the end, or what blocks it
+    private record Decision(Rover next, Optional<Obstacle> obstacle) {
     }
 
     @Override
@@ -32,55 +41,68 @@ public final class ClockSimulation implements Simulation {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
         MissionLog log = new MissionLog(missions.size(), input.terrain());
-        Set<Position> occupiedCells = new HashSet<>();
-        rovers.forEach(rover -> occupiedCells.add(rover.position()));
-        // Empty when rovers can share cells: they never block each other
-        Set<Position> roversCells = input.oneRoverPerCell() ? occupiedCells : Set.of();
+        // How many rovers hold each cell: the rovers on it, and the rovers driving into it. A cell no rover holds
+        // is removed, so the keys are the cells held
+        Map<Position, Integer> heldCells = new HashMap<>();
+        rovers.forEach(rover -> heldCells.merge(rover.position(), 1, Integer::sum));
+        Map<Integer, Decision> decisions = new HashMap<>();
 
-        PriorityQueue<End> ends = new PriorityQueue<>(Comparator.comparing(End::time)
-                .thenComparingInt(End::rank).thenComparingInt(End::rover));
+        PriorityQueue<Event> events = new PriorityQueue<>(Comparator.comparing(Event::time)
+                .thenComparingInt(Event::rank).thenComparingInt(Event::rover)
+                .thenComparing(Event::start));
         for (int i = 0; i < missions.size(); i++) {
-            schedule(ends, input, i, 0, rovers.get(i), Duration.ZERO);
+            if (!missions.get(i).instructions().isEmpty()) {
+                events.add(new Event(Duration.ZERO, 0, i, true));
+            }
         }
         int turn = 0;
-        while (!ends.isEmpty()) {
-            End end = ends.poll();
-            int i = end.rover();
+        while (!events.isEmpty()) {
+            Event event = events.poll();
+            int i = event.rover();
             Rover rover = rovers.get(i);
-            Rover next = rover.apply(missions.get(i).instructions().get(end.rank()), input.surface());
-            Optional<Obstacle> obstacle = rover.obstacleTo(next, input.terrain(), roversCells);
-            if (obstacle.isEmpty()) {
-                occupiedCells.remove(rover.position());
-                occupiedCells.add(next.position());
-                log.done(i, rover, next);
-                rovers.set(i, next);
-            } else {
-                log.blocked(i, obstacle.get());
+            if (event.start()) {
+                Decision decision = decide(input, rover, missions.get(i).instructions().get(event.rank()), heldCells);
+                if (decision.obstacle().isEmpty() && !decision.next().position().equals(rover.position())) {
+                    heldCells.merge(decision.next().position(), 1, Integer::sum);
+                }
+                decisions.put(i, decision);
+                Duration duration = duration(input.terrain(), rover, decision);
+                events.add(new Event(event.time().plus(duration), event.rank(), i, false));
+                continue;
             }
-            listener.onTurn(new Turn(++turn, rovers, obstacle.isEmpty() ? Set.of() : Set.of(i), end.time()));
-            schedule(ends, input, i, end.rank() + 1, rovers.get(i), end.time());
+            Decision decision = decisions.remove(i);
+            if (decision.obstacle().isEmpty()) {
+                if (!decision.next().position().equals(rover.position())) {
+                    heldCells.merge(rover.position(), -1, (held, left) -> held + left == 0 ? null : held + left);
+                }
+                log.done(i, rover, decision.next());
+                rovers.set(i, decision.next());
+            } else {
+                log.blocked(i, decision.obstacle().get());
+            }
+            listener.onTurn(new Turn(++turn, rovers, decision.obstacle().isEmpty() ? Set.of() : Set.of(i), event.time()));
+            if (event.rank() + 1 < missions.get(i).instructions().size()) {
+                events.add(new Event(event.time(), event.rank() + 1, i, true));
+            }
         }
         return log.results(rovers);
     }
 
-    // Schedules the end of the rank-th instruction of a rover, which starts now, if it has one.
-    // It lasts as long as the terrain says, from where the rover is now; a move the terrain blocks takes no time.
-    private void schedule(PriorityQueue<End> ends, SimulationInput input, int rover, int rank, Rover state, Duration now) {
-        List<Instruction> instructions = input.missions().get(rover).instructions();
-        if (rank >= instructions.size()) {
-            return;
-        }
-        Rover next = state.apply(instructions.get(rank), input.surface());
-        ends.add(new End(now.plus(duration(input.terrain(), state, next)), rank, rover));
+    // What the instruction leads to, and what blocks it: the terrain, or a cell held by another rover when cells
+    // hold one rover at most.
+    private Decision decide(SimulationInput input, Rover rover, Instruction instruction, Map<Position, Integer> heldCells) {
+        Rover next = rover.apply(instruction, input.surface());
+        Set<Position> held = input.oneRoverPerCell() ? heldCells.keySet() : Set.of();
+        return new Decision(next, rover.obstacleTo(next, input.terrain(), held));
     }
 
-    private Duration duration(Terrain terrain, Rover from, Rover to) {
-        if (from.position().equals(to.position())) {
-            return terrain.turnTime();
-        }
-        if (!terrain.canDrive(from.position(), to.position())) {
+    private Duration duration(Terrain terrain, Rover rover, Decision decision) {
+        if (decision.obstacle().isPresent()) {
             return Duration.ZERO;
         }
-        return terrain.driveTime(from.position(), to.position());
+        if (decision.next().position().equals(rover.position())) {
+            return terrain.turnTime();
+        }
+        return terrain.driveTime(rover.position(), decision.next().position());
     }
 }

@@ -90,4 +90,34 @@ class ClockSimulationTest {
         assertEquals(new MissionResult(new Rover(new Position(1, 0), Direction.N), 0, 1, 0, Duration.ofSeconds(30)),
                 simulation.run(input).getFirst());
     }
+
+    @Test
+    void aMovingRoverHoldsBothCellsUntilItArrives() {
+        // The first rover drives east from (2, 0) to (3, 0) for 3 minutes. Meanwhile, after 1 minute:
+        // - the second rover cannot drive into (3, 0), reserved by the first one;
+        // - the third rover cannot drive into (2, 0), which the first one has not left yet.
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, true, List.of(
+                mission(2, 0, Direction.E, "M"),
+                mission(3, 2, Direction.S, "MM"),
+                mission(2, 2, Direction.S, "MM")));
+        List<MissionResult> results = simulation.run(input);
+        assertEquals(new Position(3, 0), results.get(0).finalRover().position());
+        assertEquals(new Position(3, 1), results.get(1).finalRover().position());
+        assertEquals(1, results.get(1).blockedByRovers());
+        assertEquals(new Position(2, 1), results.get(2).finalRover().position());
+        assertEquals(1, results.get(2).blockedByRovers());
+    }
+
+    @Test
+    void aRoverCanDriveIntoACellOnceItIsFree() {
+        // The first rover leaves (4, 0) northwards in 1 minute; the second one reaches (3, 0) after 3 minutes
+        // and then drives into (4, 0), long freed
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, true, List.of(
+                mission(4, 0, Direction.N, "M"),
+                mission(2, 0, Direction.E, "MM")));
+        List<MissionResult> results = simulation.run(input);
+        assertEquals(new Position(4, 1), results.get(0).finalRover().position());
+        assertEquals(new Position(4, 0), results.get(1).finalRover().position());
+        assertEquals(0, results.get(1).blockedByRovers());
+    }
 }
