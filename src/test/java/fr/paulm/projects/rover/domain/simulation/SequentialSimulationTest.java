@@ -5,8 +5,10 @@ import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Plateau;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.Terrain;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -141,5 +143,38 @@ class SequentialSimulationTest {
                 mission(0, 0, Direction.E, "MMM"),
                 mission(2, 1, Direction.W, "M")));
         assertEquals(List.of(result(1, 0, Direction.E, 0, 2), result(2, 1, Direction.W, 0, 1)), simulation.run(input));
+    }
+
+    @Test
+    void eachRoverMeasuresItsOwnDistanceAndTime() {
+        // Each move is 10 m long and takes 1 minute; a turn takes 10 seconds. Blocked moves take no time.
+        Terrain measured = new Terrain() {
+            @Override
+            public boolean canDrive(Position from, Position to) {
+                return CLIFF_EAST_OF_COLUMN_1.canDrive(from, to);
+            }
+
+            @Override
+            public double distance(Position from, Position to) {
+                return 10;
+            }
+
+            @Override
+            public Duration driveTime(Position from, Position to) {
+                return Duration.ofMinutes(1);
+            }
+
+            @Override
+            public Duration turnTime() {
+                return Duration.ofSeconds(10);
+            }
+        };
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), measured, List.of(
+                mission(0, 0, Direction.N, "MRMM"),
+                mission(4, 4, Direction.S, "")));
+        List<MissionResult> results = simulation.run(input);
+        assertEquals(new MissionResult(new Rover(new Position(1, 1), Direction.E), 0, 1, 20, Duration.ofSeconds(130)),
+                results.get(0));
+        assertEquals(new MissionResult(new Rover(new Position(4, 4), Direction.S), 0, 0, 0, Duration.ZERO), results.get(1));
     }
 }

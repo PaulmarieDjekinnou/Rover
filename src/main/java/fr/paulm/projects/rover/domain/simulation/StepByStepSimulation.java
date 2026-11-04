@@ -19,7 +19,7 @@ public final class StepByStepSimulation implements Simulation {
     public List<MissionResult> run(SimulationInput input, TurnListener listener) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
-        MissionLog log = new MissionLog(missions.size());
+        MissionLog log = new MissionLog(missions.size(), input.terrain());
         Set<Position> occupiedCells = new HashSet<>();
         rovers.forEach(rover -> occupiedCells.add(rover.position()));
 
@@ -37,6 +37,7 @@ public final class StepByStepSimulation implements Simulation {
                 if (obstacle.isEmpty()) {
                     occupiedCells.remove(rover.position());
                     occupiedCells.add(next.position());
+                    log.done(i, rover, next);
                     rovers.set(i, next);
                 } else {
                     log.blocked(i, obstacle.get());

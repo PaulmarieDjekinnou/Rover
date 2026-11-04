@@ -3,6 +3,8 @@ package fr.paulm.projects.rover.mars.planet;
 import fr.paulm.projects.rover.domain.Position;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,8 +18,13 @@ class MarsTerrainTest {
             "00000000",
             "01400000",
             "00000000");
-    private final MarsTerrain terrain = new MarsTerrain(planet, 10);
+    private final MarsTerrain terrain = new MarsTerrain(planet, mobility(10));
     private final double rowDistance = 2 * Math.PI * 10_000 / 8;
+
+    // 1 m/s on flat ground, to make durations easy to check
+    private static Mobility mobility(double maxSlopeDegrees) {
+        return new Mobility(1, maxSlopeDegrees, Duration.ofMinutes(5));
+    }
 
     @Test
     void slopeIsPositiveUphillAndNegativeDownhill() {
@@ -46,7 +53,7 @@ class MarsTerrainTest {
     void theSameCellCanBeReachedFromOneSideAndNotFromAnother() {
         // The 2 km cell is 1.5 km above its western neighbour, about 7.3 km away (11.7 degrees),
         // and 2 km above its southern neighbour, about 7.9 km away (14.3 degrees)
-        MarsTerrain upTo12Degrees = new MarsTerrain(planet, 12);
+        MarsTerrain upTo12Degrees = new MarsTerrain(planet, mobility(12));
         assertTrue(upTo12Degrees.canDrive(new Position(1, 1), new Position(2, 1)));
         assertFalse(upTo12Degrees.canDrive(new Position(2, 0), new Position(2, 1)));
     }
@@ -54,6 +61,29 @@ class MarsTerrainTest {
     @Test
     void theLimitItselfCanBeDriven() {
         double slope = terrain.slope(new Position(1, 0), new Position(1, 1));
-        assertTrue(new MarsTerrain(planet, slope).canDrive(new Position(1, 0), new Position(1, 1)));
+        assertTrue(new MarsTerrain(planet, mobility(slope)).canDrive(new Position(1, 0), new Position(1, 1)));
+    }
+
+    @Test
+    void distanceIsAlongTheSurface() {
+        assertEquals(rowDistance, terrain.distance(new Position(5, 2), new Position(5, 3)), 1e-9);
+    }
+
+    @Test
+    void driveTimeOnFlatGroundIsTheDistanceAtFullSpeed() {
+        assertEquals(Duration.ofSeconds(Math.round(rowDistance)), terrain.driveTime(new Position(5, 2), new Position(5, 3)));
+    }
+
+    @Test
+    void climbingIsSlowerThanGoingDown() {
+        Duration up = terrain.driveTime(new Position(1, 0), new Position(1, 1));
+        Duration down = terrain.driveTime(new Position(1, 1), new Position(1, 0));
+        assertEquals(Duration.ofSeconds(Math.round(rowDistance)), down);
+        assertTrue(up.compareTo(down) > 0);
+    }
+
+    @Test
+    void turnTimeComesFromTheMobility() {
+        assertEquals(Duration.ofMinutes(5), terrain.turnTime());
     }
 }

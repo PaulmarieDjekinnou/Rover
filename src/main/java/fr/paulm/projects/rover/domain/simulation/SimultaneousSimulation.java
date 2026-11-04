@@ -31,7 +31,7 @@ public final class SimultaneousSimulation implements Simulation {
     public List<MissionResult> run(SimulationInput input, TurnListener listener) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
-        MissionLog log = new MissionLog(missions.size());
+        MissionLog log = new MissionLog(missions.size(), input.terrain());
 
         int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
         for (int turn = 0; turn < turns; turn++) {
@@ -57,7 +57,8 @@ public final class SimultaneousSimulation implements Simulation {
                 if (blocked[i]) {
                     log.blocked(i, blockedByTerrain[i] ? Obstacle.TERRAIN : Obstacle.ROVER);
                     blockedRovers.add(i);
-                } else {
+                } else if (turn < missions.get(i).instructions().size()) {
+                    log.done(i, rovers.get(i), wanted.get(i));
                     rovers.set(i, wanted.get(i));
                 }
             }
