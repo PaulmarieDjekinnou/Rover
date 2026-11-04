@@ -58,7 +58,7 @@ The final position and direction of each rover, one per line, in input order, on
 5 1 E
 ```
 
-With the `--history` option, the state of every rover after each turn is printed first, one line per turn, with the rovers whose move was blocked in that turn:
+With the `--history` option, the state of every rover after each turn is printed as soon as the turn is over, one line per turn, with the rovers whose move was blocked in that turn:
 
 ```
 Turn 1: 0 1 N | 0 3 S
@@ -77,7 +77,7 @@ Cannot read file "input.txt": file not found
 
 An unexpected error (a bug) is reported as `Unexpected error: …`, followed by its stack trace.
 
-The simulation itself has no side effect: it returns its results and its history, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
+The simulation itself has no side effect: it returns its results, sends each turn to a listener given by `Main`, and `Main` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
 ## Requirements
 
@@ -121,8 +121,8 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Rover` | position and direction; executes one instruction, unless it would collide with another rover |
 | | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
 | | `SimulationInput`, `RoverMission` | the plateau, and each rover's mission (the rover and its instructions); checks that each rover starts on the plateau, on its own cell |
-| | `Simulation` | interface (strategy): runs the missions and returns a `SimulationResult` |
-| | `SimulationResult`, `Turn` | the result of each mission, and the history: the state of all the rovers after each turn |
+| | `Simulation` | interface (strategy): runs the missions, sends each turn to a `TurnListener`, and returns the result of each mission |
+| | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
 | | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
 | `domain.exceptions` | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |

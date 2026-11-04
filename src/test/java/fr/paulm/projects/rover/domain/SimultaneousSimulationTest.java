@@ -4,6 +4,7 @@ import fr.paulm.projects.rover.TestInstructions;
 import fr.paulm.projects.rover.domain.enums.Direction;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,7 +19,7 @@ class SimultaneousSimulationTest {
     }
 
     private List<MissionResult> run(RoverMission... missions) {
-        return simulation.run(new SimulationInput(new Plateau(5, 5), List.of(missions))).missions();
+        return simulation.run(new SimulationInput(new Plateau(5, 5), List.of(missions)));
     }
 
     private static MissionResult result(int x, int y, Direction direction, int blockedMoves) {
@@ -92,8 +93,9 @@ class SimultaneousSimulationTest {
     @Test
     void historyShowsEachTurn() {
         // Turn 1: both rovers move together; turn 2: the second rover has finished and blocks the first one
-        List<Turn> history = simulation.run(new SimulationInput(new Plateau(5, 5), List.of(
-                mission(0, 0, Direction.E, "MM"), mission(1, 0, Direction.E, "M")))).history();
+        List<Turn> history = new ArrayList<>();
+        simulation.run(new SimulationInput(new Plateau(5, 5), List.of(
+                mission(0, 0, Direction.E, "MM"), mission(1, 0, Direction.E, "M"))), history::add);
         Rover second = new Rover(new Position(2, 0), Direction.E);
         assertEquals(List.of(
                 new Turn(1, List.of(new Rover(new Position(1, 0), Direction.E), second), Set.of()),

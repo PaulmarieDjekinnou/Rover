@@ -4,9 +4,9 @@ import fr.paulm.projects.rover.domain.MissionResult;
 import fr.paulm.projects.rover.domain.SequentialSimulation;
 import fr.paulm.projects.rover.domain.SimultaneousSimulation;
 import fr.paulm.projects.rover.domain.Simulation;
-import fr.paulm.projects.rover.domain.SimulationResult;
 import fr.paulm.projects.rover.domain.StepByStepSimulation;
 import fr.paulm.projects.rover.domain.Turn;
+import fr.paulm.projects.rover.domain.TurnListener;
 import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
@@ -66,11 +66,10 @@ public class Main {
         String file = args[args.length - 1];
         try {
             SimulationReader reader = readerFactory.apply(Path.of(file));
-            SimulationResult result = options.get().simulation().run(reader.read());
-            if (options.get().history()) {
-                displayHistory(result.history());
-            }
-            display(result.missions());
+            // Each turn is printed as soon as it is over, before the final positions
+            TurnListener listener = options.get().history() ? this::displayTurn : TurnListener.NONE;
+            List<MissionResult> results = options.get().simulation().run(reader.read(), listener);
+            display(results);
             return 0;
         } catch (UncheckedIOException e) {
             LOGGER.error("Cannot read file \"{}\": {}", file, reasonOf(e.getCause()));
@@ -111,15 +110,12 @@ public class Main {
         return Optional.of(new Options(simulation == null ? new SequentialSimulation() : simulation, history));
     }
 
-    // One line per turn, before the final positions: "Turn 3: 0 2 N | 0 3 S (blocked: 1)".
-    // Rovers are numbered from 1, as in the warnings.
-    private void displayHistory(List<Turn> history) {
-        for (Turn turn : history) {
-            String rovers = turn.rovers().stream().map(Object::toString).collect(Collectors.joining(" | "));
-            String blocked = turn.blockedRovers().stream().sorted()
-                    .map(i -> String.valueOf(i + 1)).collect(Collectors.joining(", "));
-            System.out.println("Turn " + turn.number() + ": " + rovers + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
-        }
+    // One line per turn: "Turn 3: 0 2 N | 0 3 S (blocked: 1)". Rovers are numbered from 1, as in the warnings.
+    private void displayTurn(Turn turn) {
+        String rovers = turn.rovers().stream().map(Object::toString).collect(Collectors.joining(" | "));
+        String blocked = turn.blockedRovers().stream().sorted()
+                .map(i -> String.valueOf(i + 1)).collect(Collectors.joining(", "));
+        System.out.println("Turn " + turn.number() + ": " + rovers + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
     // The final positions are the result of the program: they go to the standard output.

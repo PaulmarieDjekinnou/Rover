@@ -9,15 +9,14 @@ import java.util.Optional;
 import java.util.Set;
 
 // The rovers move turn by turn: in each turn, every rover executes its next instruction, in input order.
-// A rover that has no instruction left stays on its cell until the end. Each turn is a turn of the history.
+// A rover that has no instruction left stays on its cell until the end. Each turn is sent to the listener.
 public final class StepByStepSimulation implements Simulation {
 
     @Override
-    public SimulationResult run(SimulationInput input) {
+    public List<MissionResult> run(SimulationInput input, TurnListener listener) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
         int[] blockedMoves = new int[missions.size()];
-        List<Turn> history = new ArrayList<>();
         Set<Position> occupiedCells = new HashSet<>();
         rovers.forEach(rover -> occupiedCells.add(rover.position()));
 
@@ -42,8 +41,8 @@ public final class StepByStepSimulation implements Simulation {
                 }
                 occupiedCells.add(rover.position());
             }
-            history.add(new Turn(turn + 1, rovers, blockedRovers));
+            listener.onTurn(new Turn(turn + 1, rovers, blockedRovers));
         }
-        return SimulationResult.of(rovers, blockedMoves, history);
+        return MissionResult.of(rovers, blockedMoves);
     }
 }

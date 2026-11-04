@@ -15,15 +15,14 @@ import java.util.Set;
 // - two rovers want to swap their cells (they would cross each other);
 // - the cell is occupied by a rover that does not leave it during this turn.
 // A rover can follow another one that leaves its cell in the same turn.
-// A rover that has no instruction left stays on its cell until the end. Each turn is a turn of the history.
+// A rover that has no instruction left stays on its cell until the end. Each turn is sent to the listener.
 public final class SimultaneousSimulation implements Simulation {
 
     @Override
-    public SimulationResult run(SimulationInput input) {
+    public List<MissionResult> run(SimulationInput input, TurnListener listener) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
         int[] blockedMoves = new int[missions.size()];
-        List<Turn> history = new ArrayList<>();
 
         int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
         for (int turn = 0; turn < turns; turn++) {
@@ -43,9 +42,9 @@ public final class SimultaneousSimulation implements Simulation {
                     rovers.set(i, wanted.get(i));
                 }
             }
-            history.add(new Turn(turn + 1, rovers, blockedRovers));
+            listener.onTurn(new Turn(turn + 1, rovers, blockedRovers));
         }
-        return SimulationResult.of(rovers, blockedMoves, history);
+        return MissionResult.of(rovers, blockedMoves);
     }
 
     // Which rovers cannot make the move they want in this turn. A rover that turns or stays never is.
