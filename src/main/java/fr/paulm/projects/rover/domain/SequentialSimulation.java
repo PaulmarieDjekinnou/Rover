@@ -24,23 +24,21 @@ public final class SequentialSimulation implements Simulation {
         Set<Position> occupiedCells = new HashSet<>();
         rovers.forEach(rover -> occupiedCells.add(rover.position()));
 
-        // A read-only view, not a copy: the rover cannot change the cells of the others,
-        // and the set is only modified between two missions.
-        Set<Position> otherRoversCells = Collections.unmodifiableSet(occupiedCells);
+        // A read-only view, not a copy: the rover cannot change it, the simulation updates it after each move
+        Set<Position> roversCells = Collections.unmodifiableSet(occupiedCells);
         for (int i = 0; i < missions.size(); i++) {
-            Rover rover = rovers.get(i);
-            occupiedCells.remove(rover.position());
             for (Instruction instruction : missions.get(i).instructions()) {
-                Optional<Rover> next = rover.step(instruction, input.plateau(), otherRoversCells);
+                Rover rover = rovers.get(i);
+                Optional<Rover> next = rover.step(instruction, input.plateau(), roversCells);
                 if (next.isPresent()) {
-                    rover = next.get();
-                    rovers.set(i, rover);
+                    occupiedCells.remove(rover.position());
+                    occupiedCells.add(next.get().position());
+                    rovers.set(i, next.get());
                 } else {
                     blockedMoves[i]++;
                 }
                 listener.onTurn(new Turn(++turn, rovers, next.isPresent() ? Set.of() : Set.of(i)));
             }
-            occupiedCells.add(rover.position());
         }
         return MissionResult.of(rovers, blockedMoves);
     }

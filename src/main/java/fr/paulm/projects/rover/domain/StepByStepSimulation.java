@@ -29,17 +29,15 @@ public final class StepByStepSimulation implements Simulation {
                     continue;
                 }
                 Rover rover = rovers.get(i);
-                // The rover's own cell is not an obstacle for itself
-                occupiedCells.remove(rover.position());
                 Optional<Rover> next = rover.step(instructions.get(turn), input.plateau(), occupiedCells);
                 if (next.isPresent()) {
-                    rover = next.get();
-                    rovers.set(i, rover);
+                    occupiedCells.remove(rover.position());
+                    occupiedCells.add(next.get().position());
+                    rovers.set(i, next.get());
                 } else {
                     blockedMoves[i]++;
                     blockedRovers.add(i);
                 }
-                occupiedCells.add(rover.position());
             }
             listener.onTurn(new Turn(turn + 1, rovers, blockedRovers));
         }

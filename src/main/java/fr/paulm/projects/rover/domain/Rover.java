@@ -12,12 +12,12 @@ public record Rover(Position position, Direction direction) {
 
     // The rover after one instruction, or empty when the instruction would move it onto an occupied cell,
     // so two rovers never collide. The plateau wraps around (see Plateau.wrap), so a rover never leaves it.
-    // occupiedCells holds the positions of the other rovers; it is only read, never modified.
-    // occupiedCells must not contain the rover's own cell, otherwise a turn on the spot would be blocked.
+    // occupiedCells holds the positions of the rovers; it is only read, never modified. It may contain
+    // the rover's own cell: a rover that stays on its cell (a turn) is never blocked.
     Optional<Rover> step(Instruction instruction, Plateau plateau, Set<Position> occupiedCells) {
         Rover next = apply(instruction, plateau);
-        // Only a move (forward or back) changes the position
-        return occupiedCells.contains(next.position) ? Optional.empty() : Optional.of(next);
+        boolean blocked = !next.position.equals(position) && occupiedCells.contains(next.position);
+        return blocked ? Optional.empty() : Optional.of(next);
     }
 
     // The rover after one instruction, without looking at the other rovers.

@@ -149,4 +149,14 @@ class RoverTest {
         assertEquals(Optional.of(new Rover(new Position(2, 2), W)),
                 new Rover(new Position(2, 2), N).step(Instruction.LEFT, plateau, allAround));
     }
+
+    @Test
+    void stepIgnoresTheRoverOwnCell() {
+        Set<Position> ownCell = Set.of(new Position(2, 2));
+        assertEquals(Optional.of(new Rover(new Position(2, 2), E)),
+                new Rover(new Position(2, 2), N).step(Instruction.RIGHT, plateau, ownCell));
+        // On a single-cell plateau, a move comes back to the same cell: it is not blocked either
+        assertEquals(Optional.of(new Rover(new Position(0, 0), N)),
+                new Rover(new Position(0, 0), N).step(Instruction.MOVE, new Plateau(0, 0), Set.of(new Position(0, 0))));
+    }
 }
