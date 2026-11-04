@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.Position;
+import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Turn;
 import fr.paulm.projects.rover.mars.mission.Deployment;
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -46,12 +48,21 @@ final class MissionReport {
         }
     }
 
-    // One line per turn, with the names of the blocked rovers: "Turn 3: 549 341 N | 310 433 E (blocked: Curiosity)".
+    // One line each time an instruction ends, on the common clock: the time in sols, then each rover that landed
+    // with its position and direction, and the rovers whose move was blocked:
+    // "Sol 2.21: Polar 67.50N 67.50E N | Climber 22.50S 202.50E S (blocked: Climber)".
     void turn(Turn turn, Deployment deployment) {
-        String rovers = turn.rovers().stream().map(Object::toString).collect(Collectors.joining(" | "));
+        List<Touchdown> landed = deployment.landed();
+        List<String> rovers = new ArrayList<>();
+        for (int i = 0; i < turn.rovers().size(); i++) {
+            Rover rover = turn.rovers().get(i);
+            rovers.add(nameOf(landed.get(i)) + " " + landed.get(i).positionIn(rover.position(), deployment.planet())
+                    + " " + rover.direction());
+        }
         String blocked = turn.blockedRovers().stream().sorted()
-                .map(i -> nameOf(deployment.landed().get(i))).collect(Collectors.joining(", "));
-        out.println("Turn " + turn.number() + ": " + rovers + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
+                .map(i -> nameOf(landed.get(i))).collect(Collectors.joining(", "));
+        out.println(String.format(Locale.ROOT, "Sol %.2f: ", sols(turn.time())) + String.join(" | ", rovers)
+                + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
     // The end of the mission of each rover that landed, in input order: its exact position (see
