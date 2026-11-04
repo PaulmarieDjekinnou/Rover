@@ -184,7 +184,7 @@ The tests read input files from `src/test/resources/simulations/`:
 
 To add a nominal case, create both files and add the name to `MainTest.validFile`. Format errors are tested directly on strings in `TextFormatParserTest` and `MarsMissionParserTest`. `mini-planet.txt` is a mission on the small planet drawn in `mini-planet.map.txt`; `mars.txt` is a mission on the real Mars.
 
-`ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else, `domain.simulation` only on `domain`, `input` on both, and only the root package uses everything. The build fails if a dependency goes the wrong way.
+`ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else; `domain.simulation` and `mars.planet` only on `domain`, and never on each other; `mars.mission` on these three; `input` on all of them; and only the root package uses everything. The build fails if a dependency goes the wrong way.
 
 ## Structure
 
