@@ -11,10 +11,15 @@ import fr.paulm.projects.rover.domain.exceptions.InvalidInputException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 // The text format: one line for the plateau, then two lines per rover (position, instructions).
 // Does not know where the text comes from.
 public final class TextFormatParser {
+
+    // The shape of a position line ("1 2 N"). Instructions never contain digits, so a line with this shape
+    // where instructions are expected means that the rover above has no instruction line.
+    private static final Pattern POSITION_SHAPE = Pattern.compile("-?\\d+\\s+-?\\d+\\s+\\S+");
 
     // A non-blank line of the content, trimmed, with its line number in the original content (from 1),
     // so that error messages can point to the right line even when blank lines were skipped.
@@ -30,18 +35,18 @@ public final class TextFormatParser {
         List<Line> lines = nonBlankLines(content);
         Plateau plateau = parsePlateau(lines.get(0));
         // After the plateau line, each rover takes two lines: position, then instructions.
-        int roverCount = (lines.size() - 1) / 2;
         List<RoverMission> missions = new ArrayList<>();
-        for (int r = 0; r < roverCount; r++) {
-            Rover rover = parseRover(lines.get(1 + 2 * r));
-            List<Instruction> instructions = parseInstructions(lines.get(2 + 2 * r));
-            missions.add(new RoverMission(rover, instructions));
+        for (int i = 1; i < lines.size(); i += 2) {
+            Line positionLine = lines.get(i);
+            if (i + 1 == lines.size() || looksLikePosition(lines.get(i + 1))) {
+                throw positionLine.error("Each rover needs a position line and an instruction line");
+            }
+            missions.add(new RoverMission(parseRover(positionLine), parseInstructions(lines.get(i + 1))));
         }
         return new SimulationInput(plateau, missions);
     }
 
-    // Trims each line, removes blank lines and checks that there is a plateau line
-    // followed by complete (position, instructions) pairs.
+    // Trims each line, removes blank lines and checks that there is a plateau line.
     private List<Line> nonBlankLines(String content) {
         List<String> rawLines = content.lines().toList();
         List<Line> lines = new ArrayList<>();
@@ -54,11 +59,11 @@ public final class TextFormatParser {
         if (lines.isEmpty()) {
             throw new InvalidInputException("Empty file: the first line must give the plateau size, for example \"5 5\"");
         }
-        if ((lines.size() - 1) % 2 != 0) {
-            // The last line is a rover position with no instruction line after it
-            throw lines.get(lines.size() - 1).error("Each rover needs a position line and an instruction line");
-        }
         return lines;
+    }
+
+    private boolean looksLikePosition(Line line) {
+        return POSITION_SHAPE.matcher(line.text()).matches();
     }
 
     private Plateau parsePlateau(Line line) {

@@ -46,7 +46,7 @@ MMRMMRMRRM
 - **Line 1**: coordinates of the top-right corner of the plateau.
 - **Then, for each rover, two lines**: its starting position and direction, then its instructions.
 
-Blank lines and extra spaces are ignored.
+Blank lines and extra spaces are ignored. Every rover needs an instruction line: a rover without one is reported on its position line.
 
 ## Output
 

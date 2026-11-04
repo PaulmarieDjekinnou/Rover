@@ -100,7 +100,13 @@ class TextFormatParserTest {
     }
 
     @ParameterizedTest
-    @CsvSource(delimiter = '|', value = {"5 5\\n1 2 N | 2", "5 5\\n1 2 N\\nLMLMLMLMM\\n3 3 E | 4"})
+    @CsvSource(delimiter = '|', value = {
+            "5 5\\n1 2 N | 2",
+            "5 5\\n1 2 N\\nLMLMLMLMM\\n3 3 E | 4",
+            // The error points to the rover without instructions, not to a later line
+            "5 5\\n1 2 N\\n\\n3 3 E\\nMM | 2",
+            "5 5\\n1 2 N\\n\\n3 3 E\\n | 2",
+            "5 5\\n1 2 N\\n-1 0 E\\nMM | 2"})
     void missingInstructionLineIsRejected(String content, int lineNumber) {
         assertEquals("Line " + lineNumber + ": Each rover needs a position line and an instruction line",
                 errorFor(content.replace("\\n", "\n")));
