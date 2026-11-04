@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover;
 
 import fr.paulm.projects.rover.domain.InvalidInputException;
+import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Simulation;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.domain.simulation.TurnListener;
@@ -18,6 +19,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -61,6 +63,9 @@ public class Main {
             boolean history = commandLine.get().history();
             switch (reader.read()) {
                 case Scenario.OnPlateau(SimulationInput input) -> {
+                    if (commandLine.get().map()) {
+                        LOGGER.warn("The {} option only applies to missions to a planet: ignored.", CommandLine.MAP_OPTION);
+                    }
                     // Each turn is printed as soon as it is over, before the final positions
                     TurnListener listener = history ? report::turn : TurnListener.NONE;
                     report.results(simulation.run(input, listener));
@@ -69,7 +74,11 @@ public class Main {
                     Deployment deployment = mission.land();
                     report.landings(deployment);
                     TurnListener listener = history ? turn -> report.turn(turn, deployment) : TurnListener.NONE;
-                    report.results(deployment, simulation.run(deployment.input(), listener));
+                    List<MissionResult> results = simulation.run(deployment.input(), listener);
+                    report.results(deployment, results);
+                    if (commandLine.get().map()) {
+                        report.maps(deployment, results);
+                    }
                 }
             }
             return 0;

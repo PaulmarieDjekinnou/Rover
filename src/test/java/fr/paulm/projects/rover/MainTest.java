@@ -91,6 +91,30 @@ class MainTest {
     }
 
     @Test
+    void mapOptionDrawsTheReliefAroundEachRoverAfterTheResults() throws Exception {
+        Path input = TestResources.path("simulations/valid/mini-planet.txt");
+        assertEquals(0, main().run(new String[]{"--map", input.toString()}));
+        // Polar landed in (1, 2) and ended in (5, 2); Climber landed in (4, 2) and ended in (4, 1), next to the peak
+        assertEquals(List.of(
+                "",
+                "Around Polar:",
+                "Relief from 0 m (.) to 9000 m (@), north up, 8 x 4 cells:",
+                "........",
+                "p..cP...",
+                "..@C....",
+                "........"), outputLines().subList(5, 12));
+        assertEquals(19, outputLines().size());
+    }
+
+    @Test
+    void mapOptionIsIgnoredOnAPlateau() throws Exception {
+        Path input = TestResources.path("simulations/valid/sample.txt");
+        assertEquals(0, main().run(new String[]{"--map", input.toString()}));
+        assertEquals(List.of("1 3 N", "5 1 E"), outputLines());
+        assertEquals(List.of("The --map option only applies to missions to a planet: ignored."), logs.messages());
+    }
+
+    @Test
     void invalidLandingSiteIsReportedWithItsLine() throws Exception {
         Path input = TestResources.path("simulations/invalid/landing-site-too-high.txt");
         assertEquals(1, main().run(new String[]{input.toString()}));

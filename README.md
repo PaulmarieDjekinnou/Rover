@@ -127,6 +127,22 @@ Perseverance: 18.88N 76.88E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
 
 Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, the turns give the cells of the rovers that landed, and the names of the blocked ones.
 
+With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window, and each rover is drawn with the first letter of its name, in capitals where it is and in lower case where it landed. Around Curiosity, the floor of Gale crater appears as dots:
+
+```
+Around Curiosity:
+Relief from -4511 m (.) to 1165 m (@), north up, 31 x 15 cells:
+=+++**++=--=====--=++*++++=****
++*+****++====--=====+#*##**+**+
++++***++**+=:....-+=+++++++===*
+++*******+=-.c.:..:+*=-==+===-=
+=+*******+-..:+#=..+*+====+==-=
+*###*****+-..=+%+=:=*++++=**+--
+##+#******-:--=C==-+##*******=-
+```
+
+The option is ignored, with a warning, for rovers on a plateau.
+
 **Small planets in text.** `planet map mini.txt` reads a planet from a text file next to the mission: its radius, the height of one step, then one row per line, from north to south, one digit per cell (the elevation in steps). Every row has the same, even, number of cells:
 
 ```
@@ -152,6 +168,7 @@ java -jar target/rover.jar --step-by-step src/main/resources/input.txt
 java -jar target/rover.jar --simultaneous src/main/resources/input.txt
 java -jar target/rover.jar --step-by-step --history src/main/resources/input.txt
 java -jar target/rover.jar src/main/resources/mars-mission.txt
+java -jar target/rover.jar --simultaneous --history --map src/main/resources/mars-mission.txt
 ```
 
 ## Tests
@@ -178,8 +195,9 @@ All classes are in the `fr.paulm.projects.rover` package.
 | Package | Class | Role |
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
-| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` option and the file; each mode with the option that selects it |
-| | `ConsoleReport` | prints the landings, the history and the final positions on the standard output, and the warnings through the logger |
+| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history` and `--map` options and the file; each mode with the option that selects it |
+| | `ConsoleReport` | prints the landings, the history, the final positions and the maps on the standard output, and the warnings through the logger |
+| | `ReliefMap` | draws the relief around a cell in text, with the rovers |
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |
 | | `Plateau` | a rectangular surface that wraps around like a torus |

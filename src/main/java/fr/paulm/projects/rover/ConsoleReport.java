@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover;
 
+import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Turn;
 import fr.paulm.projects.rover.mars.mission.Deployment;
@@ -11,8 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 
@@ -23,6 +26,7 @@ final class ConsoleReport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConsoleReport.class);
 
     private final PrintStream out;
+    private final ReliefMap reliefMap = new ReliefMap(31, 15);
 
     ConsoleReport(PrintStream out) {
         this.out = out;
@@ -82,6 +86,23 @@ final class ConsoleReport {
             out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s, %.1f km driven in %.1f sols",
                     name, planet.centerOf(result.finalRover().position()), result.finalRover().position(),
                     result.finalRover().direction(), result.distanceMeters() / 1_000, sols(result.drivingTime())));
+        }
+    }
+
+    // A map of the relief around each rover that landed, at the end of the mission. Each rover is drawn with the
+    // first letter of its name: in capitals where it is, in lower case where it landed.
+    void maps(Deployment deployment, List<MissionResult> results) {
+        List<Touchdown> landed = deployment.landed();
+        Map<Position, Character> marks = new HashMap<>();
+        for (int i = 0; i < results.size(); i++) {
+            char initial = nameOf(landed.get(i)).charAt(0);
+            marks.putIfAbsent(landed.get(i).cell(), Character.toLowerCase(initial));
+            marks.put(results.get(i).finalRover().position(), Character.toUpperCase(initial));
+        }
+        for (int i = 0; i < results.size(); i++) {
+            out.println();
+            out.println("Around " + nameOf(landed.get(i)) + ":");
+            reliefMap.draw(deployment.planet(), results.get(i).finalRover().position(), marks).forEach(out::println);
         }
     }
 
