@@ -11,6 +11,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.CLIFF_EAST_OF_COLUMN_1;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
@@ -171,5 +172,15 @@ class ClockSimulationTest {
         assertEquals(new Position(0, 3), result.finalRover().position());
         assertEquals(Optional.of(Duration.ofMinutes(6)), result.stopTime());
         assertEquals(Duration.ofMinutes(5), result.waitingTime());
+    }
+
+    @Test
+    void eachTurnNamesTheRoverThatActed() {
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, false, List.of(
+                mission(2, 0, Direction.E, "M"),
+                mission(0, 2, Direction.N, "MM")));
+        // The second rover ends its moves after 1 and 2 minutes, the first one after 3
+        assertEquals(List.of(OptionalInt.of(1), OptionalInt.of(1), OptionalInt.of(0)),
+                history(input).stream().map(Turn::actor).toList());
     }
 }

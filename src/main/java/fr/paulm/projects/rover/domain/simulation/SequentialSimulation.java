@@ -5,11 +5,13 @@ import fr.paulm.projects.rover.domain.Obstacle;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 
 // The rovers move one after the other: each rover executes all its instructions before the next one starts.
@@ -43,7 +45,8 @@ public final class SequentialSimulation implements Simulation {
                 } else {
                     log.blocked(i, obstacle.get());
                 }
-                listener.onTurn(new Turn(++turn, rovers, obstacle.isEmpty() ? Set.of() : Set.of(i)));
+                listener.onTurn(new Turn(++turn, rovers, obstacle.isEmpty() ? Set.of() : Set.of(i), Duration.ZERO,
+                        OptionalInt.of(i)));
             }
         }
         return log.results(rovers);

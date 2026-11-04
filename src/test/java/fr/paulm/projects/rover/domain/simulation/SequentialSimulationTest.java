@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.OptionalInt;
 import java.util.Set;
 
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.CLIFF_EAST_OF_COLUMN_1;
@@ -120,10 +121,10 @@ class SequentialSimulationTest {
         Rover second = new Rover(new Position(0, 3), Direction.S);
         assertEquals(6, history.size());
         // Turn 1: only the first rover has moved; the second one has not started yet
-        assertEquals(new Turn(1, List.of(new Rover(new Position(0, 1), Direction.N), second), Set.of()), history.get(0));
+        assertEquals(new Turn(1, List.of(new Rover(new Position(0, 1), Direction.N), second), Set.of(), Duration.ZERO, OptionalInt.of(0)), history.get(0));
         // Turn 3: the first rover is blocked by the second one; turns 4 to 6: the second one is blocked by the first one
-        assertEquals(new Turn(3, List.of(first, second), Set.of(0)), history.get(2));
-        assertEquals(new Turn(6, List.of(first, second), Set.of(1)), history.get(5));
+        assertEquals(new Turn(3, List.of(first, second), Set.of(0), Duration.ZERO, OptionalInt.of(0)), history.get(2));
+        assertEquals(new Turn(6, List.of(first, second), Set.of(1), Duration.ZERO, OptionalInt.of(1)), history.get(5));
     }
 
     @Test

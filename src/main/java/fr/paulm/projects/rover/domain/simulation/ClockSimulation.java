@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -100,7 +101,8 @@ public final class ClockSimulation implements Simulation {
             } else {
                 log.blocked(i, decision.obstacle().get());
             }
-            listener.onTurn(new Turn(++turn, rovers, decision.obstacle().isEmpty() ? Set.of() : Set.of(i), event.time()));
+            listener.onTurn(new Turn(++turn, rovers, decision.obstacle().isEmpty() ? Set.of() : Set.of(i), event.time(),
+                    OptionalInt.of(i)));
             if (event.rank() + 1 < missions.get(i).instructions().size()) {
                 events.add(new Event(event.time(), event.rank() + 1, i, true));
             }
