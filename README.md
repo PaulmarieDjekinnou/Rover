@@ -173,7 +173,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The orbit is taken as a circle: the seasons go at a steady pace, whereas the eccentric orbit of Mars makes its southern summers shorter and hotter. The power of a rover is computed every 10 minutes, at the cell where its instruction starts; its consumption does not depend on the slope or the temperature, and dust does not settle on its panels.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The orbit is taken as a circle: the seasons go at a steady pace, whereas the eccentric orbit of Mars makes its southern summers shorter and hotter. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its consumption does not depend on the slope or the temperature, and dust does not settle on its panels.
 
 ## Requirements
 

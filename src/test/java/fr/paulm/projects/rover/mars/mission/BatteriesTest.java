@@ -38,8 +38,9 @@ class BatteriesTest {
         return new Batteries(deployment);
     }
 
+    // A turn on the spot in the noon cell, as long as busy says
     private Pace.Timing drive(Batteries batteries, Duration start, Duration busy) {
-        return batteries.timing(0, new Rover(noonCell, Direction.N), start, busy);
+        return batteries.timing(0, new Rover(noonCell, Direction.N), new Rover(noonCell, Direction.E), start, busy);
     }
 
     @Test
@@ -78,5 +79,20 @@ class BatteriesTest {
         // It gave up after a whole year of waiting
         Duration year = Duration.ofMillis(Math.round(668.6 * Mars.SOL.toMillis()));
         assertTrue(timing.waiting().compareTo(year) > 0, timing.waiting().toString());
+    }
+
+    @Test
+    void theSunIsTakenAlongTheWay() {
+        // It is 18:00 in cell (2, 0): the Sun sets there. Driving west, towards cell (1, 0) where it is 15:00,
+        // the solar rover gets more sunlight than turning on the spot for the same time.
+        PowerSystem solar = new PowerSystem(new PowerSource.SolarPanels(1.3), 600);
+        Batteries towardsTheSun = batteries(solar, 0.5);
+        Batteries onTheSpot = batteries(solar, 0.5);
+        Duration busy = Duration.ofHours(2);
+        towardsTheSun.timing(0, new Rover(new Position(2, 0), Direction.W), new Rover(new Position(1, 0), Direction.W),
+                Duration.ZERO, busy);
+        onTheSpot.timing(0, new Rover(new Position(2, 0), Direction.W), new Rover(new Position(2, 0), Direction.S),
+                Duration.ZERO, busy);
+        assertTrue(towardsTheSun.charge(0) > onTheSpot.charge(0));
     }
 }

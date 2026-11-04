@@ -77,7 +77,7 @@ public final class ClockSimulation implements Simulation {
                 Decision decision = decide(input, rover, missions.get(i).instructions().get(event.rank()), heldCells);
                 Duration busy = duration(input.terrain(), rover, decision);
                 Pace.Timing timing = decision.obstacle().isPresent()
-                        ? Pace.Timing.done(Duration.ZERO, Duration.ZERO) : pace.timing(i, rover, event.time(), busy);
+                        ? Pace.Timing.done(Duration.ZERO, Duration.ZERO) : pace.timing(i, rover, decision.next(), event.time(), busy);
                 log.waited(i, timing.waiting());
                 if (timing.stopped()) {
                     log.stopped(i, event.time().plus(timing.duration()));

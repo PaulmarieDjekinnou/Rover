@@ -17,7 +17,9 @@ import java.util.List;
 // and recharges until its battery is four fifths full, then goes on: a solar rover drives by day, and spends its
 // nights waiting. A rover whose battery does not reach that level in a whole year of waiting is stopped for good,
 // as Spirit was in 2010.
-// The power is computed step by step (10 minutes), at the cell where the instruction starts.
+// The power is computed step by step (10 minutes), where the rover is: between the centers of the cell it leaves
+// and of the cell it goes to, as far along as it has driven (across a pole, on one side for the first half of the
+// way, on the other side for the second half).
 public final class Batteries implements Pace {
 
     private static final Duration STEP = Duration.ofMinutes(10);
@@ -52,10 +54,9 @@ public final class Batteries implements Pace {
     }
 
     @Override
-    public Timing timing(int rover, Rover state, Duration start, Duration busy) {
+    public Timing timing(int rover, Rover from, Rover to, Duration start, Duration busy) {
         PowerSystem system = systems.get(rover);
         double capacity = system.batteryWattHours();
-        Coordinates point = planet.centerOf(state.position());
         Duration year = Duration.ofMillis(Math.round(planet.orbit().yearInSols() * planet.dayLength().toMillis()));
         Duration time = start;
         Duration left = busy;
@@ -70,7 +71,8 @@ public final class Batteries implements Pace {
             }
             Duration step = charging[rover] || STEP.compareTo(left) < 0 ? STEP : left;
             double used = charging[rover] ? PowerSystem.IDLE_WATTS : PowerSystem.ACTIVE_WATTS;
-            double produced = system.source().watts(sun, point, time);
+            double done = busy.isZero() ? 0 : 1 - left.toMillis() / (double) busy.toMillis();
+            double produced = system.source().watts(sun, along(from, to, done), time);
             double hours = step.toMillis() / 3_600_000.0;
             levels[rover] = Math.clamp(levels[rover] + (produced - used) * hours, 0, capacity);
             if (charging[rover]) {
@@ -86,5 +88,18 @@ public final class Batteries implements Pace {
             time = time.plus(step);
         }
         return Timing.done(busy, waited);
+    }
+
+    // Where a rover is when it has done this part (from 0 to 1) of the way between two states.
+    private Coordinates along(Rover from, Rover to, double done) {
+        Coordinates start = planet.centerOf(from.position());
+        Coordinates end = planet.centerOf(to.position());
+        boolean acrossAPole = !from.position().equals(to.position()) && from.direction() != to.direction();
+        if (acrossAPole) {
+            return done < 0.5 ? start : end;
+        }
+        double eastward = ((end.longitude() - start.longitude()) % 360 + 540) % 360 - 180;
+        return new Coordinates(start.latitude() + done * (end.latitude() - start.latitude()),
+                start.longitude() + done * eastward);
     }
 }

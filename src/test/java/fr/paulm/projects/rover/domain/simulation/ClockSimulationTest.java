@@ -127,7 +127,7 @@ class ClockSimulationTest {
         // The second rover starts 10 minutes after the first one
         Pace lateSecond = new Pace() {
             @Override
-            public Timing timing(int rover, Rover state, Duration start, Duration busy) {
+            public Timing timing(int rover, Rover from, Rover to, Duration start, Duration busy) {
                 return Timing.done(busy, Duration.ZERO);
             }
 
@@ -147,7 +147,7 @@ class ClockSimulationTest {
     @Test
     void thePaceCanMakeARoverWait() {
         // The second rover waits 10 minutes before each instruction
-        Pace slowSecond = (rover, state, start, busy) -> Pace.Timing.done(busy, Duration.ofMinutes(rover == 1 ? 10 : 0));
+        Pace slowSecond = (rover, from, to, start, busy) -> Pace.Timing.done(busy, Duration.ofMinutes(rover == 1 ? 10 : 0));
         SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, false, List.of(
                 mission(0, 2, Direction.N, "M"),
                 mission(4, 2, Direction.N, "MM")));
@@ -163,7 +163,7 @@ class ClockSimulationTest {
     @Test
     void aRoverThePaceStopsLeavesItsOtherInstructionsUndone() {
         // The rover can carry out its first instruction only; it gives up on the second one after 5 minutes
-        Pace oneOnly = (rover, state, start, busy) -> start.isZero()
+        Pace oneOnly = (rover, from, to, start, busy) -> start.isZero()
                 ? Pace.Timing.done(busy, Duration.ZERO) : Pace.Timing.stoppedAfter(Duration.ofMinutes(5), Duration.ofMinutes(5));
         SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, false, List.of(
                 mission(0, 2, Direction.N, "MMM")));

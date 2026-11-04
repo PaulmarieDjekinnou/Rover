@@ -4,8 +4,8 @@ import fr.paulm.projects.rover.domain.Rover;
 
 import java.time.Duration;
 
-// How long a rover takes to carry out an instruction on the common clock, once the terrain has said how long the
-// rover is busy with it: the rover may have to wait first, for instance for its battery to recharge, or it may
+// How long a rover takes to carry out an instruction on the common clock (going from one state to the next),
+// once the terrain has said how long the rover is busy with it: the rover may have to wait first, for instance for its battery to recharge, or it may
 // never manage to, and stop for good where it is, leaving its other instructions undone.
 // The clock asks at the start of each instruction, in time order for each rover.
 // The pace also says when each rover starts (when it lands, on a planet).
@@ -13,9 +13,9 @@ import java.time.Duration;
 public interface Pace {
 
     // Nothing to wait for: an instruction takes the time the terrain gives it, and every rover starts at once.
-    Pace IMMEDIATE = (rover, state, start, busy) -> Timing.done(busy, Duration.ZERO);
+    Pace IMMEDIATE = (rover, from, to, start, busy) -> Timing.done(busy, Duration.ZERO);
 
-    Timing timing(int rover, Rover state, Duration start, Duration busy);
+    Timing timing(int rover, Rover from, Rover to, Duration start, Duration busy);
 
     // When the rover starts its first instruction, on the common clock.
     default Duration start(int rover) {
