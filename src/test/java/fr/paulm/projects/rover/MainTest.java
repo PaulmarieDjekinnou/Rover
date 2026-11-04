@@ -97,7 +97,7 @@ class MainTest {
                 "Sol 2 17:29: Polar 67.50N 67.50E N 51% (night) | Climber 22.50S 202.50E W 51% (blocked: Climber)",
                 "Sol 5 23:28: Polar 67.50N 247.50E S 64% (night) | Climber 22.50S 202.50E W 51% (night)",
                 "Sol 9 05:22: Polar 22.50N 247.50E S 76% (night) | Climber 22.50S 202.50E W 51% (night)"),
-                outputLines().subList(3, 9));
+                outputLines().stream().filter(line -> line.startsWith("Sol ")).toList());
     }
 
     @Test
@@ -131,8 +131,9 @@ class MainTest {
                 "~...~...",
                 "p..cP...",
                 "..@C....",
-                "........"), outputLines().subList(5, 12));
-        assertEquals(19, outputLines().size());
+                "........"), outputLines().subList(11, 18));
+        // 5 lines of landings, 6 of results, then two maps of 7 lines
+        assertEquals(25, outputLines().size());
     }
 
     @Test

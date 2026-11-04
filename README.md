@@ -129,18 +129,27 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The energy.** Each rover has a battery, full at the landing, charged by its power source: a generator gives the same power day and night, solar panels turn a fifth of the sunlight they get into power, so nothing at night, little in winter or in a dust storm. A rover uses 150 W when it drives or turns, and 15 W when it waits. It works while its battery holds more than a fifth of its capacity; below, it waits and recharges until the battery is four fifths full, then goes on, so a solar rover drives by day and waits at night. Waiting takes time on the common clock. A rover whose battery does not recharge in a whole year of waiting stops for good, like Spirit in 2010: its other orders are left undone.
 
-Each rover enters the simulation when it lands, on the common clock: rovers sent at different dates land on different sols. The output gives the landing of each rover, on the mission clock (the sol, from 0, and the time of day), then, for each rover that landed, its final position, its cell and direction, the distance driven and the time spent driving, the time spent waiting for energy, in sols (Martian days of 24 h 39 min 35 s), and the charge of its battery. Both give the local time and the Sun:
+Each rover enters the simulation when it lands, on the common clock: rovers sent at different dates land on different sols. The output gives the landing of each rover, on the mission clock (the sol, from 0, and the time of day), then, for each rover that landed, its final position, its cell and direction, the distance driven and the time spent driving, the time spent waiting for energy, in sols (Martian days of 24 h 39 min 35 s), and the charge of its battery, on several lines per rover. Both give the local time and the Sun:
 
 ```
-Curiosity landed on Sol 0 00:00 at 4.74S 137.45E (cell 549 341), 9.1 km from its target, local time 15:00, Sun 42 degrees high
-Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from its target, local time 15:53, Sun 34 degrees high
-Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target, local time 13:15, Sun 67 degrees high
-Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols, 10.4 sols waiting for energy, battery 69%, local time 06:32, Sun 8 degrees high
-Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols, 8.3 sols waiting for energy, battery 34%, local time 22:29, night
-Opportunity: 1.95S 354.97E (cell 1419 352) facing E, 29.6 km driven in 8.3 sols, 87.8 sols waiting for energy, battery 45%, local time 15:21, Sun 39 degrees high
+Curiosity landed on Sol 0 00:00 at 4.74S 137.45E (cell 549 341), 9.1 km from its target
+  local time 15:00, Sun 42 degrees high
+Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from its target
+  local time 15:53, Sun 34 degrees high
+Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target
+  local time 13:15, Sun 67 degrees high
+Curiosity: 5.49S 137.95E (cell 551 338) facing E
+  73.8 km driven in 25.3 sols, 10.4 sols waiting for energy
+  battery 69%, local time 06:32, Sun 8 degrees high
+Perseverance: 18.84N 76.86E (cell 307 435) facing N
+  71.7 km driven in 21.0 sols, 8.3 sols waiting for energy
+  battery 34%, local time 22:29, night
+Opportunity: 1.95S 354.97E (cell 1419 352) facing E
+  29.6 km driven in 8.3 sols, 87.8 sols waiting for energy
+  battery 45%, local time 15:21, Sun 39 degrees high
 ```
 
-A rover that ran out of energy is reported with the time it stopped: `Spirit stopped, out of energy, on Sol 668 17:39: ...`. The instruction it was on is not done: it stays in its cell. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
+A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
 
 ```
 Sol 7 09:51: Curiosity 4.99S 137.45E S 80% (night) | Perseverance 18.34N 77.61E W 30% (night) | Opportunity 1.95S 354.47E E 50%

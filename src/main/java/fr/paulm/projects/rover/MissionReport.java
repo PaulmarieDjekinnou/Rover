@@ -35,17 +35,19 @@ final class MissionReport {
         this.out = out;
     }
 
-    // Where each rover touched down, before it starts its orders, and the Sun there: "Curiosity landed at
-    // 4.60S 137.45E (cell 549 341), 0.9 km from its target, local time 14:32, Sun 52 degrees high"
+    // Where and when each rover touched down, before it starts its orders, then the Sun there:
+    //   Curiosity landed on Sol 0 00:00 at 4.74S 137.45E (cell 549 341), 9.1 km from its target
+    //     local time 15:00, Sun 42 degrees high
     // or "Twin was lost at landing: ...".
     void landings(Deployment deployment) {
         for (Touchdown touchdown : deployment.touchdowns()) {
             if (touchdown.landed()) {
                 double fromTarget = touchdown.plan().site().target().distanceTo(touchdown.point(),
                         deployment.planet().radiusMeters());
-                out.println(String.format(Locale.ROOT, "%s landed on %s at %s (cell %s), %.1f km from its target, %s",
+                out.println(String.format(Locale.ROOT, "%s landed on %s at %s (cell %s), %.1f km from its target",
                         nameOf(touchdown), clock(touchdown.time(), deployment.planet()), touchdown.point(),
-                        touchdown.cell(), fromTarget / 1_000, sky(deployment.sun(), touchdown.point(), touchdown.time())));
+                        touchdown.cell(), fromTarget / 1_000));
+                out.println("  " + sky(deployment.sun(), touchdown.point(), touchdown.time()));
             } else {
                 out.println(nameOf(touchdown) + " was lost at landing: " + touchdown.failure().orElseThrow().description());
             }
@@ -72,11 +74,12 @@ final class MissionReport {
                 + (blocked.isEmpty() ? "" : " (blocked: " + blocked + ")"));
     }
 
-    // The end of the mission of each rover that landed, in input order: its exact position (see RoverPositions),
-    // its cell and direction, the distance and the time driving, the time waiting for energy, the charge of its
-    // battery, and the Sun when it ends: "Curiosity: 4.54S 137.81E (cell 551 341) facing N, 59.2 km driven in
-    // 17.3 sols, 6.1 sols waiting for energy, battery 63%, local time 03:12, night".
-    // A rover that ran out of energy says when: "Spirit stopped, out of energy, on Sol 312 04:10: ...".
+    // The end of the mission of each rover that landed, in input order: where it is (its exact position, see
+    // RoverPositions, its cell and direction), when it stopped if it ran out of energy, how far it drove and
+    // how long it took, then its battery and the Sun when it ends:
+    //   Curiosity: 5.49S 137.95E (cell 551 338) facing E
+    //     73.8 km driven in 25.3 sols, 10.4 sols waiting for energy
+    //     battery 69%, local time 06:32, Sun 8 degrees high
     void results(Deployment deployment, List<MissionResult> results, RoverPositions positions, Batteries batteries) {
         Planet planet = deployment.planet();
         List<Touchdown> landed = deployment.landed();
@@ -89,13 +92,14 @@ final class MissionReport {
             if (result.blockedByTerrain() > 0) {
                 LOGGER.warn("{}: {} move(s) blocked by the terrain.", name, result.blockedByTerrain());
             }
-            out.println(String.format(Locale.ROOT,
-                    "%s%s %s (cell %s) facing %s, %.1f km driven in %.1f sols, %.1f sols waiting for energy, battery %.0f%%, %s",
-                    name, result.stopTime().map(time -> " stopped, out of energy, on " + clock(time, planet) + ":").orElse(":"),
-                    positions.of(i),
-                    result.finalRover().position(), result.finalRover().direction(), result.distanceMeters() / 1_000,
-                    sols(result.drivingTime(), planet), sols(result.waitingTime(), planet), 100 * batteries.charge(i),
-                    sky(deployment.sun(), positions.of(i), result.stopTime().orElse(landed.get(i).time().plus(result.totalTime())))));
+            out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s", name, positions.of(i),
+                    result.finalRover().position(), result.finalRover().direction()));
+            result.stopTime().ifPresent(time -> out.println("  stopped on " + clock(time, planet) + ", out of energy"));
+            out.println(String.format(Locale.ROOT, "  %.1f km driven in %.1f sols, %.1f sols waiting for energy",
+                    result.distanceMeters() / 1_000, sols(result.drivingTime(), planet), sols(result.waitingTime(), planet)));
+            Duration end = result.stopTime().orElse(landed.get(i).time().plus(result.totalTime()));
+            out.println(String.format(Locale.ROOT, "  battery %.0f%%, %s", 100 * batteries.charge(i),
+                    sky(deployment.sun(), positions.of(i), end)));
         }
     }
 

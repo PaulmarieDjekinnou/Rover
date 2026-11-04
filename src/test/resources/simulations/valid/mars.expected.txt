@@ -1,6 +1,15 @@
-Curiosity landed on Sol 0 00:00 at 4.74S 137.45E (cell 549 341), 9.1 km from its target, local time 15:00, Sun 42 degrees high
-Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from its target, local time 15:53, Sun 34 degrees high
-Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target, local time 13:15, Sun 67 degrees high
-Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols, 10.4 sols waiting for energy, battery 69%, local time 06:32, Sun 8 degrees high
-Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols, 8.3 sols waiting for energy, battery 34%, local time 22:29, night
-Opportunity: 1.95S 354.97E (cell 1419 352) facing E, 29.6 km driven in 8.3 sols, 87.8 sols waiting for energy, battery 45%, local time 15:21, Sun 39 degrees high
+Curiosity landed on Sol 0 00:00 at 4.74S 137.45E (cell 549 341), 9.1 km from its target
+  local time 15:00, Sun 42 degrees high
+Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from its target
+  local time 15:53, Sun 34 degrees high
+Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target
+  local time 13:15, Sun 67 degrees high
+Curiosity: 5.49S 137.95E (cell 551 338) facing E
+  73.8 km driven in 25.3 sols, 10.4 sols waiting for energy
+  battery 69%, local time 06:32, Sun 8 degrees high
+Perseverance: 18.84N 76.86E (cell 307 435) facing N
+  71.7 km driven in 21.0 sols, 8.3 sols waiting for energy
+  battery 34%, local time 22:29, night
+Opportunity: 1.95S 354.97E (cell 1419 352) facing E
+  29.6 km driven in 8.3 sols, 87.8 sols waiting for energy
+  battery 45%, local time 15:21, Sun 39 degrees high
