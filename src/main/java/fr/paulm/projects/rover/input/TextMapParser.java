@@ -2,6 +2,7 @@ package fr.paulm.projects.rover.input;
 
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.mars.planet.ElevationMap;
+import fr.paulm.projects.rover.mars.planet.Mars;
 import fr.paulm.projects.rover.mars.planet.Planet;
 
 import java.time.Duration;
@@ -15,7 +16,8 @@ import java.util.List;
 //   00000000
 //   00090000
 //
-// The radius, the length of a day (a sol), then one line per row of the grid, from north to south as on a map, with one digit per cell: the elevation
+// The radius, the length of a day (a sol), then one line per row of the grid (the planet goes around the Sun
+// like Mars), from north to south as on a map, with one digit per cell: the elevation
 // in steps of meters-per-digit. All rows have the same, even, number of cells.
 public final class TextMapParser {
 
@@ -44,7 +46,7 @@ public final class TextMapParser {
         }
         try {
             ElevationMap map = ElevationMap.fromDigits(rows.stream().map(Line::text).toList(), metersPerDigit);
-            return new Planet(name, radiusMeters, dayLength, map);
+            return new Planet(name, radiusMeters, dayLength, Mars.ORBIT, map);
         } catch (InvalidInputException e) {
             throw rows.getFirst().error(e.getMessage());
         }

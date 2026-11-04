@@ -8,6 +8,7 @@ import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
+import fr.paulm.projects.rover.mars.mission.Sky;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
@@ -66,11 +67,18 @@ class MissionParserTest {
     }
 
     @Test
+    void readsTheSky() {
+        PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
+        assertEquals(new Sky(150, 15.5, 2), mission.sky());
+    }
+
+    @Test
     void settingsHaveDefaults() {
         PlanetMission mission = parser.parse("planet flat\nlanding-max-elevation 0");
         assertEquals(0, mission.seed());
         assertEquals(Mobility.DEFAULT, mission.mobility());
         assertEquals(LandingRules.DEFAULT.withMaxElevation(0), mission.landingRules());
+        assertEquals(Sky.DEFAULT, mission.sky());
         assertEquals(List.of(), mission.rovers());
     }
 
@@ -96,9 +104,12 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: landing-max-elevation, landing-max-latitude, max-slope, seed, speed, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-slope, seed, speed, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
+            "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",
+            "landing-time 3pm                   | Line 4: Invalid time: \"3pm\". Expected: hh:mm, for example 15:00",
+            "dust-opacity -1                    | Line 4: Invalid sky: solar longitude 0.0, dust opacity -1.0. Expected: a dust opacity that is not negative",
             "speed fast                         | Line 4: Invalid number: \"fast\"",
             "speed 0                            | Line 4: Invalid mobility: speed 0.0 m/s, max slope 10.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",
             "max-slope 90                       | Line 4: Invalid mobility: speed 0.04 m/s, max slope 90.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",

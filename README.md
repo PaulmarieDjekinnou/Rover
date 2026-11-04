@@ -85,6 +85,8 @@ An input file that starts with a `planet` line describes a mission to a planet. 
 
 ```
 planet mars
+start-ls 150
+landing-time 15:00
 seed 2026
 
 rover Curiosity
@@ -103,6 +105,9 @@ orders MMMLMM
 | `turn-minutes 5` | optional: how long a turn on the spot takes, in minutes (5 by default) |
 | `landing-max-elevation -1000` | optional: the highest landing site allowed, in meters (-1000 by default) |
 | `landing-max-latitude 30` | optional: the farthest landing site from the equator, in degrees (30 by default) |
+| `start-ls 150` | optional: the season at the landing, as a solar longitude Ls in degrees: 0 at the northern spring equinox, 90 at the northern summer solstice (0 by default) |
+| `landing-time 15:00` | optional: the local solar time of the landing, at the site of the first rover (12:00 by default) |
+| `dust-opacity 0.5` | optional: the optical depth of the dust in the atmosphere, which weakens sunlight: about 0.5 on a clear day, above 4 in a global dust storm (0.5 by default) |
 | `rover <name>` | starts the block of a rover |
 | `site <latitude> <longitude>` | where the rover aims: latitude negative in the south, longitude from 0 to 360 to the east |
 | `ellipse <major> <minor> <azimuth>` | optional: the landing ellipse, axes in km, azimuth of the major axis in degrees from north (none by default) |
@@ -117,13 +122,15 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Unlike on the plateau, several rovers can be in the same cell: a cell is about 15 km wide, so they are kilometers apart, and rovers never block each other. Each instruction takes its time: a move lasts its distance divided by the speed, a turn on the spot `turn-minutes` (5 minutes by default), and a move blocked by the terrain no time. A rover starts its next instruction as soon as the previous one is over, and all the rovers share the same clock: the simulation handles the ends of instructions in time order. The three modes of the plateau do not apply to a mission: their options are ignored, with a warning. On a plateau, where instructions take no time, this clock would give exactly the step-by-step mode.
 
-The output gives the landing of each rover, then, for each rover that landed, its final position, its cell and direction, the distance driven and the time taken, in sols (Martian days of 24 h 39 min 35 s):
+**The Sun.** The planet turns on itself once a sol and goes around the Sun once a year (668.6 sols on Mars), on an axis tilted by 25.19 degrees, which makes the seasons. From the season (Ls), the time and the place, the simulation knows the local solar time and how high the Sun is. Sunlight on the ground is about 586 W/m2 above the atmosphere of Mars, weakened by the dust, all the more as the Sun is low.
+
+The output gives the landing of each rover, then, for each rover that landed, its final position, its cell and direction, the distance driven and the time taken, in sols (Martian days of 24 h 39 min 35 s). Both give the local time and the Sun:
 
 ```
-Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target
-Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target
-Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
-Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
+Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target, local time 15:00, Sun 42 degrees high
+Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target, local time 11:00, Sun 74 degrees high
+Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols, local time 21:32, night
+Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols, local time 10:55, Sun 71 degrees high
 ```
 
 Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the landing (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that landed with its position and direction, and the names of the blocked rovers:
@@ -159,7 +166,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The orbit is taken as a circle: the seasons go at a steady pace, whereas the eccentric orbit of Mars makes its southern summers shorter and hotter.
 
 ## Requirements
 
@@ -222,9 +229,11 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance and the time; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius and day length, cut into the grid of its elevation map; the height of each cell |
+| | `Orbit`, `Sun` | the year, the tilt of the axis and the sunlight of a planet; the season, the local time, the height of the Sun and the sunlight on the ground |
 | `mars.rover` | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
 | `mars.mission` | `PlanetMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
+| | `Sky` | the season and the time of the landing, and the dust in the atmosphere |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
 | | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |

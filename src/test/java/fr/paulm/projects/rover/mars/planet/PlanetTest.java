@@ -52,7 +52,7 @@ class PlanetTest {
     @Test
     void theDayMustLastSomeTime() {
         ElevationMap map = new ElevationMap(2, 1, new short[2]);
-        assertThrows(InvalidInputException.class, () -> new Planet("still", 10_000, Duration.ZERO, map));
+        assertThrows(InvalidInputException.class, () -> new Planet("still", 10_000, Duration.ZERO, Mars.ORBIT, map));
     }
 
     @Test

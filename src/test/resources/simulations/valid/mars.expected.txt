@@ -1,4 +1,4 @@
-Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target
-Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target
-Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols
-Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols
+Curiosity landed at 4.74S 137.45E (cell 549 341), 9.1 km from its target, local time 15:00, Sun 42 degrees high
+Perseverance landed at 18.34N 77.61E (cell 310 433), 3.0 km from its target, local time 11:00, Sun 74 degrees high
+Curiosity: 5.49S 137.95E (cell 551 338) facing E, 73.8 km driven in 25.3 sols, local time 21:32, night
+Perseverance: 18.84N 76.86E (cell 307 435) facing N, 71.7 km driven in 21.0 sols, local time 10:55, Sun 71 degrees high

@@ -1,5 +1,7 @@
 # Two rovers on the real Mars (MOLA map, 4 cells per degree: about 15 km per cell).
 planet mars
+start-ls 150
+landing-time 15:00
 seed 2026
 
 # Curiosity, in Gale crater: heads for the central mound, Aeolis Mons

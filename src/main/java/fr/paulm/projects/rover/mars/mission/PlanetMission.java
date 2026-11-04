@@ -9,6 +9,7 @@ import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.planet.Planet;
+import fr.paulm.projects.rover.mars.planet.Sun;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,9 +18,16 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.SplittableRandom;
 
-// A mission to a planet: the planet, how the rovers drive, the landing rules, the seed of the random draws,
-// and the plan of each rover. The same seed always gives the same landings, so a mission can be replayed.
-public record PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, long seed, List<RoverPlan> rovers) {
+// A mission to a planet: the planet, how the rovers drive, the landing rules, the sky (season and dust),
+// the seed of the random draws, and the plan of each rover. The same seed always gives the same landings,
+// so a mission can be replayed.
+public record PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, Sky sky, long seed,
+                            List<RoverPlan> rovers) {
+
+    // A mission under the default sky.
+    public PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, long seed, List<RoverPlan> rovers) {
+        this(planet, mobility, landingRules, Sky.DEFAULT, seed, rovers);
+    }
 
     // Every rover has its own name, and aims at a site that the landing rules accept.
     public PlanetMission {
@@ -36,6 +44,12 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
 
     public ReliefTerrain terrain() {
         return new ReliefTerrain(planet, mobility);
+    }
+
+    // The Sun of the mission: the landing time is the local time at the site of the first rover.
+    public Sun sun() {
+        Coordinates site = rovers.isEmpty() ? new Coordinates(0, 0) : rovers.getFirst().site().target();
+        return sky.sun(planet, site);
     }
 
     public Landing landing() {
@@ -61,7 +75,8 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
                 missions.add(new RoverMission(new Rover(cell, plan.heading()), plan.orders()));
             }
         }
-        return new Deployment(planet, touchdowns, new SimulationInput(planet.grid(), terrain(), false, missions));
+        return new Deployment(planet, sun(), touchdowns,
+                new SimulationInput(planet.grid(), terrain(), false, missions));
     }
 
     private Optional<LandingFailure> failureAt(Coordinates point, Position cell, List<Coordinates> landedPoints,

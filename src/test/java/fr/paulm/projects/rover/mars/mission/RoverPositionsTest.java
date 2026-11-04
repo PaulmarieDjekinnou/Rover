@@ -23,7 +23,7 @@ class RoverPositionsTest {
     private static RoverPositions landedAt(Position cell, Direction heading, Coordinates point) {
         RoverPlan plan = new RoverPlan("Rover", new LandingSite(point, Ellipse.NONE), heading, List.of());
         Rover rover = new Rover(cell, heading);
-        Deployment deployment = new Deployment(PLANET, List.of(new Touchdown(plan, point, cell, Optional.empty())),
+        Deployment deployment = new Deployment(PLANET, Sky.DEFAULT.sun(PLANET, point), List.of(new Touchdown(plan, point, cell, Optional.empty())),
                 new SimulationInput(PLANET.grid(), Terrain.FLAT,
                         false, List.of(new RoverMission(rover, List.of()))));
         return new RoverPositions(deployment);

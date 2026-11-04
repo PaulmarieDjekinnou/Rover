@@ -1,5 +1,5 @@
-Polar landed at 22.50N 67.50E (cell 1 2), 0.0 km from its target
-Climber landed at 22.50N 202.50E (cell 4 2), 0.0 km from its target
+Polar landed at 22.50N 67.50E (cell 1 2), 0.0 km from its target, local time 12:00, Sun 68 degrees high
+Climber landed at 22.50N 202.50E (cell 4 2), 0.0 km from its target, local time 21:00, night
 Twin was lost at landing: landed on another rover (less than 100 m away)
-Polar: 22.50N 247.50E (cell 5 2) facing S, 23.6 km driven in 6.6 sols
-Climber: 22.50S 202.50E (cell 4 1) facing W, 7.9 km driven in 2.2 sols
+Polar: 22.50N 247.50E (cell 5 2) facing S, 23.6 km driven in 6.6 sols, local time 15:14, Sun 38 degrees high
+Climber: 22.50S 202.50E (cell 4 1) facing W, 7.9 km driven in 2.2 sols, local time 02:09, night

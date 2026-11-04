@@ -9,6 +9,7 @@ import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
+import fr.paulm.projects.rover.mars.mission.Sky;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.rover.Mobility;
@@ -29,6 +30,9 @@ import java.util.function.Function;
 //   max-slope 10                  optional: the steepest slope the rovers can drive on, in degrees
 //   speed 0.04                    optional: the speed of the rovers on flat ground, in m/s
 //   turn-minutes 5                optional: how long a turn on the spot takes, in minutes
+//   start-ls 150                  optional: the season at the landing, as a solar longitude in degrees (0 by default)
+//   landing-time 15:00            optional: the local time of the landing, at the site of the first rover (12:00)
+//   dust-opacity 0.5              optional: the optical depth of the dust in the atmosphere (0.5 by default)
 //   landing-max-elevation -1000   optional: the highest landing site allowed, in meters
 //   landing-max-latitude 30       optional: the farthest landing site from the equator, in degrees
 //
@@ -43,7 +47,8 @@ import java.util.function.Function;
 public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
-            Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude");
+            Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
+                    "start-ls", "landing-time", "dust-opacity");
     private static final Set<String> ROVER_KEYS = Set.of("site", "ellipse", "heading", "orders");
 
     // A block of lines: its first line (the planet or a rover), then its settings by keyword
@@ -74,6 +79,7 @@ public final class MissionParser {
         Mobility mobility = mobility(mission.settings());
         LandingRules rules = landingRules(mission.settings());
         long seed = mission.settings().containsKey("seed") ? mission.settings().get("seed").integer() : 0;
+        Sky sky = sky(mission.settings(), planet);
 
         Landing landing = new PlanetMission(planet, mobility, rules, seed, List.of()).landing();
         List<RoverPlan> rovers = new ArrayList<>();
@@ -85,7 +91,7 @@ public final class MissionParser {
             }
             rovers.add(rover);
         }
-        return new PlanetMission(planet, mobility, rules, seed, rovers);
+        return new PlanetMission(planet, mobility, rules, sky, seed, rovers);
     }
 
     // The planet block, then one block per rover. Each block holds known settings, each given once.
@@ -135,6 +141,38 @@ public final class MissionParser {
             mobility = line.check(() -> current.withTurnTime(turnTime));
         }
         return mobility;
+    }
+
+    // The season, the time of the landing and the dust.
+    private Sky sky(Map<String, Line> settings, Planet planet) {
+        double startLs = settings.containsKey("start-ls")
+                ? settings.get("start-ls").decimal() : Sky.DEFAULT.startSolarLongitudeDegrees();
+        double hours = settings.containsKey("landing-time")
+                ? hours(settings.get("landing-time")) : Sky.DEFAULT.landingHours();
+        double dust = settings.containsKey("dust-opacity")
+                ? settings.get("dust-opacity").decimal() : Sky.DEFAULT.dustOpacity();
+        if (settings.containsKey("dust-opacity")) {
+            settings.get("dust-opacity").check(() -> new Sky(startLs, hours, dust).sun(planet, new Coordinates(0, 0)));
+        }
+        return new Sky(startLs, hours, dust);
+    }
+
+    // A local time written hh:mm, in hours.
+    private double hours(Line line) {
+        String value = line.value(line.keyword());
+        String[] parts = value.split(":");
+        try {
+            if (parts.length == 2 && parts[1].length() == 2) {
+                int hours = Integer.parseInt(parts[0]);
+                int minutes = Integer.parseInt(parts[1]);
+                if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
+                    return hours + minutes / 60.0;
+                }
+            }
+        } catch (NumberFormatException e) {
+            // reported below
+        }
+        throw line.error("Invalid time: \"" + value + "\". Expected: hh:mm, for example 15:00");
     }
 
     private LandingRules landingRules(Map<String, Line> settings) {

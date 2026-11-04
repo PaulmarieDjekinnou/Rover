@@ -28,7 +28,7 @@ public final class MolaFileReader {
             if (in == null) {
                 throw new IllegalStateException("Missing resource: " + MARS_RESOURCE);
             }
-            return new Planet("Mars", Mars.MEAN_RADIUS_METERS, Mars.SOL, read(in, MARS_COLUMNS, MARS_ROWS));
+            return new Planet("Mars", Mars.MEAN_RADIUS_METERS, Mars.SOL, Mars.ORBIT, read(in, MARS_COLUMNS, MARS_ROWS));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

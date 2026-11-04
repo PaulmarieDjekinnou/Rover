@@ -7,21 +7,24 @@ import fr.paulm.projects.rover.domain.SphereGrid;
 import java.time.Duration;
 
 // A planet as the simulation sees it: a sphere of a given radius, cut into the latitude / longitude grid
-// of its elevation map, turning on itself once a day (a sol). It never changes during a simulation.
+// of its elevation map, turning on itself once a day (a sol) and around the Sun once a year (its orbit).
+// It never changes during a simulation.
 public final class Planet {
     private final String name;
     private final double radiusMeters;
     private final Duration dayLength;
+    private final Orbit orbit;
     private final ElevationMap elevations;
     private final SphereGrid grid;
 
-    public Planet(String name, double radiusMeters, Duration dayLength, ElevationMap elevations) {
+    public Planet(String name, double radiusMeters, Duration dayLength, Orbit orbit, ElevationMap elevations) {
         if (!dayLength.isPositive()) {
             throw new InvalidInputException("Invalid day length: " + dayLength + ". Expected: a positive duration");
         }
         this.name = name;
         this.radiusMeters = radiusMeters;
         this.dayLength = dayLength;
+        this.orbit = orbit;
         this.elevations = elevations;
         this.grid = new SphereGrid(elevations.columns(), elevations.rows());
     }
@@ -37,6 +40,10 @@ public final class Planet {
     // The length of a solar day, a sol: 24 h 39 min 35 s on Mars.
     public Duration dayLength() {
         return dayLength;
+    }
+
+    public Orbit orbit() {
+        return orbit;
     }
 
     public SphereGrid grid() {
