@@ -4,6 +4,8 @@ import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -38,6 +40,12 @@ class PlanetTest {
     @Test
     void elevationMapRejectsAWrongNumberOfValues() {
         assertThrows(InvalidInputException.class, () -> new ElevationMap(2, 2, new short[3]));
+    }
+
+    @Test
+    void mapInDigitsRejectsRowsOfDifferentLengthsOrOtherCharacters() {
+        assertThrows(InvalidInputException.class, () -> ElevationMap.fromDigits(List.of("00", "000"), 100));
+        assertThrows(InvalidInputException.class, () -> ElevationMap.fromDigits(List.of("0x"), 100));
     }
 
     @Test

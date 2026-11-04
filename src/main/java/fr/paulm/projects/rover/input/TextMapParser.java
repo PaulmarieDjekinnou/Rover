@@ -28,22 +28,18 @@ public final class TextMapParser {
         }
         int metersPerDigit = (int) number(lines.get(1), "meters-per-digit");
         List<Line> rows = lines.subList(2, lines.size());
-        int columns = rows.get(0).text().length();
-        short[] elevations = new short[columns * rows.size()];
-        for (int line = 0; line < rows.size(); line++) {
-            Line row = rows.get(line);
+        // Each row is checked here first, to report the right line
+        int columns = rows.getFirst().text().length();
+        for (Line row : rows) {
             if (row.text().length() != columns || !row.text().chars().allMatch(Character::isDigit)) {
                 throw row.error("Invalid map row: \"" + row.text() + "\". Expected: " + columns + " digits");
             }
-            int y = rows.size() - 1 - line;
-            for (int x = 0; x < columns; x++) {
-                elevations[y * columns + x] = (short) (Character.digit(row.text().charAt(x), 10) * metersPerDigit);
-            }
         }
         try {
-            return new Planet(name, radiusMeters, new ElevationMap(columns, rows.size(), elevations));
+            ElevationMap map = ElevationMap.fromDigits(rows.stream().map(Line::text).toList(), metersPerDigit);
+            return new Planet(name, radiusMeters, map);
         } catch (InvalidInputException e) {
-            throw rows.get(0).error(e.getMessage());
+            throw rows.getFirst().error(e.getMessage());
         }
     }
 
