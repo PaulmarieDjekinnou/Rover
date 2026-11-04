@@ -118,43 +118,65 @@ class RoverTest {
         assertEquals(new Rover(new Position(3, 2), E), roverEnd);
     }
 
-    // Collisions: step refuses a move onto a cell occupied by another rover
-    @Test
-    void stepMovesOntoAFreeCell() {
-        assertEquals(Optional.of(new Rover(new Position(2, 3), N)),
-                new Rover(new Position(2, 2), N).step(Instruction.MOVE, plateau, Set.of(new Position(4, 4))));
+    // Obstacles: what stops a move onto a cell occupied by another rover, or across a terrain that does not allow it
+    private Optional<Obstacle> obstacle(Rover rover, Instruction instruction, Plateau plateau, Terrain terrain,
+                                        Set<Position> occupiedCells) {
+        return rover.obstacleTo(rover.apply(instruction, plateau), terrain, occupiedCells);
+    }
+
+    private Optional<Obstacle> obstacle(Rover rover, Instruction instruction, Set<Position> occupiedCells) {
+        return obstacle(rover, instruction, plateau, Terrain.FLAT, occupiedCells);
     }
 
     @Test
-    void stepOntoAnOccupiedCellIsBlocked() {
-        assertEquals(Optional.empty(), new Rover(new Position(2, 2), N).step(Instruction.MOVE, plateau, Set.of(new Position(2, 3))));
+    void nothingStopsAMoveOntoAFreeCell() {
+        assertEquals(Optional.empty(), obstacle(new Rover(new Position(2, 2), N), Instruction.MOVE, Set.of(new Position(4, 4))));
     }
 
     @Test
-    void stepBackOntoAnOccupiedCellIsBlocked() {
-        assertEquals(Optional.empty(), new Rover(new Position(2, 2), N).step(Instruction.BACK, plateau, Set.of(new Position(2, 1))));
+    void aRoverStopsAMoveOntoItsCell() {
+        assertEquals(Optional.of(Obstacle.ROVER), obstacle(new Rover(new Position(2, 2), N), Instruction.MOVE, Set.of(new Position(2, 3))));
     }
 
     @Test
-    void stepIsBlockedByARoverOnTheOtherSideOfTheEdge() {
+    void aRoverStopsAMoveBackOntoItsCell() {
+        assertEquals(Optional.of(Obstacle.ROVER), obstacle(new Rover(new Position(2, 2), N), Instruction.BACK, Set.of(new Position(2, 1))));
+    }
+
+    @Test
+    void aRoverOnTheOtherSideOfTheEdgeStopsAMove() {
         // Leaving (0, 5) to the north leads to (0, 0), which is occupied
-        assertEquals(Optional.empty(), new Rover(new Position(0, 5), N).step(Instruction.MOVE, plateau, Set.of(new Position(0, 0))));
+        assertEquals(Optional.of(Obstacle.ROVER), obstacle(new Rover(new Position(0, 5), N), Instruction.MOVE, Set.of(new Position(0, 0))));
     }
 
     @Test
-    void turnIsNeverBlocked() {
+    void theTerrainStopsAMoveItDoesNotAllow() {
+        Terrain noWayNorth = (from, to) -> to.y() <= from.y();
+        Rover rover = new Rover(new Position(2, 2), N);
+        assertEquals(Optional.of(Obstacle.TERRAIN), obstacle(rover, Instruction.MOVE, plateau, noWayNorth, Set.of()));
+        assertEquals(Optional.empty(), obstacle(rover, Instruction.BACK, plateau, noWayNorth, Set.of()));
+    }
+
+    @Test
+    void theTerrainIsCheckedBeforeTheRovers() {
+        Terrain wall = (from, to) -> false;
+        assertEquals(Optional.of(Obstacle.TERRAIN),
+                obstacle(new Rover(new Position(2, 2), N), Instruction.MOVE, plateau, wall, Set.of(new Position(2, 3))));
+    }
+
+    @Test
+    void aTurnIsNeverStopped() {
         Set<Position> allAround = Set.of(new Position(2, 3), new Position(3, 2), new Position(2, 1), new Position(1, 2));
-        assertEquals(Optional.of(new Rover(new Position(2, 2), W)),
-                new Rover(new Position(2, 2), N).step(Instruction.LEFT, plateau, allAround));
+        Terrain wall = (from, to) -> false;
+        assertEquals(Optional.empty(), obstacle(new Rover(new Position(2, 2), N), Instruction.LEFT, plateau, wall, allAround));
     }
 
     @Test
-    void stepIgnoresTheRoverOwnCell() {
+    void theRoverOwnCellIsNotAnObstacle() {
         Set<Position> ownCell = Set.of(new Position(2, 2));
-        assertEquals(Optional.of(new Rover(new Position(2, 2), E)),
-                new Rover(new Position(2, 2), N).step(Instruction.RIGHT, plateau, ownCell));
-        // On a single-cell plateau, a move comes back to the same cell: it is not blocked either
-        assertEquals(Optional.of(new Rover(new Position(0, 0), N)),
-                new Rover(new Position(0, 0), N).step(Instruction.MOVE, new Plateau(0, 0), Set.of(new Position(0, 0))));
+        assertEquals(Optional.empty(), obstacle(new Rover(new Position(2, 2), N), Instruction.RIGHT, ownCell));
+        // On a single-cell plateau, a move comes back to the same cell: it is not stopped either
+        assertEquals(Optional.empty(),
+                obstacle(new Rover(new Position(0, 0), N), Instruction.MOVE, new Plateau(0, 0), Terrain.FLAT, Set.of(new Position(0, 0))));
     }
 }

@@ -124,17 +124,19 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |
 | | `Plateau` | a rectangular surface that wraps around like a torus |
 | | `SphereGrid` | a latitude / longitude grid on a sphere: the longitude wraps around, and crossing a pole turns the rover around |
+| | `Terrain`, `Obstacle` | interface: whether the ground allows a move; what can stop a rover (another rover or the terrain) |
 | | `Direction` | the four directions, their rotations and the cell ahead of a position |
 | | `Instruction` | the `LEFT`, `RIGHT`, `MOVE` and `BACK` commands (written `L`, `R`, `M` and `B` in the text format) |
-| | `Rover` | position and direction; executes one instruction, unless it would collide with another rover |
+| | `Rover` | position and direction; executes one instruction, and tells what would stop it (the terrain, another rover) |
 | | `InvalidInputException` | the input content is invalid (format or rule); the message explains the error |
-| `domain.simulation` | `SimulationInput`, `RoverMission` | the surface, and each rover's mission (the rover and its instructions); checks that each rover starts on the surface, on its own cell |
+| `domain.simulation` | `SimulationInput`, `RoverMission` | the surface, its terrain, and each rover's mission (the rover and its instructions); checks that each rover starts on the surface, on its own cell |
 | | `Simulation` | interface (strategy): runs the missions, sends each turn to a `TurnListener`, and returns the result of each mission |
 | | `SequentialSimulation`, `StepByStepSimulation`, `SimultaneousSimulation` | the three ways of moving the rovers: one after the other, turn by turn in input order, or turn by turn all at the same time |
 | | `Turn`, `TurnListener` | the state of all the rovers after a turn, and the observer that receives it while the simulation runs |
-| | `MissionResult` | how a mission ended: the rover's final state and the number of blocked moves |
+| | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state and its moves blocked by rovers and by the terrain; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius cut into the grid of its elevation map; the height of each cell |
+| | `MarsTerrain` | the slopes between cells, and which ones a rover can drive |
 | `input` | `SimulationReader` | interface: a possible input for the simulation (text file, and later JSON, database…) |
 | | `TextFileReader` | reads a file and passes its content to `TextFormatParser` |
 | | `TextFormatParser` | reads and validates the text format, wherever the content comes from; errors give the line number |

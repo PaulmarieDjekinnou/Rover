@@ -11,7 +11,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.CLIFF_EAST_OF_COLUMN_1;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.result;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SequentialSimulationTest {
@@ -23,7 +25,7 @@ class SequentialSimulationTest {
     }
 
     private static List<Integer> blockedMoves(List<MissionResult> results) {
-        return results.stream().map(MissionResult::blockedMoves).toList();
+        return results.stream().map(MissionResult::blockedByRovers).toList();
     }
 
     @Test
@@ -131,5 +133,13 @@ class SequentialSimulationTest {
         List<MissionResult> results = simulation.run(input, history::add);
         assertEquals(19, history.size());
         assertEquals(results.stream().map(MissionResult::finalRover).toList(), history.getLast().rovers());
+    }
+
+    @Test
+    void terrainBlocksTheMovesItDoesNotAllow() {
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), CLIFF_EAST_OF_COLUMN_1, List.of(
+                mission(0, 0, Direction.E, "MMM"),
+                mission(2, 1, Direction.W, "M")));
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 2), result(2, 1, Direction.W, 0, 1)), simulation.run(input));
     }
 }

@@ -2,19 +2,12 @@ package fr.paulm.projects.rover.domain.simulation;
 
 import fr.paulm.projects.rover.domain.Rover;
 
-import java.util.ArrayList;
-import java.util.List;
+// How a rover's mission ended: its final state, and how many of its moves were blocked by another rover
+// and by the terrain.
+public record MissionResult(Rover finalRover, int blockedByRovers, int blockedByTerrain) {
 
-// How a rover's mission ended: its final state, and how many moves were blocked by another rover.
-public record MissionResult(Rover finalRover, int blockedMoves) {
-
-    // The results of all the missions, from the final state of each rover and its number of blocked moves,
-    // in input order.
-    static List<MissionResult> of(List<Rover> finalRovers, int[] blockedMoves) {
-        List<MissionResult> results = new ArrayList<>();
-        for (int i = 0; i < finalRovers.size(); i++) {
-            results.add(new MissionResult(finalRovers.get(i), blockedMoves[i]));
-        }
-        return results;
+    // A mission on flat ground, where only rovers can block a move.
+    public MissionResult(Rover finalRover, int blockedByRovers) {
+        this(finalRover, blockedByRovers, 0);
     }
 }

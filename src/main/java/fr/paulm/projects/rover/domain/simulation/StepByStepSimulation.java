@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.domain.simulation;
 
 import fr.paulm.projects.rover.domain.Instruction;
+import fr.paulm.projects.rover.domain.Obstacle;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 
@@ -18,7 +19,7 @@ public final class StepByStepSimulation implements Simulation {
     public List<MissionResult> run(SimulationInput input, TurnListener listener) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
-        int[] blockedMoves = new int[missions.size()];
+        MissionLog log = new MissionLog(missions.size());
         Set<Position> occupiedCells = new HashSet<>();
         rovers.forEach(rover -> occupiedCells.add(rover.position()));
 
@@ -31,18 +32,19 @@ public final class StepByStepSimulation implements Simulation {
                     continue;
                 }
                 Rover rover = rovers.get(i);
-                Optional<Rover> next = rover.step(instructions.get(turn), input.surface(), occupiedCells);
-                if (next.isPresent()) {
+                Rover next = rover.apply(instructions.get(turn), input.surface());
+                Optional<Obstacle> obstacle = rover.obstacleTo(next, input.terrain(), occupiedCells);
+                if (obstacle.isEmpty()) {
                     occupiedCells.remove(rover.position());
-                    occupiedCells.add(next.get().position());
-                    rovers.set(i, next.get());
+                    occupiedCells.add(next.position());
+                    rovers.set(i, next);
                 } else {
-                    blockedMoves[i]++;
+                    log.blocked(i, obstacle.get());
                     blockedRovers.add(i);
                 }
             }
             listener.onTurn(new Turn(turn + 1, rovers, blockedRovers));
         }
-        return MissionResult.of(rovers, blockedMoves);
+        return log.results(rovers);
     }
 }

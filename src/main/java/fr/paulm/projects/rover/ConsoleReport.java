@@ -30,12 +30,15 @@ final class ConsoleReport {
     }
 
     // The final positions are the result of the program, one line per rover.
-    // A warning reports each rover that had moves blocked by another rover.
+    // A warning reports each rover that had moves blocked by another rover, and another one by the terrain.
     void results(List<MissionResult> results) {
         for (int i = 0; i < results.size(); i++) {
             MissionResult result = results.get(i);
-            if (result.blockedMoves() > 0) {
-                LOGGER.warn("Rover {}: {} move(s) blocked by another rover.", i + 1, result.blockedMoves());
+            if (result.blockedByRovers() > 0) {
+                LOGGER.warn("Rover {}: {} move(s) blocked by another rover.", i + 1, result.blockedByRovers());
+            }
+            if (result.blockedByTerrain() > 0) {
+                LOGGER.warn("Rover {}: {} move(s) blocked by the terrain.", i + 1, result.blockedByTerrain());
             }
             out.println(result.finalRover());
         }

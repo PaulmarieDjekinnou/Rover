@@ -56,4 +56,12 @@ class ConsoleReportTest {
         assertEquals(List.of("0 2 N", "0 3 S"), outputLines());
         assertEquals(List.of("Rover 2: 3 move(s) blocked by another rover."), warnings.messages());
     }
+
+    @Test
+    void resultsWarnAboutMovesBlockedByTheTerrain() {
+        report.results(List.of(new MissionResult(first, 1, 2)));
+        assertEquals(List.of(
+                "Rover 1: 1 move(s) blocked by another rover.",
+                "Rover 1: 2 move(s) blocked by the terrain."), warnings.messages());
+    }
 }

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.CLIFF_EAST_OF_COLUMN_1;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.result;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -139,5 +140,22 @@ class SimultaneousSimulationTest {
                 new Turn(1, List.of(new Rover(new Position(1, 0), Direction.E), second), Set.of()),
                 new Turn(2, List.of(new Rover(new Position(1, 0), Direction.E), second), Set.of(0))),
                 history);
+    }
+
+    @Test
+    void roverBlockedByTheTerrainBlocksTheRoverWantingItsCell() {
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), CLIFF_EAST_OF_COLUMN_1, List.of(
+                mission(1, 0, Direction.E, "M"),
+                mission(1, 1, Direction.S, "M")));
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 1), result(1, 1, Direction.S, 1, 0)), simulation.run(input));
+    }
+
+    @Test
+    void roverBlockedByTheTerrainNoLongerWantsTheCellAhead() {
+        // Both rovers want (2, 0), but the first one cannot cross the cliff: the second one gets the cell
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), CLIFF_EAST_OF_COLUMN_1, List.of(
+                mission(1, 0, Direction.E, "M"),
+                mission(3, 0, Direction.W, "M")));
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 1), result(2, 0, Direction.W, 0, 0)), simulation.run(input));
     }
 }

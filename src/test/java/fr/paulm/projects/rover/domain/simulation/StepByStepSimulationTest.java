@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import static fr.paulm.projects.rover.domain.simulation.TestMissions.CLIFF_EAST_OF_COLUMN_1;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.result;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -81,5 +82,14 @@ class StepByStepSimulationTest {
                 new Turn(2, List.of(new Rover(new Position(0, 2), Direction.N), second), Set.of()),
                 new Turn(3, List.of(new Rover(new Position(0, 3), Direction.N), second), Set.of())),
                 history);
+    }
+
+    @Test
+    void terrainBlocksTheMovesItDoesNotAllow() {
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), CLIFF_EAST_OF_COLUMN_1, List.of(
+                mission(0, 0, Direction.E, "MMM"),
+                mission(1, 1, Direction.S, "M")));
+        // The second rover is blocked by the first one, which is blocked by the cliff
+        assertEquals(List.of(result(1, 0, Direction.E, 0, 2), result(1, 1, Direction.S, 1, 0)), simulation.run(input));
     }
 }

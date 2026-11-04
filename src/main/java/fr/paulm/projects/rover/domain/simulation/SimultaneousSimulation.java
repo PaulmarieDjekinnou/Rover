@@ -2,8 +2,10 @@ package fr.paulm.projects.rover.domain.simulation;
 
 import fr.paulm.projects.rover.domain.Direction;
 import fr.paulm.projects.rover.domain.Instruction;
+import fr.paulm.projects.rover.domain.Obstacle;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.Terrain;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,7 @@ import java.util.Set;
 
 // The rovers move turn by turn, all at the same time: in each turn, every rover executes its next instruction,
 // and the order of the rovers in the input gives no priority. A move is blocked when:
+// - the terrain does not allow it;
 // - several rovers want to move onto the same cell;
 // - two rovers want to swap their cells by driving back along each other's path (they would cross each other).
 //   On a plateau two cells wide, two rovers can also swap their cells by moving the same way around
@@ -28,7 +31,7 @@ public final class SimultaneousSimulation implements Simulation {
     public List<MissionResult> run(SimulationInput input, TurnListener listener) {
         List<RoverMission> missions = input.missions();
         List<Rover> rovers = new ArrayList<>(missions.stream().map(RoverMission::rover).toList());
-        int[] blockedMoves = new int[missions.size()];
+        MissionLog log = new MissionLog(missions.size());
 
         int turns = missions.stream().mapToInt(mission -> mission.instructions().size()).max().orElse(0);
         for (int turn = 0; turn < turns; turn++) {
@@ -47,11 +50,12 @@ public final class SimultaneousSimulation implements Simulation {
                 departures.add(departure);
                 arrivals.add(input.surface().next(rover.position(), departure).direction());
             }
-            boolean[] blocked = blockedMovesOfTurn(rovers, wanted, departures, arrivals);
+            boolean[] blockedByTerrain = blockedByTerrain(rovers, wanted, input.terrain());
+            boolean[] blocked = blockedMovesOfTurn(rovers, wanted, departures, arrivals, blockedByTerrain);
             Set<Integer> blockedRovers = new HashSet<>();
             for (int i = 0; i < rovers.size(); i++) {
                 if (blocked[i]) {
-                    blockedMoves[i]++;
+                    log.blocked(i, blockedByTerrain[i] ? Obstacle.TERRAIN : Obstacle.ROVER);
                     blockedRovers.add(i);
                 } else {
                     rovers.set(i, wanted.get(i));
@@ -59,24 +63,36 @@ public final class SimultaneousSimulation implements Simulation {
             }
             listener.onTurn(new Turn(turn + 1, rovers, blockedRovers));
         }
-        return MissionResult.of(rovers, blockedMoves);
+        return log.results(rovers);
     }
 
-    // Which rovers cannot make the move they want in this turn. A rover that turns or stays never is.
-    private boolean[] blockedMovesOfTurn(List<Rover> rovers, List<Rover> wanted,
-                                         List<Direction> departures, List<Direction> arrivals) {
+    // Which rovers want a move that the terrain does not allow.
+    private boolean[] blockedByTerrain(List<Rover> rovers, List<Rover> wanted, Terrain terrain) {
+        boolean[] blocked = new boolean[rovers.size()];
+        for (int i = 0; i < rovers.size(); i++) {
+            blocked[i] = moves(i, rovers, wanted) && !terrain.canDrive(rovers.get(i).position(), wanted.get(i).position());
+        }
+        return blocked;
+    }
+
+    // Which rovers cannot make the move they want in this turn, starting from those the terrain already blocks.
+    // A rover that turns or stays never is.
+    private boolean[] blockedMovesOfTurn(List<Rover> rovers, List<Rover> wanted, List<Direction> departures,
+                                         List<Direction> arrivals, boolean[] blockedByTerrain) {
         int count = rovers.size();
         Map<Position, Integer> roverAt = new HashMap<>();
         Map<Position, Integer> roversWanting = new HashMap<>();
         for (int i = 0; i < count; i++) {
             roverAt.put(rovers.get(i).position(), i);
-            roversWanting.merge(wanted.get(i).position(), 1, Integer::sum);
+            // A rover the terrain blocks stays where it is: it no longer wants the cell ahead
+            Position target = blockedByTerrain[i] ? rovers.get(i).position() : wanted.get(i).position();
+            roversWanting.merge(target, 1, Integer::sum);
         }
 
-        boolean[] blocked = new boolean[count];
+        boolean[] blocked = blockedByTerrain.clone();
         for (int i = 0; i < count; i++) {
             Position target = wanted.get(i).position();
-            if (!moves(i, rovers, wanted)) {
+            if (!moves(i, rovers, wanted) || blocked[i]) {
                 continue;
             }
             Integer other = roverAt.get(target);

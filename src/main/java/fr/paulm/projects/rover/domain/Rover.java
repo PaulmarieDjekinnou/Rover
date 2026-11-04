@@ -7,14 +7,18 @@ import java.util.Set;
 // Immutable: executing instructions returns a new state and leaves this one unchanged.
 public record Rover(Position position, Direction direction) {
 
-    // The rover after one instruction, or empty when the instruction would move it onto an occupied cell,
-    // so two rovers never collide. The surface decides where a move leads, so a rover never leaves it.
-    // occupiedCells holds the positions of the rovers; it is only read, never modified. It may contain
-    // the rover's own cell: a rover that stays on its cell (a turn) is never blocked.
-    public Optional<Rover> step(Instruction instruction, Surface surface, Set<Position> occupiedCells) {
-        Rover next = apply(instruction, surface);
-        boolean blocked = !next.position.equals(position) && occupiedCells.contains(next.position);
-        return blocked ? Optional.empty() : Optional.of(next);
+    // What stops this rover from becoming next, if anything: first the terrain between the two cells, then another
+    // rover on the cell it wants, so two rovers never collide. occupiedCells holds the positions of the rovers;
+    // it is only read, never modified. It may contain the rover's own cell: a rover that stays on its cell
+    // (a turn) is never stopped.
+    public Optional<Obstacle> obstacleTo(Rover next, Terrain terrain, Set<Position> occupiedCells) {
+        if (next.position.equals(position)) {
+            return Optional.empty();
+        }
+        if (!terrain.canDrive(position, next.position)) {
+            return Optional.of(Obstacle.TERRAIN);
+        }
+        return occupiedCells.contains(next.position) ? Optional.of(Obstacle.ROVER) : Optional.empty();
     }
 
     // The rover after one instruction, without looking at the other rovers.
