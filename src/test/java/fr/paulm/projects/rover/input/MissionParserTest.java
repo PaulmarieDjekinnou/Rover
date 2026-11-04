@@ -11,6 +11,8 @@ import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.mission.Sky;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.rover.Mobility;
+import fr.paulm.projects.rover.mars.rover.PowerSource;
+import fr.paulm.projects.rover.mars.rover.PowerSystem;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.TestPlanets;
 import org.junit.jupiter.api.Test;
@@ -67,6 +69,17 @@ class MissionParserTest {
     }
 
     @Test
+    void readsThePowerOfEachRover() {
+        PlanetMission mission = parse("rover Solar", "site 22.5 67.5", "heading N", "power solar 1.3", "battery 600",
+                "rover Nuclear", "site -22.5 10", "heading N", "power rtg 110",
+                "rover Default", "site 22.5 100", "heading N");
+        assertEquals(List.of(new PowerSystem(new PowerSource.SolarPanels(1.3), 600),
+                        new PowerSystem(new PowerSource.Generator(110), 2_000),
+                        PowerSystem.DEFAULT),
+                mission.rovers().stream().map(RoverPlan::power).toList());
+    }
+
+    @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
         assertEquals(new Sky(150, 15.5, 2), mission.sky());
@@ -98,7 +111,7 @@ class MissionParserTest {
     @Test
     void errorsGiveTheLineInTheFile() {
         // The three lines added by parse come first: the rover line is line 4
-        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: ellipse, heading, orders, site",
+        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, ellipse, heading, orders, power, site",
                 error("rover One", "color red"));
     }
 
@@ -125,6 +138,10 @@ class MissionParserTest {
             "rover A\\nsite 70 0\\nheading N      | Line 5: Landing site 70.00N 0.00E is too far from the equator. Expected: a latitude within 60.0 degrees",
             "rover A\\nsite 0 0\\nellipse 1 2 0\\nheading N | Line 6: Invalid landing ellipse: 1.0 x 2.0 km. Expected: a major axis at least as long as the minor axis, which is not negative",
             "rover A\\nsite 0 0\\nheading N\\nrover A\\nsite 0 90\\nheading N | Line 7: Two rovers are named \"A\"",
+            "rover A\\nsite 0 0\\nheading N\\npower wind 3 | Line 7: Invalid power: \"wind 3\". Expected: rtg followed by watts, or solar followed by square meters",
+            "rover A\\nsite 0 0\\nheading N\\npower rtg lots | Line 7: Invalid number: \"lots\"",
+            "rover A\\nsite 0 0\\nheading N\\npower solar 0 | Line 7: Invalid solar panels: 0.0 m2. Expected: a positive area",
+            "rover A\\nsite 0 0\\nheading N\\nbattery 0 | Line 7: Invalid battery: 0.0 Wh. Expected: a positive capacity",
     })
     void invalidMissionsAreRejected(String lines, String message) {
         assertEquals(message, error(lines.replace("\\n", "\n")));

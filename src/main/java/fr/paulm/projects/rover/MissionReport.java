@@ -3,6 +3,7 @@ package fr.paulm.projects.rover;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Turn;
+import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
 import fr.paulm.projects.rover.mars.mission.Touchdown;
@@ -67,9 +68,11 @@ final class MissionReport {
     }
 
     // The end of the mission of each rover that landed, in input order: its exact position (see RoverPositions),
-    // its cell and direction, the distance and the time, and the Sun when it ends:
-    // "Curiosity: 4.54S 137.81E (cell 551 341) facing N, 59.2 km driven in 17.3 sols, local time 03:12, night".
-    void results(Deployment deployment, List<MissionResult> results, RoverPositions positions) {
+    // its cell and direction, the distance and the time driving, the time waiting for energy, the charge of its
+    // battery, and the Sun when it ends: "Curiosity: 4.54S 137.81E (cell 551 341) facing N, 59.2 km driven in
+    // 17.3 sols, 6.1 sols waiting for energy, battery 63%, local time 03:12, night".
+    // A rover that ran out of energy says so: "Spirit stopped, out of energy: ...".
+    void results(Deployment deployment, List<MissionResult> results, RoverPositions positions, Batteries batteries) {
         Planet planet = deployment.planet();
         List<Touchdown> landed = deployment.landed();
         for (int i = 0; i < results.size(); i++) {
@@ -81,10 +84,12 @@ final class MissionReport {
             if (result.blockedByTerrain() > 0) {
                 LOGGER.warn("{}: {} move(s) blocked by the terrain.", name, result.blockedByTerrain());
             }
-            out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s, %.1f km driven in %.1f sols, %s",
-                    name, positions.of(i), result.finalRover().position(),
-                    result.finalRover().direction(), result.distanceMeters() / 1_000, sols(result.drivingTime(), planet),
-                    sky(deployment.sun(), positions.of(i), result.drivingTime())));
+            out.println(String.format(Locale.ROOT,
+                    "%s%s %s (cell %s) facing %s, %.1f km driven in %.1f sols, %.1f sols waiting for energy, battery %.0f%%, %s",
+                    name, result.stopped() ? " stopped, out of energy:" : ":", positions.of(i),
+                    result.finalRover().position(), result.finalRover().direction(), result.distanceMeters() / 1_000,
+                    sols(result.drivingTime(), planet), sols(result.waitingTime(), planet), 100 * batteries.charge(i),
+                    sky(deployment.sun(), positions.of(i), result.totalTime())));
         }
     }
 

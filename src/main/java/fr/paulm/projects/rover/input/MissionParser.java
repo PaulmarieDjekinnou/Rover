@@ -13,6 +13,8 @@ import fr.paulm.projects.rover.mars.mission.Sky;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.rover.Mobility;
+import fr.paulm.projects.rover.mars.rover.PowerSource;
+import fr.paulm.projects.rover.mars.rover.PowerSystem;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -41,6 +43,8 @@ import java.util.function.Function;
 //   ellipse 20 7 0                optional: major axis and minor axis in km, azimuth in degrees (none by default)
 //   heading N                     the direction the rover faces once on the ground
 //   orders MMRMM                  optional: the instructions, as in the plateau format
+//   power rtg 110                 optional: a radioisotope generator of 110 W, or "solar 1.3" for 1.3 m2 of panels
+//   battery 2000                  optional: the capacity of the battery, in Wh (a 110 W generator and 2000 Wh by default)
 //
 // The whole file is read and checked before anything lands. PlanetMission checks the landing sites again
 // on construction; they are checked here first, to report the line of the site.
@@ -49,7 +53,7 @@ public final class MissionParser {
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
                     "start-ls", "landing-time", "dust-opacity");
-    private static final Set<String> ROVER_KEYS = Set.of("site", "ellipse", "heading", "orders");
+    private static final Set<String> ROVER_KEYS = Set.of("site", "ellipse", "heading", "orders", "power", "battery");
 
     // A block of lines: its first line (the planet or a rover), then its settings by keyword
     private record Block(Line first, Map<String, Line> settings) {
@@ -212,7 +216,35 @@ public final class MissionParser {
         Direction heading = Direction.fromCode(code)
                 .orElseThrow(() -> headingLine.error("Invalid direction: \"" + code + "\". Expected: N, E, S or W"));
         List<Instruction> orders = settings.containsKey("orders") ? orders(settings.get("orders")) : List.of();
-        return new RoverPlan(name, new LandingSite(target, ellipse), heading, orders);
+        return new RoverPlan(name, new LandingSite(target, ellipse), heading, orders, power(settings));
+    }
+
+    // The power source and the battery of a rover, each checked on its own line.
+    private PowerSystem power(Map<String, Line> settings) {
+        if (!settings.containsKey("power") && !settings.containsKey("battery")) {
+            return PowerSystem.DEFAULT;
+        }
+        PowerSource source = settings.containsKey("power") ? powerSource(settings.get("power")) : PowerSystem.DEFAULT.source();
+        double battery = settings.containsKey("battery")
+                ? settings.get("battery").decimal() : PowerSystem.DEFAULT.batteryWattHours();
+        Line line = settings.getOrDefault("battery", settings.get("power"));
+        return line.check(() -> new PowerSystem(source, battery));
+    }
+
+    // "rtg 110": a generator of 110 W; "solar 1.3": 1.3 m2 of solar panels.
+    private PowerSource powerSource(Line line) {
+        String[] parts = line.value("power").split("\\s+");
+        if (parts.length != 2 || !(parts[0].equals("rtg") || parts[0].equals("solar"))) {
+            throw line.error("Invalid power: \"" + line.value("power") + "\". Expected: rtg followed by watts,"
+                    + " or solar followed by square meters");
+        }
+        double value;
+        try {
+            value = Double.parseDouble(parts[1]);
+        } catch (NumberFormatException e) {
+            throw line.error("Invalid number: \"" + parts[1] + "\"");
+        }
+        return line.check(() -> parts[0].equals("rtg") ? new PowerSource.Generator(value) : new PowerSource.SolarPanels(value));
     }
 
     private List<Instruction> orders(Line line) {

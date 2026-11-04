@@ -10,10 +10,12 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.CLIFF_EAST_OF_COLUMN_1;
 import static fr.paulm.projects.rover.domain.simulation.TestMissions.mission;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ClockSimulationTest {
 
@@ -119,5 +121,32 @@ class ClockSimulationTest {
         assertEquals(new Position(4, 1), results.get(0).finalRover().position());
         assertEquals(new Position(4, 0), results.get(1).finalRover().position());
         assertEquals(0, results.get(1).blockedByRovers());
+    }
+
+    @Test
+    void thePaceCanMakeARoverWait() {
+        // The second rover waits 10 minutes before each instruction
+        Pace slowSecond = (rover, state, start, busy) -> Optional.of(rover == 1 ? busy.plusMinutes(10) : busy);
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, false, List.of(
+                mission(0, 2, Direction.N, "M"),
+                mission(4, 2, Direction.N, "MM")));
+        List<Turn> turns = new ArrayList<>();
+        List<MissionResult> results = new ClockSimulation(slowSecond).run(input, turns::add);
+        assertEquals(List.of(Duration.ofMinutes(1), Duration.ofMinutes(11), Duration.ofMinutes(22)),
+                turns.stream().map(Turn::time).toList());
+        assertEquals(Duration.ofMinutes(2), results.get(1).drivingTime());
+        assertEquals(Duration.ofMinutes(20), results.get(1).waitingTime());
+        assertEquals(Duration.ofMinutes(22), results.get(1).totalTime());
+    }
+
+    @Test
+    void aRoverThePaceStopsLeavesItsOtherInstructionsUndone() {
+        // The rover can carry out its first instruction only
+        Pace oneOnly = (rover, state, start, busy) -> start.isZero() ? Optional.of(busy) : Optional.empty();
+        SimulationInput input = new SimulationInput(new Plateau(5, 5), timed, false, List.of(
+                mission(0, 2, Direction.N, "MMM")));
+        MissionResult result = new ClockSimulation(oneOnly).run(input).getFirst();
+        assertEquals(new Position(0, 3), result.finalRover().position());
+        assertTrue(result.stopped());
     }
 }

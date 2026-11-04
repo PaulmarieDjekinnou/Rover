@@ -26,7 +26,19 @@ import java.util.Set;
 // Starts and ends are handled in time order, then by rank (all the first instructions, then all the second ones…),
 // then in input order, an end before a start. Without durations, as on a plateau, this is exactly the step-by-step
 // mode: each rover sees the moves of the rovers before it in the same round.
+// The pace may make a rover wait before it acts (to recharge, for instance), or stop it for good: a rover that
+// stops leaves its cell to nobody else, and its other instructions undone.
 public final class ClockSimulation implements Simulation {
+
+    private final Pace pace;
+
+    public ClockSimulation() {
+        this(Pace.IMMEDIATE);
+    }
+
+    public ClockSimulation(Pace pace) {
+        this.pace = pace;
+    }
 
     // The start or the end of the rank-th instruction of a rover (rank from 0), at the given time
     private record Event(Duration time, int rank, int rover, boolean start) {
@@ -62,12 +74,19 @@ public final class ClockSimulation implements Simulation {
             Rover rover = rovers.get(i);
             if (event.start()) {
                 Decision decision = decide(input, rover, missions.get(i).instructions().get(event.rank()), heldCells);
+                Duration busy = duration(input.terrain(), rover, decision);
+                Optional<Duration> duration = decision.obstacle().isPresent()
+                        ? Optional.of(Duration.ZERO) : pace.duration(i, rover, event.time(), busy);
+                if (duration.isEmpty()) {
+                    log.stopped(i);
+                    continue;
+                }
+                log.waited(i, duration.get().minus(busy));
                 if (decision.obstacle().isEmpty() && !decision.next().position().equals(rover.position())) {
                     heldCells.merge(decision.next().position(), 1, Integer::sum);
                 }
                 decisions.put(i, decision);
-                Duration duration = duration(input.terrain(), rover, decision);
-                events.add(new Event(event.time().plus(duration), event.rank(), i, false));
+                events.add(new Event(event.time().plus(duration.get()), event.rank(), i, false));
                 continue;
             }
             Decision decision = decisions.remove(i);

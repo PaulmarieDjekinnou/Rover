@@ -8,6 +8,7 @@ import fr.paulm.projects.rover.domain.simulation.TurnListener;
 import fr.paulm.projects.rover.input.Scenario;
 import fr.paulm.projects.rover.input.SimulationReader;
 import fr.paulm.projects.rover.input.TextFileReader;
+import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
@@ -111,8 +112,10 @@ public class Main {
                 missionReport.turn(turn, deployment, positions);
             }
         };
-        List<MissionResult> results = new ClockSimulation().run(deployment.input(), listener);
-        missionReport.results(deployment, results, positions);
+        // The batteries set the pace: a rover waits when it must recharge
+        Batteries batteries = new Batteries(deployment);
+        List<MissionResult> results = new ClockSimulation(batteries).run(deployment.input(), listener);
+        missionReport.results(deployment, results, positions, batteries);
         if (commandLine.map()) {
             missionReport.maps(deployment, results, tracks);
         }

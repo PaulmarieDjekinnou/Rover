@@ -1,15 +1,18 @@
-# Two rovers on the real Mars (MOLA map, 4 cells per degree: about 15 km per cell).
+# Three rovers on the real Mars (MOLA map, 4 cells per degree: about 15 km per cell),
+# landing at the season and the local time of Curiosity's landing.
 planet mars
 start-ls 150
 landing-time 15:00
 seed 2026
 
-# Curiosity, in Gale crater: heads for the central mound, Aeolis Mons
+# Curiosity, in Gale crater: heads for the central mound, Aeolis Mons. Powered by a radioisotope generator
 rover Curiosity
 site -4.59 137.44
 ellipse 20 7 0
 heading S
 orders MMMLMM
+power rtg 110
+battery 2000
 
 # Perseverance, in Jezero crater: drives west towards the old river delta
 rover Perseverance
@@ -17,3 +20,11 @@ site 18.38 77.58
 ellipse 7.7 6.6 0
 heading W
 orders MMMRMM
+
+# Opportunity, on Meridiani Planum: solar panels, so it drives by day and waits at night
+rover Opportunity
+site -1.95 354.47
+heading E
+orders MM
+power solar 1.3
+battery 600
