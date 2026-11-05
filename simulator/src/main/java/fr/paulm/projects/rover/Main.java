@@ -13,6 +13,7 @@ import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
+import fr.paulm.projects.rover.telemetry.Downlink;
 import fr.paulm.projects.rover.telemetry.TelemetryListener;
 import fr.paulm.projects.rover.telemetry.TelemetrySink;
 import fr.paulm.projects.rover.telemetry.TelemetrySinks;
@@ -121,8 +122,11 @@ public class Main {
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         // With --telemetry, the mission is also sent, as the rovers would send it: opened first, so that an
         // unreachable Kafka is reported before anything is shown
-        Optional<TelemetrySink> sink = commandLine.telemetry().map(telemetryFactory);
+        Optional<TelemetrySink> opened = commandLine.telemetry().map(telemetryFactory);
         Deployment deployment = mission.land();
+        // A mission with a date sends its telemetry through the link to Earth: relay passes and light delay
+        Optional<TelemetrySink> sink = opened.map(target -> mission.link()
+                .<TelemetrySink>map(link -> new Downlink(target, link, deployment)).orElse(target));
         missionReport.landings(deployment);
         // The batteries and the operations set the pace: a rover waits when it must recharge, outside its drive
         // window, or once it has driven its distance of the sol

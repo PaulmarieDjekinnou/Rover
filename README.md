@@ -187,6 +187,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
 | | `TelemetrySink`, `TelemetrySinks`, `KafkaSink`, `JsonLinesSink` | where the messages go: Kafka, a file, or a list in tests |
+| | `Downlink` | the link to Earth between the messages and where they go: each rover keeps them until a pass of an orbiter, then they reach Earth after the light delay |
 | `ground` | `GroundStation`, `Receiver`, `Archive`, `JdbcArchive` | the ground station: reads the topics and archives the messages in PostgreSQL |
 | | `MissionControl`, `Dashboard`, `MissionView`, `WebPage` | mission control: follows the rovers of every mission live, in the console and on a web page |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
