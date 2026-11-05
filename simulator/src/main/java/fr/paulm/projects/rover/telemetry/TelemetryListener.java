@@ -19,13 +19,17 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 // Turns a mission into telemetry, as the rovers would send it: the start of the mission and the landings, then a
-// message each time a rover ends an instruction (and an event when it was blocked), then the rovers that stopped
-// and the end of the mission. It follows the turns of the common clock, after RoverPositions and the batteries,
+// message each time a rover ends an instruction (and an event when it was blocked, when a dust storm started or
+// ended where it is since its last message, or when the wind cleaned its panels), then the rovers that stopped
+// and the end of the mission. A storm is an optical depth above 2. It follows the turns of the common clock, after RoverPositions and the batteries,
 // whose state it reads.
 public final class TelemetryListener implements TurnListener {
+    private static final double STORM_OPACITY = 2;
+
     private final String missionId;
     private final Deployment deployment;
     private final RoverPositions positions;
@@ -38,6 +42,8 @@ public final class TelemetryListener implements TurnListener {
     // Per rover name: the lost rovers send events too
     private final Map<String, Long> eventSequences = new HashMap<>();
     private final double[] distances;
+    private final boolean[] inStorm;
+    private final int[] cleanings;
 
     public TelemetryListener(String missionId, Deployment deployment, RoverPositions positions, Batteries batteries,
                              TelemetrySink sink, Clock wallClock) {
@@ -51,6 +57,8 @@ public final class TelemetryListener implements TurnListener {
         deployment.input().missions().forEach(mission -> states.add(mission.rover()));
         this.sequences = new long[landed.size()];
         this.distances = new double[landed.size()];
+        this.inStorm = new boolean[landed.size()];
+        this.cleanings = new int[landed.size()];
     }
 
     // The start of the mission, then where each rover landed, or why it was lost.
@@ -99,6 +107,17 @@ public final class TelemetryListener implements TurnListener {
             RoverEvent.Type type = deployment.input().oneRoverPerCell()
                     ? RoverEvent.Type.BLOCKED_BY_ROVER : RoverEvent.Type.BLOCKED_BY_TERRAIN;
             event(name, turn.time(), type, "move to the " + rover.direction() + " blocked");
+        }
+        double opacity = deployment.sun().opticalDepth(turn.time());
+        if ((opacity > STORM_OPACITY) != inStorm[i]) {
+            inStorm[i] = !inStorm[i];
+            event(name, turn.time(), inStorm[i] ? RoverEvent.Type.DUST_STORM_STARTED : RoverEvent.Type.DUST_STORM_ENDED,
+                    String.format(Locale.ROOT, "dust opacity %.1f", opacity));
+        }
+        if (batteries.cleanings(i) > cleanings[i]) {
+            cleanings[i] = batteries.cleanings(i);
+            event(name, turn.time(), RoverEvent.Type.PANELS_CLEANED,
+                    String.format(Locale.ROOT, "panels %.0f%% clean", 100 * batteries.panelCleanliness(i)));
         }
         Coordinates point = positions.of(i);
         sink.telemetry(new RoverTelemetry(missionId, name, sequences[i]++, turn.time().toSeconds(),

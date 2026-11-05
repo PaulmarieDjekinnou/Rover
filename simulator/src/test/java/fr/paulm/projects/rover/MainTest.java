@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -269,7 +270,9 @@ class MainTest {
         // One plan per rover, even the one lost at landing
         assertEquals(3, sink.plans.size());
         assertEquals(List.of(RoverEvent.Type.LANDED, RoverEvent.Type.LANDED, RoverEvent.Type.LOST, RoverEvent.Type.BLOCKED_BY_TERRAIN),
-                sink.events.stream().map(RoverEvent::type).toList());
+                sink.events.stream().map(RoverEvent::type)
+                        .filter(type -> !type.name().startsWith("DUST_STORM") && type != RoverEvent.Type.PANELS_CLEANED)
+                        .toList());
         // One message per instruction ended: Polar's 3 moves, Climber's move, turn and blocked move
         List<RoverTelemetry> polar = sink.telemetry.stream().filter(message -> message.rover().equals("Polar")).toList();
         assertEquals(List.of(0L, 1L, 2L), polar.stream().map(RoverTelemetry::sequence).toList());
@@ -297,5 +300,18 @@ class MainTest {
         assertEquals(1, main.run(new String[]{"--telemetry", "nowhere:9092", input.toString()}));
         assertEquals(List.of("Cannot send the telemetry: Kafka does not answer at nowhere:9092"), logs.messages());
         assertEquals(List.of(), outputLines());
+    }
+
+    @Test
+    void aRoverUnderThickDustSendsADustStormEvent() throws Exception {
+        Files.copy(TestResources.path("simulations/valid/mini-planet.map.txt"), tempDir.resolve("mini-planet.map.txt"));
+        Path mission = tempDir.resolve("dusty.txt");
+        Files.writeString(mission, String.join("\n", "planet map mini-planet.map.txt", "dust-opacity 3",
+                "landing-max-elevation 500", "landing-max-latitude 60",
+                "rover Dusty", "site 22.5 67.5", "heading E", "orders R", "power solar 1.3"));
+        assertEquals(0, main().run(new String[]{"--telemetry", "kafka:9092", mission.toString()}));
+        assertTrue(sink.events.stream().anyMatch(event -> event.type() == RoverEvent.Type.DUST_STORM_STARTED),
+                sink.events.toString());
+        assertEquals(3, sink.telemetry.getFirst().dustOpacity(), 1e-9);
     }
 }

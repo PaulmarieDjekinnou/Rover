@@ -205,7 +205,7 @@ With the `--telemetry server:port` option, a mission to a planet also sends its 
 | Topic | Key | Messages |
 |---|---|---|
 | `rover.telemetry` | the rover's name | one message each time a rover ends an instruction: mission time, position, cell, direction, battery, day or night, distance driven, dust opacity, cleanliness of the solar panels, and a sequence number per rover |
-| `rover.events` | the rover's name | landed, lost at landing, no route to a waypoint, move blocked by the terrain or by a rover, stopped for good |
+| `rover.events` | the rover's name | landed, lost at landing, no route to a waypoint, move blocked by the terrain or by a rover, dust storm started or ended where it is, panels cleaned by the wind, stopped for good; storms and cleanings are seen when the rover ends an instruction, so a storm that passes between two messages is not reported |
 | `rover.plans` | the rover's name | the plan of each rover, at the start: its site, power source, battery, landing time and number of waypoints |
 | `mission.status` | the mission id | the start and the end of the mission (file, planet, length of its sol, seed) |
 

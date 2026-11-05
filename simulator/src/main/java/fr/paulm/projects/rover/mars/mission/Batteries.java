@@ -60,6 +60,7 @@ public final class Batteries implements Pace {
     private final double[] drivenThisSol;
     // How clean the solar panels of each rover are, from 0 to 1, and the draws of the wind that cleans them
     private final double[] cleanliness;
+    private final int[] cleanings;
     private final List<SplittableRandom> winds = new ArrayList<>();
     // The level of each battery as it went, at each step: the history needs it at any time
     private final List<TreeMap<Duration, Double>> histories = new ArrayList<>();
@@ -88,6 +89,7 @@ public final class Batteries implements Pace {
         this.sols = new long[systems.size()];
         this.drivenThisSol = new double[systems.size()];
         this.cleanliness = new double[systems.size()];
+        this.cleanings = new int[systems.size()];
         Arrays.fill(cleanliness, 1);
         for (int i = 0; i < systems.size(); i++) {
             winds.add(new SplittableRandom(seed * 31 + i));
@@ -106,6 +108,11 @@ public final class Batteries implements Pace {
     // How clean the solar panels of a rover are after its last instruction, from 0 to 1 (1 without panels).
     public double panelCleanliness(int rover) {
         return cleanliness[rover];
+    }
+
+    // How many times the wind has cleaned the panels of a rover so far.
+    public int cleanings(int rover) {
+        return cleanings[rover];
     }
 
     // How full the battery of a rover is after its last instruction, from 0 to 1.
@@ -205,6 +212,7 @@ public final class Batteries implements Pace {
         cleanliness[rover] = Math.max(0, cleanliness[rover] - rate * sols);
         if (winds.get(rover).nextDouble() < CLEANINGS_PER_SOL * sols) {
             cleanliness[rover] = Math.min(1, cleanliness[rover] + CLEANING);
+            cleanings[rover]++;
         }
     }
 
