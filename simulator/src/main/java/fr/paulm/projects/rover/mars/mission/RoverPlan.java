@@ -11,10 +11,10 @@ import java.util.Optional;
 
 // What is planned for one rover: its name, where it lands, which way it faces once on the ground, its orders,
 // its power, when it lands (when no date is given, it lands at the start of the mission), and the waypoints it
-// must reach in order. A rover follows either orders or waypoints: the instructions to its waypoints are planned
-// once it has landed (see PlanetMission).
+// must reach in order, and its own operations if they differ from the mission's. A rover follows either orders or
+// waypoints: the instructions to its waypoints are planned once it has landed (see PlanetMission).
 public record RoverPlan(String name, LandingSite site, Direction heading, List<Instruction> orders, PowerSystem power,
-                        Optional<LandingDate> landingDate, List<Coordinates> waypoints) {
+                        Optional<LandingDate> landingDate, List<Coordinates> waypoints, Optional<Operations> operations) {
 
     public RoverPlan {
         orders = List.copyOf(orders);
@@ -22,6 +22,12 @@ public record RoverPlan(String name, LandingSite site, Direction heading, List<I
         if (!orders.isEmpty() && !waypoints.isEmpty()) {
             throw new InvalidInputException("Rover \"" + name + "\" has both orders and waypoints. Expected: one or the other");
         }
+    }
+
+    // A rover operated as the mission says.
+    public RoverPlan(String name, LandingSite site, Direction heading, List<Instruction> orders, PowerSystem power,
+                     Optional<LandingDate> landingDate, List<Coordinates> waypoints) {
+        this(name, site, heading, orders, power, landingDate, waypoints, Optional.empty());
     }
 
     // A rover that follows orders.

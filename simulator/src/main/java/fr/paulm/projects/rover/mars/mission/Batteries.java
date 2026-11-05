@@ -43,7 +43,7 @@ public final class Batteries implements Pace {
 
     private final Planet planet;
     private final Sun sun;
-    private final Operations operations;
+    private final List<Operations> operations;
     private final List<PowerSystem> systems;
     private final List<Duration> starts;
     private final double[] levels;
@@ -70,7 +70,9 @@ public final class Batteries implements Pace {
     public Batteries(Deployment deployment, Operations operations, long seed) {
         this.planet = deployment.planet();
         this.sun = deployment.sun();
-        this.operations = operations;
+        // Each rover is operated as its plan says, or else as the mission says
+        this.operations = deployment.landed().stream()
+                .map(touchdown -> touchdown.plan().operations().orElse(operations)).toList();
         this.systems = deployment.landed().stream().map(touchdown -> touchdown.plan().power()).toList();
         this.starts = deployment.landed().stream().map(Touchdown::time).toList();
         this.levels = systems.stream().mapToDouble(PowerSystem::batteryWattHours).toArray();
@@ -134,13 +136,14 @@ public final class Batteries implements Pace {
                 sols[rover] = sol;
                 drivenThisSol[rover] = 0;
             }
-            boolean allowed = operations.inWindow(sun.localTime(place, time))
-                    && drivenThisSol[rover] < operations.maxMetersPerSol();
+            Operations rules = operations.get(rover);
+            boolean allowed = rules.inWindow(sun.localTime(place, time)) && drivenThisSol[rover] < rules.maxMetersPerSol();
             boolean working = !charging[rover] && allowed;
             Duration step = !working || STEP.compareTo(left) < 0 ? STEP : left;
             if (working && metersPerMilli > 0) {
                 // The last step of the sol stops at the distance of the sol
-                long untilTheLimit = (long) Math.ceil((operations.maxMetersPerSol() - drivenThisSol[rover]) / metersPerMilli);
+                long untilTheLimit = (long) Math.ceil((operations.get(rover).maxMetersPerSol() - drivenThisSol[rover])
+                        / metersPerMilli);
                 if (untilTheLimit < step.toMillis()) {
                     step = Duration.ofMillis(Math.max(1, untilTheLimit));
                 }

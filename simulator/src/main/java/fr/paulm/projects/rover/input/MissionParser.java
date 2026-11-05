@@ -52,6 +52,7 @@ import java.util.function.Function;
 //   power rtg 110                 optional: a radioisotope generator of 110 W, or "solar 1.3" for 1.3 m2 of panels
 //   battery 2000                  optional: the capacity of the battery, in Wh (a 110 W generator and 2000 Wh by default)
 //   landing 3 14:00               optional: lands on sol 3 of the mission at 14:00 local time (at the start by default)
+//   drive-window, max-drive-per-sol   optional: the operations of this rover, if they differ from the mission's
 //   goto -4.90 137.40             instead of orders: a waypoint to reach, the route being planned after the landing;
 //                                 one line per waypoint, in order
 //
@@ -63,7 +64,8 @@ public final class MissionParser {
             Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
                     "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol");
     private static final Set<String> ROVER_KEYS =
-            Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing");
+            Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing", "drive-window",
+                    "max-drive-per-sol");
 
     // A block of lines: its first line (the planet or a rover), then its settings by keyword, and its waypoints
     private record Block(Line first, Map<String, Line> settings, List<Line> waypoints) {
@@ -96,16 +98,17 @@ public final class MissionParser {
         Sky sky = sky(mission.settings(), planet);
 
         Landing landing = new PlanetMission(planet, mobility, rules, seed, List.of()).landing();
+        Operations missionOperations = operations(mission.settings(), Operations.DEFAULT);
         List<RoverPlan> rovers = new ArrayList<>();
         Set<String> names = new HashSet<>();
         for (Block block : blocks.subList(1, blocks.size())) {
-            RoverPlan rover = rover(block, landing);
+            RoverPlan rover = rover(block, landing, missionOperations);
             if (!names.add(rover.name())) {
                 throw block.first().error("Two rovers are named \"" + rover.name() + "\"");
             }
             rovers.add(rover);
         }
-        return new PlanetMission(planet, mobility, rules, sky, operations(mission.settings()), seed, rovers);
+        return new PlanetMission(planet, mobility, rules, sky, missionOperations, seed, rovers);
     }
 
     // The planet block, then one block per rover. Each block holds known settings, each given once.
@@ -161,9 +164,9 @@ public final class MissionParser {
         return mobility;
     }
 
-    // The drive window and the distance per sol, each checked on its own line.
-    private Operations operations(Map<String, Line> settings) {
-        Operations operations = Operations.DEFAULT;
+    // The drive window and the distance per sol, each checked on its own line, from the given ones.
+    private Operations operations(Map<String, Line> settings, Operations base) {
+        Operations operations = base;
         if (settings.containsKey("drive-window")) {
             Line line = settings.get("drive-window");
             String[] times = line.value("drive-window").split("\\s+");
@@ -249,7 +252,7 @@ public final class MissionParser {
         return rules;
     }
 
-    private RoverPlan rover(Block block, Landing landing) {
+    private RoverPlan rover(Block block, Landing landing, Operations missionOperations) {
         String name = block.first().value("rover");
         Map<String, Line> settings = block.settings();
         for (String required : List.of("site", "heading")) {
@@ -285,7 +288,9 @@ public final class MissionParser {
         PowerSystem power = power(settings);
         LandingSite landingSite = new LandingSite(target, ellipse);
         Line planLine = block.waypoints().isEmpty() ? block.first() : block.waypoints().getFirst();
-        return planLine.check(() -> new RoverPlan(name, landingSite, heading, orders, power, date, waypoints));
+        Optional<Operations> own = settings.containsKey("drive-window") || settings.containsKey("max-drive-per-sol")
+                ? Optional.of(operations(settings, missionOperations)) : Optional.empty();
+        return planLine.check(() -> new RoverPlan(name, landingSite, heading, orders, power, date, waypoints, own));
     }
 
     // The power source and the battery of a rover, each checked on its own line.

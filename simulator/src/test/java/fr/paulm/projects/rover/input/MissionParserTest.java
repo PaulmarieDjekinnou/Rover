@@ -107,6 +107,15 @@ class MissionParserTest {
     }
 
     @Test
+    void aRoverCanHaveItsOwnOperations() {
+        PlanetMission mission = parse("drive-window 09:00 16:00",
+                "rover Own", "site 22.5 67.5", "heading N", "max-drive-per-sol 40",
+                "rover Shared", "site -22.5 10", "heading N");
+        assertEquals(Optional.of(new Operations(9, 16, 40)), mission.rovers().get(0).operations());
+        assertEquals(Optional.empty(), mission.rovers().get(1).operations());
+    }
+
+    @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
         // A dust opacity given in the file stays the same: no weather
@@ -139,7 +148,7 @@ class MissionParserTest {
     @Test
     void errorsGiveTheLineInTheFile() {
         // The three lines added by parse come first: the rover line is line 4
-        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, ellipse, heading, landing, orders, power, site",
+        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, drive-window, ellipse, heading, landing, max-drive-per-sol, orders, power, site",
                 error("rover One", "color red"));
     }
 

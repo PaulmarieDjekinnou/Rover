@@ -119,6 +119,7 @@ orders MMMLMM
 | `orders MMRM` | optional: the instructions, as on the plateau |
 | `power rtg 110` | optional: the power source, a radioisotope generator of 110 W (like Curiosity's), or `solar 1.3` for 1.3 m2 of solar panels (like Opportunity's) (`rtg 110` by default) |
 | `battery 2000` | optional: the capacity of the battery, in Wh (2000 by default) |
+| `drive-window`, `max-drive-per-sol` | optional, in a rover block: the operations of this rover, if they differ from the mission's |
 | `goto -4.90 137.40` | instead of `orders`: a waypoint to reach, one line per waypoint, in order; the route is planned after the landing |
 | `landing 3 14:00` | optional: the rover lands on sol 3 of the mission, when it is 14:00 local time at its site (by default, at the start of the mission, with the first rover) |
 

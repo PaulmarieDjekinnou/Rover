@@ -36,8 +36,14 @@ class BatteriesTest {
     }
 
     private Batteries batteries(PowerSystem power, double dustOpacity, Operations operations) {
+        return batteries(power, dustOpacity, operations, Optional.empty());
+    }
+
+    // The mission's operations, and those of the rover if it has its own
+    private Batteries batteries(PowerSystem power, double dustOpacity, Operations operations, Optional<Operations> own) {
         Coordinates point = planet.centerOf(noonCell);
-        RoverPlan plan = new RoverPlan("Rover", new LandingSite(point, Ellipse.NONE), Direction.N, List.of(), power);
+        RoverPlan plan = new RoverPlan("Rover", new LandingSite(point, Ellipse.NONE), Direction.N, List.of(), power,
+                Optional.empty(), List.of(), own);
         Sun sun = new Sun(planet, 0, point.longitude(), dustOpacity);
         Deployment deployment = new Deployment(planet, sun, List.of(new Touchdown(plan, point, noonCell, Optional.empty())),
                 new SimulationInput(planet.grid(), Terrain.FLAT, false, List.of(new RoverMission(new Rover(noonCell, Direction.N), List.of()))));
@@ -157,5 +163,16 @@ class BatteriesTest {
         Batteries batteries = batteries(PowerSystem.DEFAULT, 0.5);
         drive(batteries, Duration.ZERO, Duration.ofHours(10));
         assertEquals(1, batteries.panelCleanliness(0));
+    }
+
+    @Test
+    void aRoverWithItsOwnOperationsFollowsThem() {
+        // The mission sets no limit, the rover drives 10 m a sol: a 7.9 km move takes some 790 sols
+        Batteries batteries = batteries(PowerSystem.DEFAULT, 0.5, Operations.UNLIMITED, Optional.of(new Operations(0, 24, 10)));
+        Rover from = new Rover(noonCell, Direction.N);
+        Rover to = new Rover(new Position(0, 1), Direction.N);
+        double meters = planet.distance(noonCell, new Position(0, 1));
+        Pace.Timing timing = batteries.timing(0, from, to, Duration.ZERO, Duration.ofSeconds(Math.round(meters / 0.04)));
+        assertEquals(meters / 10, timing.duration().toMillis() / (double) Mars.SOL.toMillis(), 2);
     }
 }
