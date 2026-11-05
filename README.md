@@ -216,6 +216,13 @@ java -jar ground-station/target/ground-station.jar localhost:9092 jdbc:postgresq
 
 The database user and password come from `ROVER_DB_USER` and `ROVER_DB_PASSWORD` (`rover` by default).
 
+**Mission control** follows the rovers live, in the console, from Kafka: the last known position, direction, battery and day or night of each rover, and its status (active, stopped, silent when it has sent nothing for a sol). Each mission control has its own consumer group and starts from the latest messages, while the ground station archives everything in its own group:
+
+```bash
+java -cp ground-station/target/ground-station.jar fr.paulm.projects.rover.ground.MissionControl localhost:9092
+java -jar simulator/target/rover.jar --speed 8877 --telemetry localhost:9092 simulator/src/main/resources/mars-mission.txt
+```
+
 **Live.** With `--speed factor`, a mission runs at that many seconds of mission per real second, so that it can be followed live, in the history or in Kafka: `--speed 8877` runs a sol in about 10 seconds. The simulation waits before each turn until its time has come; on a plateau, the option is ignored with a warning.
 
 ## Requirements
@@ -310,6 +317,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
 | | `TelemetrySink`, `TelemetrySinks`, `KafkaSink`, `JsonLinesSink` | where the messages go: Kafka, a file, or a list in tests |
 | `ground` | `GroundStation`, `Receiver`, `Archive`, `JdbcArchive` | the ground station: reads the topics and archives the messages in PostgreSQL |
+| | `MissionControl`, `Dashboard` | mission control: follows the rovers live, in the console |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
 | | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |
