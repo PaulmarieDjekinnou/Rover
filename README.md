@@ -216,6 +216,8 @@ java -jar ground-station/target/ground-station.jar localhost:9092 jdbc:postgresq
 
 The database user and password come from `ROVER_DB_USER` and `ROVER_DB_PASSWORD` (`rover` by default).
 
+**Live.** With `--speed factor`, a mission runs at that many seconds of mission per real second, so that it can be followed live, in the history or in Kafka: `--speed 8877` runs a sol in about 10 seconds. The simulation waits before each turn until its time has come; on a plateau, the option is ignored with a warning.
+
 ## Requirements
 
 - Java 25
@@ -270,8 +272,9 @@ All classes are in the `fr.paulm.projects.rover` package.
 | Package | Class | Role |
 |---|---|---|
 | *(root)* | `Main` | entry point: reads the arguments and the file, runs the simulation, handles errors |
-| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history`, `--map` and `--telemetry` options and the file; each mode with the option that selects it |
+| | `CommandLine`, `Mode` | the arguments: the simulation mode, the `--history`, `--map`, `--telemetry` and `--speed` options and the file; each mode with the option that selects it |
 | | `ConsoleReport`, `MissionReport` | print the results on the standard output, and the warnings through the logger: the history and the final positions on a plateau; the landings, the history, the end of each mission and the maps on a planet |
+| | `PacedListener` | slows a mission down to the speed given with `--speed` |
 | | `ReliefMap`, `RoverTracks` | draws the relief around a cell in text, with the rovers; the cells each rover drove through |
 | `domain` | `Position` | a cell of the grid (`x`, `y`); independent of rovers |
 | | `Surface`, `Heading` | interface: the shape of the world, which gives the next cell and the direction a rover has when it gets there |

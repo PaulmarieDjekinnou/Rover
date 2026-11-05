@@ -44,6 +44,9 @@ class CommandLineTest {
             "--telemetry input.txt",                      // no server
             "--telemetry --map input.txt",
             "--telemetry a:1 --telemetry b:2 input.txt",
+            "--speed fast input.txt",                     // not a number
+            "--speed 0 input.txt",
+            "--speed -3 input.txt",
             "--step-by-step --step-by-step input.txt",
             "--step-by-step --simultaneous input.txt",    // two modes
             "input.txt --history"})                       // option after the file name
@@ -64,12 +67,17 @@ class CommandLineTest {
     }
 
     @Test
+    void speedOptionTakesAPositiveFactor() {
+        assertEquals(Optional.of(8877.0), parse("--speed 8877 --history mission.txt").orElseThrow().speed());
+    }
+
+    @Test
     void noArgumentIsRejected() {
         assertEquals(Optional.empty(), CommandLine.parse(new String[]{}));
     }
 
     @Test
     void usageListsEveryModeOption() {
-        assertEquals("Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] [--map] [--telemetry server:port | file:path] input.txt", CommandLine.usage());
+        assertEquals("Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] [--map] [--telemetry server:port | file:path] [--speed factor] input.txt", CommandLine.usage());
     }
 }

@@ -106,6 +106,9 @@ public class Main {
         if (commandLine.telemetry().isPresent()) {
             LOGGER.warn("The {} option only applies to missions to a planet: ignored.", CommandLine.TELEMETRY_OPTION);
         }
+        if (commandLine.speed().isPresent()) {
+            LOGGER.warn("The {} option only applies to missions to a planet: ignored.", CommandLine.SPEED_OPTION);
+        }
         // Each turn is printed as soon as it is over, before the final positions
         TurnListener listener = commandLine.history() ? plateauReport::turn : TurnListener.NONE;
         plateauReport.results(commandLine.mode().simulation().run(input, listener));
@@ -130,7 +133,7 @@ public class Main {
         Optional<TelemetryListener> telemetry = sink.map(target -> new TelemetryListener(
                 UUID.randomUUID().toString(), deployment, positions, batteries, target, Clock.systemUTC()));
         telemetry.ifPresent(emitter -> emitter.missionStarted(commandLine.file(), mission.seed()));
-        TurnListener listener = turn -> {
+        TurnListener everything = turn -> {
             positions.onTurn(turn);
             tracks.onTurn(turn);
             telemetry.ifPresent(emitter -> emitter.onTurn(turn));
@@ -138,6 +141,10 @@ public class Main {
                 missionReport.turn(turn, deployment, positions, batteries);
             }
         };
+        // With --speed, the mission runs at that pace, to be followed live
+        TurnListener listener = commandLine.speed()
+                .<TurnListener>map(speed -> new PacedListener(everything, speed, Clock.systemUTC(), Thread::sleep))
+                .orElse(everything);
         List<MissionResult> results;
         try {
             results = new ClockSimulation(batteries).run(deployment.input(), listener);
