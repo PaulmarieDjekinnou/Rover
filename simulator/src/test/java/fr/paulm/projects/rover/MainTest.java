@@ -6,6 +6,7 @@ import fr.paulm.projects.rover.telemetry.InMemorySink;
 import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
+import fr.paulm.projects.rover.telemetry.TelemetryUnavailableException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -283,5 +284,16 @@ class MainTest {
         assertEquals(0, main().run(new String[]{"--telemetry", "kafka:9092", input.toString()}));
         assertEquals(List.of("The --telemetry option only applies to missions to a planet: ignored."), logs.messages());
         assertEquals(List.of(), sink.telemetry);
+    }
+
+    @Test
+    void unreachableTelemetryIsReportedBeforeTheMission() throws Exception {
+        Path input = TestResources.path("simulations/valid/mini-planet.txt");
+        Main main = new Main(TextFileReader::new, out, server -> {
+            throw new TelemetryUnavailableException("Kafka does not answer at " + server, null);
+        });
+        assertEquals(1, main.run(new String[]{"--telemetry", "nowhere:9092", input.toString()}));
+        assertEquals(List.of("Cannot send the telemetry: Kafka does not answer at nowhere:9092"), logs.messages());
+        assertEquals(List.of(), outputLines());
     }
 }

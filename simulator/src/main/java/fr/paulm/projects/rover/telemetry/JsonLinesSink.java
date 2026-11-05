@@ -18,7 +18,7 @@ public final class JsonLinesSink implements TelemetrySink {
         try {
             writer = Files.newBufferedWriter(file);
         } catch (IOException e) {
-            throw new UncheckedIOException(e);
+            throw new TelemetryUnavailableException("Cannot write the telemetry to " + file, e);
         }
     }
 

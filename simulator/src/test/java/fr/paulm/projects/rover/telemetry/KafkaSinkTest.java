@@ -34,4 +34,15 @@ class KafkaSinkTest {
         sink.close();
         assertTrue(producer.closed());
     }
+
+    @Test
+    void messagesThatCannotBeSentAreCounted() {
+        MockProducer<String, String> failing = new MockProducer<>(false, null, new StringSerializer(), new StringSerializer());
+        KafkaSink sink = new KafkaSink(failing);
+        sink.event(new RoverEvent("m1", "Spirit", 0, 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "here"));
+        sink.event(new RoverEvent("m1", "Spirit", 1, 0, "Sol 0 00:00", RoverEvent.Type.STOPPED, "out of energy"));
+        failing.errorNext(new RuntimeException("broker down"));
+        failing.completeNext();
+        assertEquals(1, sink.lostMessages());
+    }
 }

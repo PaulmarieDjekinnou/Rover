@@ -200,9 +200,9 @@ With the `--telemetry server:port` option, a mission to a planet also sends its 
 | `rover.events` | the rover's name | landed, lost at landing, move blocked, stopped for good |
 | `mission.status` | the mission id | the start and the end of the mission (file, planet, seed) |
 
-Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning. With `--telemetry file:mission.jsonl`, the messages are written to a file instead, one per line (JSON Lines), each with its topic and key: to look at a mission or compare two runs without Kafka.
+Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning. If Kafka does not answer within 5 seconds, the program says so and stops before the mission; a message that cannot be sent during the mission is counted, and a warning at the end gives how many were lost. With `--telemetry file:mission.jsonl`, the messages are written to a file instead, one per line (JSON Lines), each with its topic and key: to look at a mission or compare two runs without Kafka.
 
-**The ground station** is a second application, in its own module and jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`, see `ground-station/src/main/resources/ground/schema.sql`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and telemetry read twice is written once.
+**The ground station** is a second application, in its own module and jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`). It creates and upgrades its schema itself when it starts (Flyway, `ground-station/src/main/resources/db/migration`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and a message read twice is written once (telemetry and events are numbered per rover). A message it cannot read does not stop it: it goes to the `rover.dead-letters` topic, with the reason in its headers.
 
 ```bash
 docker compose up -d     # Kafka (KRaft, with its topics) and PostgreSQL
@@ -255,6 +255,8 @@ The project has three Maven modules:
 | `telemetry-model` | the messages the simulator sends and the ground station reads, their JSON and their topics |
 | `simulator` | the simulator: rovers on a plateau, missions to a planet, and their telemetry (`rover.jar`) |
 | `ground-station` | the ground station, which archives the telemetry in PostgreSQL (`ground-station.jar`); it only knows the messages, never the simulator |
+
+The integration tests (`*IT`) run against real Kafka and PostgreSQL servers, started in Docker by Testcontainers, with `./mvnw verify`; without Docker, they are skipped. GitHub Actions runs them.
 
 
 All classes are in the `fr.paulm.projects.rover` package.

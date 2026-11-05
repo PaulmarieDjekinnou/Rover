@@ -15,6 +15,7 @@ import fr.paulm.projects.rover.mars.mission.RoverPositions;
 import fr.paulm.projects.rover.telemetry.TelemetryListener;
 import fr.paulm.projects.rover.telemetry.TelemetrySink;
 import fr.paulm.projects.rover.telemetry.TelemetrySinks;
+import fr.paulm.projects.rover.telemetry.TelemetryUnavailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +89,9 @@ public class Main {
         } catch (InvalidInputException e) {
             LOGGER.error("Invalid input: {}", e.getMessage());
             return 1;
+        } catch (TelemetryUnavailableException e) {
+            LOGGER.error("Cannot send the telemetry: {}", e.getMessage());
+            return 1;
         } catch (RuntimeException e) {
             // A bug: a short message, followed by the stack trace for whoever fixes it
             LOGGER.error("Unexpected error: {}", e.toString(), e);
@@ -111,6 +115,9 @@ public class Main {
     private void runOnPlanet(PlanetMission mission, CommandLine commandLine) {
         commandLine.mode().option().ifPresent(option -> LOGGER.warn(
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
+        // With --telemetry, the mission is also sent, as the rovers would send it: opened first, so that an
+        // unreachable Kafka is reported before anything is shown
+        Optional<TelemetrySink> sink = commandLine.telemetry().map(telemetryFactory);
         Deployment deployment = mission.land();
         missionReport.landings(deployment);
         // The batteries and the operations set the pace: a rover waits when it must recharge, outside its drive
@@ -120,8 +127,6 @@ public class Main {
         // as soon as it is over, with the history option
         RoverPositions positions = new RoverPositions(deployment);
         RoverTracks tracks = new RoverTracks();
-        // With --telemetry, the mission is also sent to Kafka, as the rovers would send it
-        Optional<TelemetrySink> sink = commandLine.telemetry().map(telemetryFactory);
         Optional<TelemetryListener> telemetry = sink.map(target -> new TelemetryListener(
                 UUID.randomUUID().toString(), deployment, positions, batteries, target, Clock.systemUTC()));
         telemetry.ifPresent(emitter -> emitter.missionStarted(commandLine.file(), mission.seed()));
