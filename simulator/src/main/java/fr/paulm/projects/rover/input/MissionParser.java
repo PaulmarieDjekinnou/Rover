@@ -8,6 +8,7 @@ import fr.paulm.projects.rover.mars.mission.Landing;
 import fr.paulm.projects.rover.mars.mission.LandingDate;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
+import fr.paulm.projects.rover.mars.mission.Link;
 import fr.paulm.projects.rover.mars.mission.Operations;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
@@ -47,7 +48,12 @@ import java.util.function.Function;
 //   turn-minutes 5                optional: how long a turn on the spot takes, in minutes
 //   start-ls 150                  optional: the season at the landing, as a solar longitude in degrees (0 by default)
 //   start-date 2012-08-06T05:17   optional, instead of start-ls: the date at the start of the mission, in UTC (a day,
-//                                 or a day and a time), which gives the season on Mars
+//                                 or a day and a time), which gives the season on Mars; the telemetry then goes
+//                                 through the link to Earth (see Link)
+//   relay-passes 04:00 16:00      optional, with start-date: the local times of the passes of the relay orbiters
+//                                 (04:00 05:30 16:00 17:30 by default)
+//   pass-messages 500             optional, with start-date: the most messages a pass carries (500 by default)
+//   rover-memory 5000             optional, with start-date: the most messages a rover keeps (5000 by default)
 //   landing-time 15:00            optional: the local time of the landing, at the site of the first rover (12:00)
 //   dust-opacity 0.5              optional: a dust opacity that stays the same all along (by default, the weather of
 //                                 Mars: a dust season and storms on a clear base of 0.5)
@@ -75,7 +81,7 @@ public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "resolution", "rocks", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
-                    "start-ls", "start-date", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
+                    "start-ls", "start-date", "relay-passes", "pass-messages", "rover-memory", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing", "drive-window",
                     "max-drive-per-sol", "drive-every");
@@ -129,7 +135,7 @@ public final class MissionParser {
             }
             rovers.add(rover);
         }
-        return new PlanetMission(planet, mobility, rules, sky, missionOperations, seed, rovers);
+        return new PlanetMission(planet, mobility, rules, sky, missionOperations, seed, rovers, link(mission.settings()));
     }
 
     // The planet block, then one block per rover. Each block holds known settings, each given once.
@@ -249,6 +255,34 @@ public final class MissionParser {
         }
         // A dust opacity given in the file stays the same all along; otherwise, the weather of Mars
         return new Sky(startLs, hours, dust, !settings.containsKey("dust-opacity"));
+    }
+
+    // The link to Earth, for a mission with a date.
+    private Optional<Link> link(Map<String, Line> settings) {
+        if (!settings.containsKey("start-date")) {
+            for (String key : List.of("relay-passes", "pass-messages", "rover-memory")) {
+                if (settings.containsKey(key)) {
+                    throw settings.get(key).error("The link to Earth needs a start-date");
+                }
+            }
+            return Optional.empty();
+        }
+        Instant start = startDate(settings.get("start-date"));
+        List<Double> passes = Link.DEFAULT_PASSES;
+        if (settings.containsKey("relay-passes")) {
+            Line line = settings.get("relay-passes");
+            passes = new ArrayList<>();
+            for (String time : line.value("relay-passes").split("\\s+")) {
+                passes.add(hours(line, time));
+            }
+        }
+        int perPass = settings.containsKey("pass-messages")
+                ? (int) settings.get("pass-messages").integer() : Link.DEFAULT_MESSAGES_PER_PASS;
+        int memory = settings.containsKey("rover-memory")
+                ? (int) settings.get("rover-memory").integer() : Link.DEFAULT_MEMORY_MESSAGES;
+        List<Double> times = passes;
+        Line line = settings.getOrDefault("rover-memory", settings.getOrDefault("pass-messages", settings.get("start-date")));
+        return Optional.of(line.check(() -> new Link(start, times, perPass, memory)));
     }
 
     // "2012-08-06", or "2012-08-06T05:17": a date in UTC.

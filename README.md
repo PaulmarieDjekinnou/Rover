@@ -171,6 +171,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Planet`, `ElevationMap` | a sphere of a given radius and day length, cut into the grid of its elevation map; the height of each cell |
 | | `Orbit`, `Sun` | the year, the tilt of the axis, the sunlight and the eccentricity of a planet (Kepler's equation); the season, the local time, the height of the Sun and the sunlight on the ground |
 | | `Dust`, `DustWeather` | the dust in the atmosphere: constant, or the dust season and the storms of Mars |
+| | `EarthMars` | Earth and Mars on their orbits at a date: the distance between them, the light delay, and the angle between Mars and the Sun seen from Earth |
 | `mars.rover` | `RoutePlanner` | the A* search of the fastest route to a waypoint |
 | | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
 | | `PowerSource`, `PowerSystem` | a radioisotope generator or solar panels; the source and the battery of a rover, and what it uses |
@@ -182,6 +183,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
 | | `Batteries` | the batteries of the rovers through the mission, and the operations: the pace that makes them wait (to recharge, for the drive window, for the next sol), or stop |
 | | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
+| | `Link` | the link to Earth of a mission with a date: the passes of the relay orbiters, how many messages a pass carries and a rover keeps, the light delay and the solar conjunctions |
 | `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
 | | `TelemetrySink`, `TelemetrySinks`, `KafkaSink`, `JsonLinesSink` | where the messages go: Kafka, a file, or a list in tests |

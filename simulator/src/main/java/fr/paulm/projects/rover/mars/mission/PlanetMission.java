@@ -23,10 +23,16 @@ import java.util.Set;
 import java.util.SplittableRandom;
 
 // A mission to a planet: the planet, how the rovers drive, the landing rules, the sky (season and dust),
-// how the rovers are operated each sol, the seed of the random draws, and the plan of each rover. The same seed always gives the same landings,
-// so a mission can be replayed.
+// how the rovers are operated each sol, the seed of the random draws, the plan of each rover, and the link to Earth,
+// when the mission has a date. The same seed always gives the same landings, so a mission can be replayed.
 public record PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, Sky sky, Operations operations,
-                            long seed, List<RoverPlan> rovers) {
+                            long seed, List<RoverPlan> rovers, Optional<Link> link) {
+
+    // A mission without a link: the telemetry reaches Earth at once.
+    public PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, Sky sky, Operations operations,
+                         long seed, List<RoverPlan> rovers) {
+        this(planet, mobility, landingRules, sky, operations, seed, rovers, Optional.empty());
+    }
 
     // A mission with the default operations.
     public PlanetMission(Planet planet, Mobility mobility, LandingRules landingRules, Sky sky, long seed,

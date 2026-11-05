@@ -7,6 +7,7 @@ import fr.paulm.projects.rover.mars.mission.Ellipse;
 import fr.paulm.projects.rover.mars.mission.LandingDate;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
+import fr.paulm.projects.rover.mars.mission.Link;
 import fr.paulm.projects.rover.mars.mission.Operations;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
@@ -22,6 +23,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -138,6 +140,16 @@ class MissionParserTest {
     }
 
     @Test
+    void aMissionWithADateHasALinkToEarth() {
+        PlanetMission mission = parse("start-date 2012-08-06", "relay-passes 03:00 15:30", "pass-messages 20",
+                "rover-memory 100");
+        assertEquals(Optional.of(new Link(Instant.parse("2012-08-06T00:00:00Z"), List.of(3.0, 15.5), 20, 100)),
+                mission.link());
+        assertEquals(Optional.of(new Link(Instant.parse("2012-08-06T00:00:00Z"))), parse("start-date 2012-08-06").link());
+        assertEquals(Optional.empty(), parse("seed 1").link());
+    }
+
+    @Test
     void settingsHaveDefaults() {
         PlanetMission mission = parser.parse("planet flat\nlanding-max-elevation 0");
         assertEquals(0, mission.seed());
@@ -169,11 +181,13 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, resolution, rocks, seed, speed, start-date, start-ls, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, pass-messages, relay-passes, resolution, rocks, rover-memory, seed, speed, start-date, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
             "start-date 6/8/2012               | Line 4: Invalid date: \"6/8/2012\". Expected: a day in UTC, with or without a time, for example 2012-08-06 or 2012-08-06T05:17",
             "start-ls 0\\nstart-date 2012-08-06 | Line 5: Both start-ls and start-date give the season: keep one of them",
+            "relay-passes 04:00                | Line 4: The link to Earth needs a start-date",
+            "start-date 2012-08-06\\npass-messages 0 | Line 5: Invalid link: passes at [4.0, 5.5, 16.0, 17.5] hours, 0 message(s) per pass, a memory of 5000 message(s). Expected: at least one pass within the day, and at least one message per pass and in memory",
             "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",
             "landing-time 3pm                   | Line 4: Invalid time: \"3pm\". Expected: hh:mm, for example 15:00",
             "drive-window 15:00 10:00          | Line 4: Invalid operations: a drive window from 15.0 to 10.0 hours, 50.0 m per sol, one sol in 3. Expected: a window within the day, a positive distance, and a drive every sol or more",
