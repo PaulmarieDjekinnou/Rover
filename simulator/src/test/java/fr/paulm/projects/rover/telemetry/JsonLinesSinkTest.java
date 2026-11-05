@@ -21,10 +21,10 @@ class JsonLinesSinkTest {
     @Test
     void writesOneLinePerMessageWithItsTopicAndKey() throws Exception {
         Path file = tempDir.resolve("mission.jsonl");
-        RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10);
+        RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10, 0.5, 1);
         try (TelemetrySink sink = TelemetrySinks.open("file:" + file)) {
             assertInstanceOf(JsonLinesSink.class, sink);
-            sink.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 1, Instant.EPOCH));
+            sink.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 88_775, 1, Instant.EPOCH));
             sink.telemetry(telemetry);
         }
         List<String> lines = Files.readAllLines(file);

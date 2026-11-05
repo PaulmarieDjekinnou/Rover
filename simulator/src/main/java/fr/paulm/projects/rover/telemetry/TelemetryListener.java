@@ -8,9 +8,11 @@ import fr.paulm.projects.rover.domain.simulation.TurnListener;
 import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.MissionClock;
+import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
 import fr.paulm.projects.rover.mars.mission.Touchdown;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
+import fr.paulm.projects.rover.mars.rover.PowerSource;
 
 import java.time.Clock;
 import java.time.Duration;
@@ -53,8 +55,18 @@ public final class TelemetryListener implements TurnListener {
 
     // The start of the mission, then where each rover landed, or why it was lost.
     public void missionStarted(String file, long seed) {
-        sink.status(new MissionStatus(missionId, MissionStatus.Type.STARTED, file, deployment.planet().name(), seed,
-                wallClock.instant()));
+        sink.status(new MissionStatus(missionId, MissionStatus.Type.STARTED, file, deployment.planet().name(),
+                deployment.planet().dayLength().toSeconds(), seed, wallClock.instant()));
+        for (Touchdown touchdown : deployment.touchdowns()) {
+            RoverPlan plan = touchdown.plan();
+            String power = switch (plan.power().source()) {
+                case PowerSource.Generator generator -> "rtg " + generator.watts();
+                case PowerSource.SolarPanels panels -> "solar " + panels.squareMeters();
+            };
+            sink.plan(new RoverPlanned(missionId, plan.name(), plan.site().target().latitude(),
+                    plan.site().target().longitude(), power, plan.power().batteryWattHours(), touchdown.time().toSeconds(),
+                    plan.waypoints().size()));
+        }
         for (Touchdown touchdown : deployment.touchdowns()) {
             if (touchdown.landed()) {
                 event(touchdown.plan().name(), touchdown.time(), RoverEvent.Type.LANDED, touchdown.point().toString());
@@ -83,14 +95,17 @@ public final class TelemetryListener implements TurnListener {
         states.set(i, rover);
         String name = landed.get(i).plan().name();
         if (turn.blockedRovers().contains(i)) {
-            event(name, turn.time(), RoverEvent.Type.BLOCKED, "move to the " + rover.direction() + " blocked");
+            // On a planet, rovers share cells: only the terrain blocks them
+            RoverEvent.Type type = deployment.input().oneRoverPerCell()
+                    ? RoverEvent.Type.BLOCKED_BY_ROVER : RoverEvent.Type.BLOCKED_BY_TERRAIN;
+            event(name, turn.time(), type, "move to the " + rover.direction() + " blocked");
         }
         Coordinates point = positions.of(i);
         sink.telemetry(new RoverTelemetry(missionId, name, sequences[i]++, turn.time().toSeconds(),
                 MissionClock.format(turn.time(), deployment.planet()), point.latitude(), point.longitude(),
                 rover.position().x(), rover.position().y(), rover.direction().name(),
                 100 * batteries.charge(i, turn.time()), deployment.sun().elevation(point, turn.time()) <= 0,
-                distances[i]));
+                distances[i], deployment.sun().opticalDepth(turn.time()), batteries.panelCleanliness(i)));
     }
 
     // The rovers that stopped for good, then the end of the mission.
@@ -100,8 +115,8 @@ public final class TelemetryListener implements TurnListener {
             results.get(i).stopTime().ifPresent(time ->
                     event(landed.get(rover).plan().name(), time, RoverEvent.Type.STOPPED, "out of energy"));
         }
-        sink.status(new MissionStatus(missionId, MissionStatus.Type.ENDED, file, deployment.planet().name(), seed,
-                wallClock.instant()));
+        sink.status(new MissionStatus(missionId, MissionStatus.Type.ENDED, file, deployment.planet().name(),
+                deployment.planet().dayLength().toSeconds(), seed, wallClock.instant()));
     }
 
     private void event(String rover, Duration time, RoverEvent.Type type, String detail) {

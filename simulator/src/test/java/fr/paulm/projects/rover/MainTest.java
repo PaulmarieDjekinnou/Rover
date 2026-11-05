@@ -266,7 +266,9 @@ class MainTest {
         assertEquals(TestResources.read("simulations/valid/mini-planet.expected.txt"), outputLines());
         assertEquals(List.of(MissionStatus.Type.STARTED, MissionStatus.Type.ENDED),
                 sink.statuses.stream().map(MissionStatus::type).toList());
-        assertEquals(List.of(RoverEvent.Type.LANDED, RoverEvent.Type.LANDED, RoverEvent.Type.LOST, RoverEvent.Type.BLOCKED),
+        // One plan per rover, even the one lost at landing
+        assertEquals(3, sink.plans.size());
+        assertEquals(List.of(RoverEvent.Type.LANDED, RoverEvent.Type.LANDED, RoverEvent.Type.LOST, RoverEvent.Type.BLOCKED_BY_TERRAIN),
                 sink.events.stream().map(RoverEvent::type).toList());
         // One message per instruction ended: Polar's 3 moves, Climber's move, turn and blocked move
         List<RoverTelemetry> polar = sink.telemetry.stream().filter(message -> message.rover().equals("Polar")).toList();

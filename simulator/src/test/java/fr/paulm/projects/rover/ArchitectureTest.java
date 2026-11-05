@@ -32,7 +32,7 @@ class ArchitectureTest {
             .whereLayer("Input").mayOnlyBeAccessedByLayers("Application")
             .whereLayer("Mission").mayOnlyBeAccessedByLayers("Telemetry", "Input", "Application")
             .whereLayer("Simulation").mayOnlyBeAccessedByLayers("Mission", "Telemetry", "Input", "Application")
-            .whereLayer("Rover").mayOnlyBeAccessedByLayers("Mission", "Input", "Application")
+            .whereLayer("Rover").mayOnlyBeAccessedByLayers("Mission", "Telemetry", "Input", "Application")
             .whereLayer("Planet").mayOnlyBeAccessedByLayers("Rover", "Mission", "Telemetry", "Input", "Application")
             .whereLayer("Model").mayOnlyBeAccessedByLayers("Simulation", "Planet", "Rover", "Mission", "Telemetry",
                     "Input", "Application");

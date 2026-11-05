@@ -9,6 +9,8 @@ public interface TelemetrySink extends AutoCloseable {
 
     void status(MissionStatus message);
 
+    void plan(RoverPlanned message);
+
     @Override
     void close();
 }

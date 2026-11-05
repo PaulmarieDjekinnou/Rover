@@ -2,6 +2,7 @@ package fr.paulm.projects.rover.ground;
 
 import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
+import fr.paulm.projects.rover.telemetry.RoverPlanned;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 import fr.paulm.projects.rover.telemetry.TelemetryJson;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,11 @@ class ReceiverTest {
         }
 
         @Override
+        public void plan(RoverPlanned message) {
+            written.add(message);
+        }
+
+        @Override
         public void commit() {
         }
 
@@ -49,9 +55,9 @@ class ReceiverTest {
 
     @Test
     void eachTopicGoesToItsTable() {
-        MissionStatus status = new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 1, Instant.EPOCH);
+        MissionStatus status = new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 88_775, 1, Instant.EPOCH);
         RoverEvent event = new RoverEvent("m1", "Spirit", 0, 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "here");
-        RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10);
+        RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10, 0.5, 1);
         receiver.receive("mission.status", TelemetryJson.write(status));
         receiver.receive("rover.events", TelemetryJson.write(event));
         receiver.receive("rover.telemetry", TelemetryJson.write(telemetry));

@@ -75,6 +75,11 @@ public final class KafkaSink implements TelemetrySink {
     }
 
     @Override
+    public void plan(RoverPlanned message) {
+        send(new ProducerRecord<>(Topics.PLANS, message.rover(), TelemetryJson.write(message)));
+    }
+
+    @Override
     public void status(MissionStatus message) {
         send(new ProducerRecord<>(Topics.STATUS, message.missionId(), TelemetryJson.write(message)));
     }

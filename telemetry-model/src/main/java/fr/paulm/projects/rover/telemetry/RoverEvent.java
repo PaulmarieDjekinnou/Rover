@@ -7,6 +7,6 @@ public record RoverEvent(String missionId, String rover, long sequence, long mis
                          Type type, String detail) {
 
     public enum Type {
-        LANDED, LOST, NO_ROUTE, BLOCKED, STOPPED
+        LANDED, LOST, NO_ROUTE, BLOCKED_BY_TERRAIN, BLOCKED_BY_ROVER, STOPPED
     }
 }

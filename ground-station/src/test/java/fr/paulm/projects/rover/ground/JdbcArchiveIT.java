@@ -46,13 +46,13 @@ class JdbcArchiveIT {
 
     @Test
     void messagesReadTwiceAreArchivedOnce() throws Exception {
-        RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10);
+        RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10, 0.5, 1);
         RoverEvent event = new RoverEvent("m1", "Spirit", 0, 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "here");
         try (Archive archive = new JdbcArchive(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
             for (int read = 0; read < 2; read++) {
                 archive.telemetry(telemetry);
                 archive.event(event);
-                archive.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 1, Instant.EPOCH));
+                archive.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 88_775, 1, Instant.EPOCH));
                 archive.commit();
             }
         }

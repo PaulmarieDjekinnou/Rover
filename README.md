@@ -202,13 +202,14 @@ With the `--telemetry server:port` option, a mission to a planet also sends its 
 
 | Topic | Key | Messages |
 |---|---|---|
-| `rover.telemetry` | the rover's name | one message each time a rover ends an instruction: mission time, position, cell, direction, battery, day or night, distance driven, and a sequence number per rover |
-| `rover.events` | the rover's name | landed, lost at landing, move blocked, stopped for good |
-| `mission.status` | the mission id | the start and the end of the mission (file, planet, seed) |
+| `rover.telemetry` | the rover's name | one message each time a rover ends an instruction: mission time, position, cell, direction, battery, day or night, distance driven, dust opacity, cleanliness of the solar panels, and a sequence number per rover |
+| `rover.events` | the rover's name | landed, lost at landing, no route to a waypoint, move blocked by the terrain or by a rover, stopped for good |
+| `rover.plans` | the rover's name | the plan of each rover, at the start: its site, power source, battery, landing time and number of waypoints |
+| `mission.status` | the mission id | the start and the end of the mission (file, planet, length of its sol, seed) |
 
 Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning. If Kafka does not answer within 5 seconds, the program says so and stops before the mission; a message that cannot be sent during the mission is counted, and a warning at the end gives how many were lost. With `--telemetry file:mission.jsonl`, the messages are written to a file instead, one per line (JSON Lines), each with its topic and key: to look at a mission or compare two runs without Kafka.
 
-**The ground station** is a second application, in its own module and jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`). It creates and upgrades its schema itself when it starts (Flyway, `ground-station/src/main/resources/db/migration`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and a message read twice is written once (telemetry and events are numbered per rover). A message it cannot read does not stop it: it goes to the `rover.dead-letters` topic, with the reason in its headers.
+**The ground station** is a second application, in its own module and jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `rovers`, `telemetry` and `events`). It creates and upgrades its schema itself when it starts (Flyway, `ground-station/src/main/resources/db/migration`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and a message read twice is written once (telemetry and events are numbered per rover). A message it cannot read does not stop it: it goes to the `rover.dead-letters` topic, with the reason in its headers.
 
 ```bash
 docker compose up -d     # Kafka (KRaft, with its topics) and PostgreSQL
@@ -218,7 +219,7 @@ java -jar ground-station/target/ground-station.jar localhost:9092 jdbc:postgresq
 
 The database user and password come from `ROVER_DB_USER` and `ROVER_DB_PASSWORD` (`rover` by default).
 
-**Mission control** follows the rovers live, in the console, from Kafka: the last known position, direction, battery and day or night of each rover, and its status (active, stopped, silent when it has sent nothing for a sol). Each mission control has its own consumer group and starts from the latest messages, while the ground station archives everything in its own group:
+**Mission control** follows the rovers live, in the console, from Kafka: the last known position, direction, battery and day or night of each rover, the dust, and its status (active, stopped, silent when it has sent nothing for a sol of its planet, done once the mission has ended). Each mission control has its own consumer group and starts from the latest messages, while the ground station archives everything in its own group:
 
 ```bash
 java -cp ground-station/target/ground-station.jar fr.paulm.projects.rover.ground.MissionControl localhost:9092
@@ -271,7 +272,7 @@ The project has three Maven modules:
 | `simulator` | the simulator: rovers on a plateau, missions to a planet, and their telemetry (`rover.jar`) |
 | `ground-station` | the ground station, which archives the telemetry in PostgreSQL (`ground-station.jar`); it only knows the messages, never the simulator |
 
-The integration tests (`*IT`) run against real Kafka and PostgreSQL servers, started in Docker by Testcontainers, with `./mvnw verify`; without Docker, they are skipped. GitHub Actions runs them.
+The integration tests (`*IT`) run against real Kafka and PostgreSQL servers (`ChainIT` sends a mission through Kafka and checks what the ground station archives), started in Docker by Testcontainers, with `./mvnw verify`; without Docker, they are skipped. GitHub Actions runs them.
 
 
 All classes are in the `fr.paulm.projects.rover` package.

@@ -27,10 +27,10 @@ class KafkaSinkIT {
     @Test
     void theMessagesOfARoverArriveInOrderWithTheirKey() {
         try (KafkaSink sink = new KafkaSink(KAFKA.getBootstrapServers())) {
-            sink.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 1, Instant.EPOCH));
+            sink.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 88_775, 1, Instant.EPOCH));
             for (int i = 0; i < 20; i++) {
                 sink.telemetry(new RoverTelemetry("m1", i % 2 == 0 ? "Spirit" : "Opportunity", i / 2, i, "Sol 0 00:00",
-                        0, 0, 0, 0, "N", 100, false, i));
+                        0, 0, 0, 0, "N", 100, false, i, 0.5, 1));
             }
         }
         List<ConsumerRecord<String, String>> received = new ArrayList<>();

@@ -45,30 +45,37 @@ public final class GroundStation {
         Duration idle = args.length == 4 ? Duration.ofSeconds(Long.parseLong(args[3])) : null;
         String user = System.getenv().getOrDefault("ROVER_DB_USER", "rover");
         String password = System.getenv().getOrDefault("ROVER_DB_PASSWORD", "rover");
-        try (Archive archive = new JdbcArchive(args[1], user, password);
+        run(args[0], new JdbcArchive(args[1], user, password), idle);
+    }
+
+    // Reads Kafka into the archive until Ctrl+C, or until no message has come for idle (when given).
+    // Returns the number of telemetry messages archived per mission.
+    public static Map<String, Long> run(String kafka, Archive archive, Duration idle) {
+        try (archive;
              KafkaProducer<String, String> deadLetters = new KafkaProducer<>(Map.of(
-                     ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, args[0],
+                     ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka,
                      ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
                      ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class));
              KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
-                     ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, args[0],
+                     ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, kafka,
                      ConsumerConfig.GROUP_ID_CONFIG, GROUP,
                      ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false,
                      ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
                      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
                      ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class))) {
             Thread main = Thread.currentThread();
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            Thread hook = new Thread(() -> {
                 consumer.wakeup();
                 try {
                     main.join();
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-            }));
+            });
+            Runtime.getRuntime().addShutdownHook(hook);
             Receiver receiver = new Receiver(archive);
-            consumer.subscribe(List.of(Topics.STATUS, Topics.EVENTS, Topics.TELEMETRY));
-            LOGGER.info("Ground station listening to {}", args[0]);
+            consumer.subscribe(List.of(Topics.STATUS, Topics.PLANS, Topics.EVENTS, Topics.TELEMETRY));
+            LOGGER.info("Ground station listening to {}", kafka);
             Instant lastMessage = Instant.now();
             try {
                 while (idle == null || Duration.between(lastMessage, Instant.now()).compareTo(idle) < 0) {
@@ -93,11 +100,13 @@ public final class GroundStation {
                         lastMessage = Instant.now();
                     }
                 }
+                Runtime.getRuntime().removeShutdownHook(hook);
             } catch (WakeupException e) {
                 // Ctrl+C: stop reading, and close the consumer and the database properly
             }
             receiver.telemetryPerMission().forEach((mission, count) ->
                     LOGGER.info("Mission {}: {} telemetry message(s) archived", mission, count));
+            return receiver.telemetryPerMission();
         }
     }
 }

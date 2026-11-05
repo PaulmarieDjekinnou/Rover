@@ -33,6 +33,11 @@ public final class JsonLinesSink implements TelemetrySink {
     }
 
     @Override
+    public void plan(RoverPlanned message) {
+        write(Topics.PLANS, message.rover(), message);
+    }
+
+    @Override
     public void status(MissionStatus message) {
         write(Topics.STATUS, message.missionId(), message);
     }

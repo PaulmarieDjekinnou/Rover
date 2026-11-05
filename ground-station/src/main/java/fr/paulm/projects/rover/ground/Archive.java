@@ -2,6 +2,7 @@ package fr.paulm.projects.rover.ground;
 
 import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
+import fr.paulm.projects.rover.telemetry.RoverPlanned;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 
 // Where the ground station keeps what it receives: PostgreSQL, or a list in tests.
@@ -10,6 +11,8 @@ import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 public interface Archive extends AutoCloseable {
 
     void status(MissionStatus message);
+
+    void plan(RoverPlanned message);
 
     void telemetry(RoverTelemetry message);
 

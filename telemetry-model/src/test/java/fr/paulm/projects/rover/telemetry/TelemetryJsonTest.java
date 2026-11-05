@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TelemetryJsonTest {
 
     private final RoverTelemetry telemetry = new RoverTelemetry("m1", "Curiosity", 3, 655_432, "Sol 7 09:51",
-            -4.99, 137.45, 549, 340, "S", 80, true, 29_580);
+            -4.99, 137.45, 549, 340, "S", 80, true, 29_580, 0.5, 1);
 
     @Test
     void aMessageBecomesJsonAndBack() {
@@ -22,7 +22,7 @@ class TelemetryJsonTest {
 
     @Test
     void timesAndTypesAreWrittenAsText() {
-        MissionStatus status = new MissionStatus("m1", MissionStatus.Type.STARTED, "mission.txt", "Mars", 42,
+        MissionStatus status = new MissionStatus("m1", MissionStatus.Type.STARTED, "mission.txt", "Mars", 88_775, 42,
                 Instant.parse("2026-11-04T10:00:00Z"));
         String json = TelemetryJson.write(status);
         assertTrue(json.contains("\"wallClock\":\"2026-11-04T10:00:00Z\""), json);

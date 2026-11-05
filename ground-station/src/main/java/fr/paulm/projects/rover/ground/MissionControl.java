@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover.ground;
 
+import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 import fr.paulm.projects.rover.telemetry.TelemetryJson;
@@ -48,15 +49,15 @@ public final class MissionControl {
                     Thread.currentThread().interrupt();
                 }
             }));
-            consumer.subscribe(List.of(Topics.TELEMETRY, Topics.EVENTS));
+            consumer.subscribe(List.of(Topics.STATUS, Topics.TELEMETRY, Topics.EVENTS));
             try {
                 while (true) {
                     for (ConsumerRecord<String, String> record : consumer.poll(Duration.ofSeconds(1))) {
                         try {
-                            if (record.topic().equals(Topics.TELEMETRY)) {
-                                dashboard.telemetry(TelemetryJson.read(record.value(), RoverTelemetry.class));
-                            } else {
-                                dashboard.event(TelemetryJson.read(record.value(), RoverEvent.class));
+                            switch (record.topic()) {
+                                case Topics.TELEMETRY -> dashboard.telemetry(TelemetryJson.read(record.value(), RoverTelemetry.class));
+                                case Topics.STATUS -> dashboard.status(TelemetryJson.read(record.value(), MissionStatus.class));
+                                default -> dashboard.event(TelemetryJson.read(record.value(), RoverEvent.class));
                             }
                         } catch (IllegalArgumentException e) {
                             // An unreadable message: the ground station sends it to the dead letters

@@ -2,6 +2,7 @@ package fr.paulm.projects.rover.ground;
 
 import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
+import fr.paulm.projects.rover.telemetry.RoverPlanned;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 import fr.paulm.projects.rover.telemetry.TelemetryJson;
 import fr.paulm.projects.rover.telemetry.Topics;
@@ -28,6 +29,7 @@ final class Receiver {
             }
             case Topics.EVENTS -> archive.event(TelemetryJson.read(json, RoverEvent.class));
             case Topics.STATUS -> archive.status(TelemetryJson.read(json, MissionStatus.class));
+            case Topics.PLANS -> archive.plan(TelemetryJson.read(json, RoverPlanned.class));
             default -> throw new IllegalArgumentException("Unknown topic: " + topic);
         }
     }

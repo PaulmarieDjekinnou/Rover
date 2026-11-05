@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover.ground;
 
+import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 
@@ -10,10 +11,13 @@ import java.util.Map;
 import java.util.TreeMap;
 
 // What mission control shows: the last known state of each rover of the latest mission, as the telemetry tells it.
-// A rover is "silent" when it has sent nothing for a sol (of mission time) while the others went on.
+// A rover is "silent" when it has sent nothing for a sol of its planet (of mission time) while the others went on;
+// once the mission has ended, every rover is "done".
 final class Dashboard {
 
-    private static final long SOL_SECONDS = 88_775;
+    // Until the start of the mission tells it, the sol of Mars
+    private long solSeconds = 88_775;
+    private boolean ended;
 
     // The last telemetry and the last event of each rover, by name, for the mission being followed
     private final Map<String, RoverTelemetry> telemetry = new TreeMap<>();
@@ -31,6 +35,12 @@ final class Dashboard {
         }
     }
 
+    void status(MissionStatus message) {
+        follow(message.missionId());
+        solSeconds = message.solSeconds();
+        ended = message.type() == MissionStatus.Type.ENDED;
+    }
+
     void event(RoverEvent message) {
         follow(message.missionId());
         events.put(message.rover(), message);
@@ -44,6 +54,7 @@ final class Dashboard {
             events.clear();
             latestSeconds = 0;
             latestClock = "";
+            ended = false;
         }
     }
 
@@ -53,9 +64,10 @@ final class Dashboard {
         lines.add(String.format(Locale.ROOT, "%-14s mission %s", latestClock, missionId == null ? "-" : missionId));
         for (Map.Entry<String, RoverTelemetry> entry : telemetry.entrySet()) {
             RoverTelemetry rover = entry.getValue();
-            lines.add(String.format(Locale.ROOT, "%-13s %7.2f %7.2f  %s  %s %3.0f %%  %-5s  %s", entry.getKey(),
+            lines.add(String.format(Locale.ROOT, "%-13s %7.2f %7.2f  %s  %s %3.0f %%  %-5s  dust %3.1f  %s", entry.getKey(),
                     rover.latitude(), rover.longitude(), rover.direction(), bar(rover.batteryPercent()),
-                    rover.batteryPercent(), rover.night() ? "night" : "day", status(entry.getKey(), rover)));
+                    rover.batteryPercent(), rover.night() ? "night" : "day", rover.dustOpacity(),
+                    status(entry.getKey(), rover)));
         }
         events.keySet().stream().filter(name -> !telemetry.containsKey(name)).forEach(name ->
                 lines.add(String.format(Locale.ROOT, "%-13s %s", name, events.get(name).type().name().toLowerCase(Locale.ROOT))));
@@ -63,7 +75,14 @@ final class Dashboard {
     }
 
     private String status(String name, RoverTelemetry rover) {
-        if (latestSeconds - rover.missionSeconds() > SOL_SECONDS) {
+        RoverEvent stopped = events.get(name);
+        if (stopped != null && stopped.type() == RoverEvent.Type.STOPPED) {
+            return "stopped";
+        }
+        if (ended) {
+            return "done";
+        }
+        if (latestSeconds - rover.missionSeconds() > solSeconds) {
             return "silent";
         }
         RoverEvent event = events.get(name);
