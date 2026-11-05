@@ -79,7 +79,7 @@ final class MissionReport {
     // RoverPositions, its cell and direction), when it stopped if it ran out of energy, how far it drove and
     // how long it took, then its battery and the Sun when it ends:
     //   Curiosity: 5.49S 137.95E (cell 551 338) facing E
-    //     73.8 km driven in 25.3 sols, 10.4 sols waiting for energy
+    //     73.8 km driven in 25.3 sols, 712.6 sols waiting
     //     battery 69%, local time 06:32, Sun 8 degrees high
     void results(Deployment deployment, List<MissionResult> results, RoverPositions positions, Batteries batteries) {
         Planet planet = deployment.planet();
@@ -96,7 +96,7 @@ final class MissionReport {
             out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s", name, positions.of(i),
                     result.finalRover().position(), result.finalRover().direction()));
             result.stopTime().ifPresent(time -> out.println("  stopped on " + clock(time, planet) + ", out of energy"));
-            out.println(String.format(Locale.ROOT, "  %.1f km driven in %.1f sols, %.1f sols waiting for energy",
+            out.println(String.format(Locale.ROOT, "  %.1f km driven in %.1f sols, %.1f sols waiting",
                     result.distanceMeters() / 1_000, sols(result.drivingTime(), planet), sols(result.waitingTime(), planet)));
             Duration end = result.stopTime().orElse(landed.get(i).time().plus(result.totalTime()));
             out.println(String.format(Locale.ROOT, "  battery %.0f%%, %s", 100 * batteries.charge(i),

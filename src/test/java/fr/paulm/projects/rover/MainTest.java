@@ -93,15 +93,15 @@ class MainTest {
         assertEquals(0, main().run(new String[]{"--history", input.toString()}));
         // One line each time an instruction ends: both first moves end together, then Climber turns (5 minutes)
         // and is blocked by the peak at once, and Polar goes on, crossing the north pole
-        // Each move is 7.9 km long (2.21 sols at 4 cm/s), plus the waits to recharge the batteries;
-        // the turn takes 5 minutes. Each rover comes with its battery charge, and (night) where the Sun is down.
+        // Each move is 7.9 km long: at 100 m per sol, in the drive window, about 78 sols; the turn takes 5 minutes.
+        // Each rover comes with its battery charge, and (night) where the Sun is down.
         assertEquals(List.of(
-                "Sol 2 17:24: Polar 67.50N 67.50E N 51% (night) | Climber 22.50N 202.50E S 51%",
-                "Sol 2 17:24: Polar 67.50N 67.50E N 51% (night) | Climber 22.50S 202.50E S 51%",
-                "Sol 2 17:29: Polar 67.50N 67.50E N 51% (night) | Climber 22.50S 202.50E W 51%",
-                "Sol 2 17:29: Polar 67.50N 67.50E N 51% (night) | Climber 22.50S 202.50E W 51% (blocked: Climber)",
-                "Sol 5 23:28: Polar 67.50N 247.50E S 64% (night) | Climber 22.50S 202.50E W 51% (night)",
-                "Sol 9 05:22: Polar 22.50N 247.50E S 76% (night) | Climber 22.50S 202.50E W 51% (night)"),
+                "Sol 77 22:27: Polar 67.50N 67.50E N 99% | Climber 22.50N 202.50E S 100% (night)",
+                "Sol 78 13:22: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E S 99%",
+                "Sol 78 13:27: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E W 99%",
+                "Sol 78 13:27: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E W 99% (blocked: Climber)",
+                "Sol 156 22:03: Polar 67.50N 247.50E S 100% | Climber 22.50S 202.50E W 99% (night)",
+                "Sol 235 10:28: Polar 22.50N 247.50E S 99% | Climber 22.50S 202.50E W 99%"),
                 outputLines().stream().filter(line -> line.startsWith("Sol ")).toList());
     }
 
@@ -109,9 +109,9 @@ class MainTest {
     void aRoverAppearsInTheHistoryOnceItHasLanded() throws Exception {
         Path input = TestResources.path("simulations/valid/late-landing.txt");
         assertEquals(0, main().run(new String[]{"--history", input.toString()}));
-        // Early ends its first move on sol 2, before Late lands on sol 3
+        // Early ends its first move on sol 71, before Late lands on sol 100
         List<String> history = outputLines().stream().filter(line -> line.startsWith("Sol ")).toList();
-        assertEquals("Sol 2 13:10: Early 22.50N 112.50E E 60% (night)", history.getFirst());
+        assertEquals("Sol 71 22:14: Early 22.50N 112.50E E 100%", history.getFirst());
         assertTrue(history.getLast().contains("| Late "));
     }
 

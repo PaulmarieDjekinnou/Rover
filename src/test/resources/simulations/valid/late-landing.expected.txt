@@ -1,10 +1,10 @@
 Early landed on Sol 0 00:00 at 22.50N 67.50E (cell 1 2), 0.0 km from its target
   local time 12:00, Sun 68 degrees high
-Late landed on Sol 3 05:00 at 22.50N 292.50E (cell 6 2), 0.0 km from its target
-  local time 08:00, Sun 28 degrees high
+Late landed on Sol 100 05:00 at 22.50N 292.50E (cell 6 2), 0.0 km from its target
+  local time 08:00, Sun 34 degrees high
 Early: 22.50N 157.50E (cell 3 2) facing E
-  14.5 km driven in 4.1 sols, 1.0 sols waiting for energy
-  battery 20%, local time 20:30, night
+  14.5 km driven in 4.1 sols, 139.7 sols waiting
+  battery 99%, local time 13:30, Sun 69 degrees high
 Late: 22.50N 247.50E (cell 5 2) facing W
-  7.2 km driven in 2.0 sols, 0.5 sols waiting for energy
-  battery 60%, local time 18:10, night
+  7.2 km driven in 2.0 sols, 70.1 sols waiting
+  battery 100%, local time 07:17, Sun 26 degrees high

@@ -109,6 +109,8 @@ orders MMMLMM
 | `landing-max-latitude 30` | optional: the farthest landing site from the equator, in degrees (30 by default) |
 | `start-ls 150` | optional: the season at the landing, as a solar longitude Ls in degrees: 0 at the northern spring equinox, 90 at the northern summer solstice (0 by default) |
 | `landing-time 15:00` | optional: the local solar time at the start of the mission, at the site of the first rover (12:00 by default) |
+| `drive-window 10:00 15:00` | optional: the local solar times between which the rovers drive and turn (10:00 to 15:00 by default) |
+| `max-drive-per-sol 100` | optional: the farthest a rover drives in a sol, in meters (100 by default) |
 | `dust-opacity 0.5` | optional: the optical depth of the dust in the atmosphere, which weakens sunlight: about 0.5 on a clear day, above 4 in a global dust storm (0.5 by default) |
 | `rover <name>` | starts the block of a rover |
 | `site <latitude> <longitude>` | where the rover aims: latitude negative in the south, longitude from 0 to 360 to the east |
@@ -129,9 +131,11 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The Sun.** The planet turns on itself once a sol and goes around the Sun once a year (668.6 sols on Mars), on an axis tilted by 25.19 degrees, which makes the seasons. From the season (Ls), the time and the place, the simulation knows the local solar time and how high the Sun is. Sunlight on the ground is about 586 W/m2 above the atmosphere of Mars, weakened by the dust, all the more as the Sun is low.
 
+**The operations.** Like real missions, the rovers are operated sol by sol: a rover drives and turns only in its drive window, at its local time, and at most `max-drive-per-sol` meters in its local sol; then it waits for the next window. Real rovers drive a few hours a day, some tens of meters per sol on average: `RealMissionsTest` checks that the sample mission stays within these orders of magnitude.
+
 **The energy.** Each rover has a battery, full at the landing, charged by its power source: a generator gives the same power day and night, solar panels turn a fifth of the sunlight they get into power, so nothing at night, little in winter or in a dust storm. A rover uses 150 W when it drives or turns, and 15 W when it waits. It works while its battery holds more than a fifth of its capacity; below, it waits and recharges until the battery is four fifths full, then goes on, so a solar rover drives by day and waits at night. Waiting takes time on the common clock. A rover whose battery does not recharge in a whole year of waiting stops for good, like Spirit in 2010: its other orders are left undone.
 
-Each rover enters the simulation when it lands, on the common clock: rovers sent at different dates land on different sols. The output gives the landing of each rover, on the mission clock (the sol, from 0, and the time of day), then, for each rover that landed, its final position, its cell and direction, the distance driven and the time spent driving, the time spent waiting for energy, in sols (Martian days of 24 h 39 min 35 s), and the charge of its battery, on several lines per rover. Both give the local time and the Sun:
+Each rover enters the simulation when it lands, on the common clock: rovers sent at different dates land on different sols. The output gives the landing of each rover, on the mission clock (the sol, from 0, and the time of day), then, for each rover that landed, its final position, its cell and direction, the distance driven and the time spent driving, the time spent waiting (for energy, for the drive window, or for the next sol), in sols (Martian days of 24 h 39 min 35 s), and the charge of its battery, on several lines per rover. Both give the local time and the Sun:
 
 ```
 Curiosity landed on Sol 0 00:00 at 4.74S 137.45E (cell 549 341), 9.1 km from its target
@@ -141,14 +145,14 @@ Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from 
 Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target
   local time 13:15, Sun 67 degrees high
 Curiosity: 5.49S 137.95E (cell 551 338) facing E
-  73.8 km driven in 25.3 sols, 10.4 sols waiting for energy
-  battery 69%, local time 06:32, Sun 8 degrees high
+  73.8 km driven in 25.3 sols, 712.6 sols waiting
+  battery 98%, local time 11:07, Sun 77 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
-  71.7 km driven in 21.0 sols, 8.3 sols waiting for energy
-  battery 34%, local time 22:29, night
+  71.7 km driven in 21.0 sols, 695.8 sols waiting
+  battery 99%, local time 10:36, Sun 63 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
-  29.6 km driven in 8.3 sols, 87.8 sols waiting for energy
-  battery 45%, local time 15:21, Sun 39 degrees high
+  29.6 km driven in 8.3 sols, 286.6 sols waiting
+  battery 70%, local time 10:32, Sun 63 degrees high
 ```
 
 A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
@@ -277,9 +281,10 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `PowerSource`, `PowerSystem` | a radioisotope generator or solar panels; the source and the battery of a rover, and what it uses |
 | `mars.mission` | `PlanetMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
+| | `Operations` | the drive window and the distance per sol |
 | | `Sky`, `LandingDate` | the season and the time at the start of the mission, and the dust in the atmosphere; the sol and local time a rover lands at |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
-| | `Batteries` | the batteries of the rovers through the mission: the pace that makes them wait to recharge, or stop |
+| | `Batteries` | the batteries of the rovers through the mission, and the operations: the pace that makes them wait (to recharge, for the drive window, for the next sol), or stop |
 | | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
 | `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |

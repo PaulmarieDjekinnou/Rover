@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.mars.mission;
 
 import fr.paulm.projects.rover.domain.Direction;
+import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.Terrain;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BatteriesTest {
@@ -30,12 +32,16 @@ class BatteriesTest {
     private final Position noonCell = new Position(0, 0);
 
     private Batteries batteries(PowerSystem power, double dustOpacity) {
+        return batteries(power, dustOpacity, Operations.UNLIMITED);
+    }
+
+    private Batteries batteries(PowerSystem power, double dustOpacity, Operations operations) {
         Coordinates point = planet.centerOf(noonCell);
         RoverPlan plan = new RoverPlan("Rover", new LandingSite(point, Ellipse.NONE), Direction.N, List.of(), power);
         Sun sun = new Sun(planet, 0, point.longitude(), dustOpacity);
         Deployment deployment = new Deployment(planet, sun, List.of(new Touchdown(plan, point, noonCell, Optional.empty())),
                 new SimulationInput(planet.grid(), Terrain.FLAT, false, List.of(new RoverMission(new Rover(noonCell, Direction.N), List.of()))));
-        return new Batteries(deployment);
+        return new Batteries(deployment, operations);
     }
 
     // A turn on the spot in the noon cell, as long as busy says
@@ -105,5 +111,34 @@ class BatteriesTest {
         assertEquals(0.9, batteries.charge(0, Duration.ofHours(5)), 1e-9);
         assertEquals(0.8, batteries.charge(0, Duration.ofHours(10)), 1e-9);
         assertEquals(0.8, batteries.charge(0), 1e-9);
+    }
+
+    @Test
+    void aRoverDrivesOnlyInItsDriveWindow() {
+        // It is noon at the start: the window from 10:00 to 15:00 leaves 3 hours of driving in the first sol
+        Batteries batteries = batteries(PowerSystem.DEFAULT, 0.5, new Operations(10, 15, 1_000));
+        Pace.Timing timing = drive(batteries, Duration.ZERO, Duration.ofHours(4));
+        // 3 hours today, then the last hour from 10:00 the next sol: 19 hours of waiting, in hours of the planet
+        Duration planetHour = Mars.SOL.dividedBy(24);
+        assertEquals(planetHour.multipliedBy(19).toMinutes(), timing.waiting().toMinutes(), 10);
+    }
+
+    @Test
+    void aRoverStopsAtItsDistanceOfTheSol() {
+        // A 7.9 km move at 4 cm/s, 100 m a sol: about 79 sols
+        Batteries batteries = batteries(PowerSystem.DEFAULT, 0.5, new Operations(0, 24, 100));
+        Rover from = new Rover(noonCell, Direction.N);
+        Rover to = new Rover(new Position(0, 1), Direction.N);
+        double meters = planet.distance(noonCell, new Position(0, 1));
+        Duration busy = Duration.ofSeconds(Math.round(meters / 0.04));
+        Pace.Timing timing = batteries.timing(0, from, to, Duration.ZERO, busy);
+        double sols = timing.duration().toMillis() / (double) Mars.SOL.toMillis();
+        assertEquals(meters / 100, sols, 1.5);
+    }
+
+    @Test
+    void operationsMustBeWithinTheDay() {
+        assertThrows(InvalidInputException.class, () -> new Operations(15, 10, 100));
+        assertThrows(InvalidInputException.class, () -> new Operations(10, 15, 0));
     }
 }

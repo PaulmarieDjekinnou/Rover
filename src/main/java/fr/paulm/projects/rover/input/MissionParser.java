@@ -8,6 +8,7 @@ import fr.paulm.projects.rover.mars.mission.Landing;
 import fr.paulm.projects.rover.mars.mission.LandingDate;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
+import fr.paulm.projects.rover.mars.mission.Operations;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.mission.Sky;
@@ -37,6 +38,8 @@ import java.util.function.Function;
 //   start-ls 150                  optional: the season at the landing, as a solar longitude in degrees (0 by default)
 //   landing-time 15:00            optional: the local time of the landing, at the site of the first rover (12:00)
 //   dust-opacity 0.5              optional: the optical depth of the dust in the atmosphere (0.5 by default)
+//   drive-window 10:00 15:00      optional: the local times between which the rovers drive (10:00 to 15:00)
+//   max-drive-per-sol 100         optional: the farthest a rover drives in a sol, in meters (100 by default)
 //   landing-max-elevation -1000   optional: the highest landing site allowed, in meters
 //   landing-max-latitude 30       optional: the farthest landing site from the equator, in degrees
 //
@@ -55,7 +58,7 @@ public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
-                    "start-ls", "landing-time", "dust-opacity");
+                    "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol");
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing");
 
@@ -99,7 +102,7 @@ public final class MissionParser {
             }
             rovers.add(rover);
         }
-        return new PlanetMission(planet, mobility, rules, sky, seed, rovers);
+        return new PlanetMission(planet, mobility, rules, sky, operations(mission.settings()), seed, rovers);
     }
 
     // The planet block, then one block per rover. Each block holds known settings, each given once.
@@ -149,6 +152,29 @@ public final class MissionParser {
             mobility = line.check(() -> current.withTurnTime(turnTime));
         }
         return mobility;
+    }
+
+    // The drive window and the distance per sol, each checked on its own line.
+    private Operations operations(Map<String, Line> settings) {
+        Operations operations = Operations.DEFAULT;
+        if (settings.containsKey("drive-window")) {
+            Line line = settings.get("drive-window");
+            String[] times = line.value("drive-window").split("\\s+");
+            if (times.length != 2) {
+                throw line.error("Expected: drive-window followed by two times, for example 10:00 15:00");
+            }
+            double start = hours(line, times[0]);
+            double end = times[1].equals("24:00") ? 24 : hours(line, times[1]);
+            double perSol = operations.maxMetersPerSol();
+            operations = line.check(() -> new Operations(start, end, perSol));
+        }
+        if (settings.containsKey("max-drive-per-sol")) {
+            Line line = settings.get("max-drive-per-sol");
+            double meters = line.decimal();
+            Operations current = operations;
+            operations = line.check(() -> new Operations(current.windowStartHours(), current.windowEndHours(), meters));
+        }
+        return operations;
     }
 
     // The season, the time of the landing and the dust.

@@ -7,6 +7,7 @@ import fr.paulm.projects.rover.mars.mission.Ellipse;
 import fr.paulm.projects.rover.mars.mission.LandingDate;
 import fr.paulm.projects.rover.mars.mission.LandingRules;
 import fr.paulm.projects.rover.mars.mission.LandingSite;
+import fr.paulm.projects.rover.mars.mission.Operations;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.mission.Sky;
@@ -88,6 +89,12 @@ class MissionParserTest {
     }
 
     @Test
+    void readsTheOperations() {
+        assertEquals(new Operations(9, 16.5, 250), parse("drive-window 09:00 16:30", "max-drive-per-sol 250").operations());
+        assertEquals(Operations.DEFAULT, parse().operations());
+    }
+
+    @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
         assertEquals(new Sky(150, 15.5, 2), mission.sky());
@@ -125,11 +132,13 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-slope, seed, speed, start-ls, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, seed, speed, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
             "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",
             "landing-time 3pm                   | Line 4: Invalid time: \"3pm\". Expected: hh:mm, for example 15:00",
+            "drive-window 15:00 10:00          | Line 4: Invalid operations: a drive window from 15.0 to 10.0 hours and 100.0 m per sol. Expected: a window within the day, and a positive distance",
+            "max-drive-per-sol 0               | Line 4: Invalid operations: a drive window from 10.0 to 15.0 hours and 0.0 m per sol. Expected: a window within the day, and a positive distance",
             "dust-opacity -1                    | Line 4: Invalid sky: solar longitude 0.0, dust opacity -1.0. Expected: a dust opacity that is not negative",
             "speed fast                         | Line 4: Invalid number: \"fast\"",
             "speed 0                            | Line 4: Invalid mobility: speed 0.0 m/s, max slope 10.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",

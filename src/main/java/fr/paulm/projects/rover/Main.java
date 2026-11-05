@@ -112,8 +112,9 @@ public class Main {
                 "The {} option only applies to rovers on a plateau: a mission runs on a common clock.", option));
         Deployment deployment = mission.land();
         missionReport.landings(deployment);
-        // The batteries set the pace: a rover waits when it must recharge
-        Batteries batteries = new Batteries(deployment);
+        // The batteries and the operations set the pace: a rover waits when it must recharge, outside its drive
+        // window, or once it has driven its distance of the sol
+        Batteries batteries = new Batteries(deployment, mission.operations());
         // The exact positions follow each turn, the tracks are drawn on the maps; each turn is printed
         // as soon as it is over, with the history option
         RoverPositions positions = new RoverPositions(deployment);
