@@ -20,7 +20,7 @@ class KafkaSinkTest {
     @Test
     void eachKindOfMessageGoesToItsTopicKeyedByRoverOrMission() {
         sink.status(new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 1, Instant.EPOCH));
-        sink.event(new RoverEvent("m1", "Curiosity", 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "4.74S 137.45E"));
+        sink.event(new RoverEvent("m1", "Curiosity", 0, 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "4.74S 137.45E"));
         RoverTelemetry telemetry = new RoverTelemetry("m1", "Curiosity", 0, 60, "Sol 0 00:01", 0, 0, 0, 0, "N", 99, false, 0);
         sink.telemetry(telemetry);
         List<ProducerRecord<String, String>> sent = producer.history();

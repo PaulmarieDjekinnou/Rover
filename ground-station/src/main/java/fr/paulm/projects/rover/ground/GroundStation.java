@@ -5,11 +5,16 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -18,6 +23,8 @@ import java.util.Map;
 // The ground station: reads the telemetry of the missions from Kafka and archives it in PostgreSQL.
 // It reads the three topics in the "ground-station" consumer group, and tells Kafka what it has read (commits its
 // offsets) only once the messages are in the database: if it stops in between, it reads them again (at least once).
+// A message it cannot read does not stop it: the message goes to the dead letters topic, with the reason in its
+// headers, and the station reads on.
 // It runs until Ctrl+C, or until no message has come for a while (--until-idle seconds).
 //
 //   java -jar ground-station.jar localhost:9092 jdbc:postgresql://localhost:5432/rover
@@ -39,6 +46,10 @@ public final class GroundStation {
         String user = System.getenv().getOrDefault("ROVER_DB_USER", "rover");
         String password = System.getenv().getOrDefault("ROVER_DB_PASSWORD", "rover");
         try (Archive archive = new JdbcArchive(args[1], user, password);
+             KafkaProducer<String, String> deadLetters = new KafkaProducer<>(Map.of(
+                     ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, args[0],
+                     ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
+                     ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class));
              KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
                      ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, args[0],
                      ConsumerConfig.GROUP_ID_CONFIG, GROUP,
@@ -63,10 +74,21 @@ public final class GroundStation {
                 while (idle == null || Duration.between(lastMessage, Instant.now()).compareTo(idle) < 0) {
                     ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
                     for (ConsumerRecord<String, String> record : records) {
-                        receiver.receive(record.topic(), record.value());
+                        try {
+                            receiver.receive(record.topic(), record.value());
+                        } catch (IllegalArgumentException e) {
+                            LOGGER.warn("Unreadable message in {}, sent to {}: {}", record.topic(), Topics.DEAD_LETTERS,
+                                    e.getMessage());
+                            ProducerRecord<String, String> letter =
+                                    new ProducerRecord<>(Topics.DEAD_LETTERS, record.key(), record.value());
+                            letter.headers().add("topic", record.topic().getBytes(StandardCharsets.UTF_8));
+                            letter.headers().add("reason", String.valueOf(e.getMessage()).getBytes(StandardCharsets.UTF_8));
+                            deadLetters.send(letter);
+                        }
                     }
                     if (!records.isEmpty()) {
                         archive.commit();
+                        deadLetters.flush();
                         consumer.commitSync();
                         lastMessage = Instant.now();
                     }

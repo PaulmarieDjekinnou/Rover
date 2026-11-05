@@ -15,7 +15,9 @@ import fr.paulm.projects.rover.mars.planet.Coordinates;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 // Turns a mission into telemetry, as the rovers would send it: the start of the mission and the landings, then a
 // message each time a rover ends an instruction (and an event when it was blocked), then the rovers that stopped
@@ -31,6 +33,8 @@ public final class TelemetryListener implements TurnListener {
     private final List<Touchdown> landed;
     private final List<Rover> states = new ArrayList<>();
     private final long[] sequences;
+    // Per rover name: the lost rovers send events too
+    private final Map<String, Long> eventSequences = new HashMap<>();
     private final double[] distances;
 
     public TelemetryListener(String missionId, Deployment deployment, RoverPositions positions, Batteries batteries,
@@ -97,7 +101,8 @@ public final class TelemetryListener implements TurnListener {
     }
 
     private void event(String rover, Duration time, RoverEvent.Type type, String detail) {
-        sink.event(new RoverEvent(missionId, rover, time.toSeconds(), MissionClock.format(time, deployment.planet()),
-                type, detail));
+        long sequence = eventSequences.merge(rover, 1L, Long::sum) - 1;
+        sink.event(new RoverEvent(missionId, rover, sequence, time.toSeconds(),
+                MissionClock.format(time, deployment.planet()), type, detail));
     }
 }

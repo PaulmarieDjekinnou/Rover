@@ -50,7 +50,7 @@ class ReceiverTest {
     @Test
     void eachTopicGoesToItsTable() {
         MissionStatus status = new MissionStatus("m1", MissionStatus.Type.STARTED, "f", "Mars", 1, Instant.EPOCH);
-        RoverEvent event = new RoverEvent("m1", "Spirit", 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "here");
+        RoverEvent event = new RoverEvent("m1", "Spirit", 0, 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "here");
         RoverTelemetry telemetry = new RoverTelemetry("m1", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10);
         receiver.receive("mission.status", TelemetryJson.write(status));
         receiver.receive("rover.events", TelemetryJson.write(event));

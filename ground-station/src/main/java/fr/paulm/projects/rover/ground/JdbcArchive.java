@@ -3,6 +3,7 @@ package fr.paulm.projects.rover.ground;
 import fr.paulm.projects.rover.telemetry.MissionStatus;
 import fr.paulm.projects.rover.telemetry.RoverEvent;
 import fr.paulm.projects.rover.telemetry.RoverTelemetry;
+import org.flywaydb.core.Flyway;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -10,14 +11,16 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 
-// The archive in PostgreSQL (see ground/schema.sql), with plain JDBC, in one transaction per poll.
+// The archive in PostgreSQL, with plain JDBC, in one transaction per poll. The schema is created and upgraded by
+// Flyway when the archive opens (db/migration: V1 the tables, V2 the numbers of the events).
+// Telemetry and events read twice are written once, thanks to their primary keys (mission, rover, sequence).
 // A mission is created by the first message that mentions it: the start of a mission and its telemetry come
 // through different topics, so nothing says which one arrives first. The start then fills the mission in.
-// Telemetry read twice is written once, thanks to its primary key (mission, rover, sequence).
 public final class JdbcArchive implements Archive {
     private final Connection connection;
 
     public JdbcArchive(String url, String user, String password) {
+        Flyway.configure().dataSource(url, user, password).load().migrate();
         try {
             connection = DriverManager.getConnection(url, user, password);
             connection.setAutoCommit(false);
@@ -49,8 +52,11 @@ public final class JdbcArchive implements Archive {
     @Override
     public void event(RoverEvent m) {
         ensureMission(m.missionId());
-        update("INSERT INTO events (mission_id, rover, mission_seconds, mission_clock, type, detail) VALUES (?, ?, ?, ?, ?, ?)",
-                m.missionId(), m.rover(), m.missionSeconds(), m.missionClock(), m.type().name(), m.detail());
+        update("""
+                INSERT INTO events (mission_id, rover, sequence, mission_seconds, mission_clock, type, detail)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT DO NOTHING""",
+                m.missionId(), m.rover(), m.sequence(), m.missionSeconds(), m.missionClock(), m.type().name(), m.detail());
     }
 
     @Override
