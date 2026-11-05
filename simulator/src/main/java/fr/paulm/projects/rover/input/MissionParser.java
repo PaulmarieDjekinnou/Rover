@@ -13,12 +13,18 @@ import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.mission.Sky;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
+import fr.paulm.projects.rover.mars.planet.EarthMars;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.rover.PowerSource;
 import fr.paulm.projects.rover.mars.rover.PowerSystem;
 
 import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +46,8 @@ import java.util.function.Function;
 //   speed 0.04                    optional: the speed of the rovers on flat ground, in m/s
 //   turn-minutes 5                optional: how long a turn on the spot takes, in minutes
 //   start-ls 150                  optional: the season at the landing, as a solar longitude in degrees (0 by default)
+//   start-date 2012-08-06T05:17   optional, instead of start-ls: the date at the start of the mission, in UTC (a day,
+//                                 or a day and a time), which gives the season on Mars
 //   landing-time 15:00            optional: the local time of the landing, at the site of the first rover (12:00)
 //   dust-opacity 0.5              optional: a dust opacity that stays the same all along (by default, the weather of
 //                                 Mars: a dust season and storms on a clear base of 0.5)
@@ -67,7 +75,7 @@ public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "resolution", "rocks", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
-                    "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
+                    "start-ls", "start-date", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing", "drive-window",
                     "max-drive-per-sol", "drive-every");
@@ -224,8 +232,14 @@ public final class MissionParser {
 
     // The season, the time of the landing and the dust.
     private Sky sky(Map<String, Line> settings, Planet planet) {
+        if (settings.containsKey("start-ls") && settings.containsKey("start-date")) {
+            throw settings.get("start-date").error("Both start-ls and start-date give the season: keep one of them");
+        }
         double startLs = settings.containsKey("start-ls")
-                ? settings.get("start-ls").decimal() : Sky.DEFAULT.startSolarLongitudeDegrees();
+                ? settings.get("start-ls").decimal()
+                : settings.containsKey("start-date")
+                ? new EarthMars(startDate(settings.get("start-date"))).marsSolarLongitudeDegrees()
+                : Sky.DEFAULT.startSolarLongitudeDegrees();
         double hours = settings.containsKey("landing-time")
                 ? hours(settings.get("landing-time")) : Sky.DEFAULT.landingHours();
         double dust = settings.containsKey("dust-opacity")
@@ -235,6 +249,18 @@ public final class MissionParser {
         }
         // A dust opacity given in the file stays the same all along; otherwise, the weather of Mars
         return new Sky(startLs, hours, dust, !settings.containsKey("dust-opacity"));
+    }
+
+    // "2012-08-06", or "2012-08-06T05:17": a date in UTC.
+    private Instant startDate(Line line) {
+        String value = line.value("start-date");
+        try {
+            return value.contains("T") ? LocalDateTime.parse(value).toInstant(ZoneOffset.UTC)
+                    : LocalDate.parse(value).atStartOfDay().toInstant(ZoneOffset.UTC);
+        } catch (DateTimeParseException e) {
+            throw line.error("Invalid date: \"" + value + "\". Expected: a day in UTC, with or without a time,"
+                    + " for example 2012-08-06 or 2012-08-06T05:17");
+        }
     }
 
     // "3 14:00": sol 3 of the mission, at 14:00 local time.

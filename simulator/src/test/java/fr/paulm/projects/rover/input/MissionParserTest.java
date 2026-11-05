@@ -131,6 +131,13 @@ class MissionParserTest {
     }
 
     @Test
+    void theStartDateGivesTheSeason() {
+        // Curiosity landed at Ls 150.6
+        assertEquals(150.6, parse("start-date 2012-08-06T05:17").sky().startSolarLongitudeDegrees(), 0.5);
+        assertEquals(150.4, parse("start-date 2012-08-06").sky().startSolarLongitudeDegrees(), 0.5);
+    }
+
+    @Test
     void settingsHaveDefaults() {
         PlanetMission mission = parser.parse("planet flat\nlanding-max-elevation 0");
         assertEquals(0, mission.seed());
@@ -162,9 +169,11 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, resolution, rocks, seed, speed, start-ls, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, resolution, rocks, seed, speed, start-date, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
+            "start-date 6/8/2012               | Line 4: Invalid date: \"6/8/2012\". Expected: a day in UTC, with or without a time, for example 2012-08-06 or 2012-08-06T05:17",
+            "start-ls 0\\nstart-date 2012-08-06 | Line 5: Both start-ls and start-date give the season: keep one of them",
             "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",
             "landing-time 3pm                   | Line 4: Invalid time: \"3pm\". Expected: hh:mm, for example 15:00",
             "drive-window 15:00 10:00          | Line 4: Invalid operations: a drive window from 15.0 to 10.0 hours, 50.0 m per sol, one sol in 3. Expected: a window within the day, a positive distance, and a drive every sol or more",

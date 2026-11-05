@@ -29,6 +29,7 @@ orders MMMLMM
 | `landing-max-elevation -1000` | optional: the highest landing site allowed, in meters (-1000 by default) |
 | `landing-max-latitude 30` | optional: the farthest landing site from the equator, in degrees (30 by default) |
 | `start-ls 150` | optional: the season at the landing, as a solar longitude Ls in degrees: 0 at the northern spring equinox, 90 at the northern summer solstice (0 by default) |
+| `start-date 2012-08-06T05:17` | optional, instead of `start-ls`: the date at the start of the mission, in UTC (a day, or a day and a time); the season on Mars follows from where Mars is on its orbit at that date (Ls 150.7 here, when Curiosity landed) |
 | `landing-time 15:00` | optional: the local solar time at the start of the mission, at the site of the first rover (12:00 by default) |
 | `drive-window 10:00 15:00` | optional: the local solar times between which the rovers drive and turn (10:00 to 15:00 by default) |
 | `max-drive-per-sol 50` | optional: the farthest a rover drives in a drive sol, in meters (50 by default) |
