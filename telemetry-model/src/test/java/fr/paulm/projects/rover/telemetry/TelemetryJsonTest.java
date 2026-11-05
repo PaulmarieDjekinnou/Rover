@@ -21,6 +21,14 @@ class TelemetryJsonTest {
     }
 
     @Test
+    void aMessageKeepsBothItsTimes() {
+        RoverTelemetry delayed = telemetry.received(660_000);
+        assertEquals(655_432, delayed.missionSeconds());
+        assertEquals(delayed, TelemetryJson.read(TelemetryJson.write(delayed), RoverTelemetry.class));
+        assertEquals(655_432, telemetry.receivedSeconds());
+    }
+
+    @Test
     void timesAndTypesAreWrittenAsText() {
         MissionStatus status = new MissionStatus("m1", MissionStatus.Type.STARTED, "mission.txt", "Mars", 88_775, 42,
                 Instant.parse("2026-11-04T10:00:00Z"));
