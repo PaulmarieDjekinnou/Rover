@@ -42,4 +42,14 @@ class TelemetryJsonTest {
     void invalidJsonIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> TelemetryJson.read("{not json", RoverEvent.class));
     }
+
+    @Test
+    void aMessageWithAMissingOrNullFieldIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> TelemetryJson.read("{}", RoverEvent.class));
+        String json = TelemetryJson.write(telemetry);
+        assertThrows(IllegalArgumentException.class,
+                () -> TelemetryJson.read(json.replace(",\"receivedSeconds\":655432", ""), RoverTelemetry.class));
+        assertThrows(IllegalArgumentException.class,
+                () -> TelemetryJson.read(json.replace("\"Curiosity\"", "null"), RoverTelemetry.class));
+    }
 }
