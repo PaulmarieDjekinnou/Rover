@@ -17,10 +17,12 @@ import java.util.PriorityQueue;
 
 // Finds the fastest way for a rover to reach a cell, on the orbital map, as mission planners do: an A* search
 // over the states of the rover (its cell and its direction, since turning takes time). From a state, the rover can
-// turn left or right (the turn time), or move forward when the terrain allows it (the drive time, which depends on
-// the slope). It never drives backwards over long distances, like real rovers.
-// The estimate of the time left is the distance as the crow flies on the sphere, at the speed on flat ground: it is
-// never more than the real time, so the route found is the fastest one. The search gives up beyond a number of
+// turn left or right, or move forward when the terrain allows it. It never drives backwards over long distances,
+// like real rovers. The cost of a step is the energy it takes, counted in time at the power of a drive on flat
+// ground: a turn costs its time, a move its drive time times the extra power of climbing (see
+// PowerSystem.slopeFactor), so a climb costs twice, slower and more power hungry.
+// The estimate of the cost left is the distance as the crow flies on the sphere, at the speed on flat ground: it is
+// never more than the real cost, so the route found is the cheapest one in energy. The search gives up beyond a number of
 // states explored, so that an unreachable or very far goal does not run for ever.
 public final class RoutePlanner {
 
@@ -86,7 +88,8 @@ public final class RoutePlanner {
         if (!terrain.canDrive(from.position(), to.position())) {
             return Optional.empty();
         }
-        return Optional.of(terrain.driveTime(from.position(), to.position()));
+        double factor = PowerSystem.slopeFactor(terrain.slope(from.position(), to.position()), mobility.maxSlopeDegrees());
+        return Optional.of(Duration.ofMillis(Math.round(terrain.driveTime(from.position(), to.position()).toMillis() * factor)));
     }
 
     private long estimate(Position cell, Coordinates goalCenter) {

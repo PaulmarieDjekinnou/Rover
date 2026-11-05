@@ -40,4 +40,12 @@ class PowerSourceTest {
         assertThrows(InvalidInputException.class, () -> new PowerSource.SolarPanels(0));
         assertThrows(InvalidInputException.class, () -> new PowerSystem(new PowerSource.Generator(110), 0));
     }
+
+    @Test
+    void climbingTakesMorePowerUpToTwiceAtTheSteepestSlope() {
+        assertEquals(1, PowerSystem.slopeFactor(-5, 10));
+        assertEquals(1, PowerSystem.slopeFactor(0, 10));
+        assertEquals(1.5, PowerSystem.slopeFactor(5, 10));
+        assertEquals(2, PowerSystem.slopeFactor(10, 10));
+    }
 }

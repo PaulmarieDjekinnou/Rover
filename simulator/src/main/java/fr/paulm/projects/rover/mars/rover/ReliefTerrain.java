@@ -19,6 +19,10 @@ public final class ReliefTerrain implements Terrain {
         this.mobility = mobility;
     }
 
+    public double maxSlopeDegrees() {
+        return mobility.maxSlopeDegrees();
+    }
+
     // The slope of the move in degrees: positive uphill, negative downhill.
     public double slope(Position from, Position to) {
         double rise = planet.elevation(to) - planet.elevation(from);

@@ -94,7 +94,7 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
     }
 
     // The orders of the rover, or the route to its waypoints, planned from where it landed, one waypoint after the
-    // other, up to the first one it cannot reach.
+    // other; a waypoint it cannot reach is skipped, and the next one is planned from where the rover then is.
     private Route route(RoverPlan plan, Rover landed) {
         if (plan.waypoints().isEmpty()) {
             return Route.of(plan.orders());
@@ -102,19 +102,19 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
         RoutePlanner planner = new RoutePlanner(planet, mobility);
         List<Instruction> instructions = new ArrayList<>();
         Rover state = landed;
-        int reached = 0;
-        for (Coordinates waypoint : plan.waypoints()) {
-            Optional<List<Instruction>> leg = planner.route(state, waypoint);
+        List<Integer> missed = new ArrayList<>();
+        for (int i = 0; i < plan.waypoints().size(); i++) {
+            Optional<List<Instruction>> leg = planner.route(state, plan.waypoints().get(i));
             if (leg.isEmpty()) {
-                break;
+                missed.add(i);
+                continue;
             }
             for (Instruction instruction : leg.get()) {
                 state = state.apply(instruction, planet.grid());
             }
             instructions.addAll(leg.get());
-            reached++;
         }
-        return new Route(instructions, reached, plan.waypoints().size());
+        return new Route(instructions, plan.waypoints().size(), missed);
     }
 
     private Optional<LandingFailure> failureAt(Coordinates point, Position cell, List<Coordinates> landedPoints,

@@ -72,4 +72,25 @@ class RoutePlannerTest {
         assertEquals(Optional.of(List.of()),
                 planner.route(new Rover(new Position(6, 2), Direction.S), planet.centerOf(new Position(6, 2))));
     }
+
+    @Test
+    void theRouteAvoidsAClimbWhenGoingAroundCostsLessEnergy() {
+        // A 1.5 km high cell in (2, 2) between (1, 2) and (3, 2): about 11.7 degrees up from the side, which a rover
+        // that takes 12 degrees can climb. Over the hill is faster (about 21.6 against 30.2 in time units), but the
+        // climb takes nearly twice the power: in energy, around (30.2) costs less than over (about 35.5)
+        Planet hill = TestPlanets.planet(10_000, 500,
+                "00000000",
+                "00300000",
+                "00000000",
+                "00000000");
+        RoutePlanner planner = new RoutePlanner(hill, new Mobility(0.04, 12, java.time.Duration.ofMinutes(5)));
+        Rover start = new Rover(new Position(1, 2), Direction.E);
+        List<Instruction> route = planner.route(start, hill.centerOf(new Position(3, 2))).orElseThrow();
+        Rover rover = start;
+        for (Instruction instruction : route) {
+            rover = rover.apply(instruction, hill.grid());
+            assertTrue(!rover.position().equals(new Position(2, 2)), "drove over the hill: " + route);
+        }
+        assertEquals(new Position(3, 2), rover.position());
+    }
 }

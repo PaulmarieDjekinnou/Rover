@@ -135,11 +135,11 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The weather.** Unless `dust-opacity` fixes it, the dust follows the weather of Mars: clear skies in the northern spring and summer, twice as much dust at the height of the dust season (Ls 270), two regional storms a year in that season, and one year in three a global storm that lasts for months (opacity above 4), as in 2001, 2007 and 2018. The storms are drawn from the seed. Solar panels gather dust (0.15 % of their power a sol, three times faster in a storm) until the wind cleans them (about once in 60 sols, giving back 30 %); the results give how clean they are. These rates are orders of magnitude, not a fit to the missions.
 
-**The waypoints.** Instead of orders, a rover can be given waypoints (`goto`), as real missions give destinations. Once it has landed, its route is planned on the orbital map with an A* search: the states are a cell and a direction (turning takes time), a step is a turn or a move the terrain allows, its cost is its time, and the estimate of the time left is the distance as the crow flies at the speed on flat ground, so the route is the fastest one. The route becomes ordinary instructions (L, R, M). Planning stops at the first waypoint no route reaches; the results say how many were reached (`route to 1 of 2 waypoints, none to 5.08S 137.85E`), and the telemetry sends a `NO_ROUTE` event.
+**The waypoints.** Instead of orders, a rover can be given waypoints (`goto`), as real missions give destinations. Once it has landed, its route is planned on the orbital map with an A* search: the states are a cell and a direction (turning takes time), a step is a turn or a move the terrain allows, its cost is the energy it takes (its time, times the extra power of climbing), and the estimate of the cost left is the distance as the crow flies at the speed on flat ground, so the route is the cheapest one in energy: it may go around a hill rather than over it. The route becomes ordinary instructions (L, R, M). A waypoint no route reaches is skipped, and the next ones are planned from where the rover then is; the results say which were missed (`route to 2 of 3 waypoints, none to 5.08S 137.85E`), and the telemetry sends a `NO_ROUTE` event for each.
 
 **The operations.** Like real missions, the rovers are operated sol by sol: a rover drives and turns only in its drive window, at its local time, and at most `max-drive-per-sol` meters in its local sol; then it waits for the next window. Real rovers drive a few hours a day, some tens of meters per sol on average: `RealMissionsTest` checks that the sample mission stays within these orders of magnitude.
 
-**The energy.** Each rover has a battery, full at the landing, charged by its power source: a generator gives the same power day and night, solar panels turn a fifth of the sunlight they get into power, so nothing at night, little in winter or in a dust storm. A rover uses 150 W when it drives or turns, and 15 W when it waits. It works while its battery holds more than a fifth of its capacity; below, it waits and recharges until the battery is four fifths full, then goes on, so a solar rover drives by day and waits at night. Waiting takes time on the common clock. A rover whose battery does not recharge in a whole year of waiting stops for good, like Spirit in 2010: its other orders are left undone.
+**The energy.** Each rover has a battery, full at the landing, charged by its power source: a generator gives the same power day and night, solar panels turn a fifth of the sunlight they get into power, so nothing at night, little in winter or in a dust storm. A rover uses 150 W when it drives on flat ground or turns, up to twice as much when it climbs the steepest slope it can take, and 15 W when it waits. It works while its battery holds more than a fifth of its capacity; below, it waits and recharges until the battery is four fifths full, then goes on, so a solar rover drives by day and waits at night. Waiting takes time on the common clock. A rover whose battery does not recharge in a whole year of waiting stops for good, like Spirit in 2010: its other orders are left undone.
 
 Each rover enters the simulation when it lands, on the common clock: rovers sent at different dates land on different sols. The output gives the landing of each rover, on the mission clock (the sol, from 0, and the time of day), then, for each rover that landed, its final position, its cell and direction, the distance driven and the time spent driving, the time spent waiting (for energy, for the drive window, or for the next sol), in sols (Martian days of 24 h 39 min 35 s), and the charge of its battery, on several lines per rover. Both give the local time and the Sun:
 
@@ -153,10 +153,10 @@ Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from 
 Curiosity: 5.24S 137.95E (cell 551 339) facing E
   route to 2 of 2 waypoints
   59.0 km driven in 21.3 sols, 569.5 sols waiting
-  battery 100%, local time 10:16, Sun 52 degrees high
+  battery 99%, local time 10:16, Sun 52 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 695.8 sols waiting
-  battery 99%, local time 10:36, Sun 63 degrees high
+  battery 98%, local time 10:36, Sun 63 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
   29.6 km driven in 8.3 sols, 688.6 sols waiting
   battery 39%, panels 76% clean, local time 10:39, Sun 69 degrees high
@@ -195,7 +195,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its consumption does not depend on the slope or the temperature, and its panels lie flat.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its panels lie flat.
 
 ## Telemetry with Kafka
 

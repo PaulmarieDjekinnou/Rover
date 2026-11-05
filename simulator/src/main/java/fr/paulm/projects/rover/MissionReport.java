@@ -163,7 +163,9 @@ final class MissionReport {
     // "route to 2 of 2 waypoints", or "route to 1 of 2 waypoints, none to 5.08S 137.85E".
     private String waypoints(Route route, RoverPlan plan) {
         String reached = "route to " + route.reachedWaypoints() + " of " + route.waypoints() + " waypoints";
-        return route.complete() ? reached : reached + ", none to " + plan.waypoints().get(route.reachedWaypoints());
+        String missed = route.missedWaypoints().stream().map(i -> plan.waypoints().get(i).toString())
+                .collect(Collectors.joining(", "));
+        return route.complete() ? reached : reached + ", none to " + missed;
     }
 
     private String clock(Duration time, Planet planet) {

@@ -7,10 +7,10 @@ Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from 
 Curiosity: 5.24S 137.95E (cell 551 339) facing E
   route to 2 of 2 waypoints
   59.0 km driven in 21.3 sols, 569.5 sols waiting
-  battery 100%, local time 10:16, Sun 52 degrees high
+  battery 99%, local time 10:16, Sun 52 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 695.8 sols waiting
-  battery 99%, local time 10:36, Sun 63 degrees high
+  battery 98%, local time 10:36, Sun 63 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
   29.6 km driven in 8.3 sols, 688.6 sols waiting
   battery 39%, panels 76% clean, local time 10:39, Sun 69 degrees high

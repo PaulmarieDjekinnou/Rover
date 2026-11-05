@@ -5,7 +5,9 @@ import fr.paulm.projects.rover.domain.simulation.Pace;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.Sun;
+import fr.paulm.projects.rover.domain.Terrain;
 import fr.paulm.projects.rover.mars.rover.PowerSource;
+import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
 import fr.paulm.projects.rover.mars.rover.PowerSystem;
 
 import java.time.Duration;
@@ -44,6 +46,7 @@ public final class Batteries implements Pace {
     private final Planet planet;
     private final Sun sun;
     private final List<Operations> operations;
+    private final Terrain terrain;
     private final List<PowerSystem> systems;
     private final List<Duration> starts;
     private final double[] levels;
@@ -70,6 +73,7 @@ public final class Batteries implements Pace {
     public Batteries(Deployment deployment, Operations operations, long seed) {
         this.planet = deployment.planet();
         this.sun = deployment.sun();
+        this.terrain = deployment.input().terrain();
         // Each rover is operated as its plan says, or else as the mission says
         this.operations = deployment.landed().stream()
                 .map(touchdown -> touchdown.plan().operations().orElse(operations)).toList();
@@ -120,6 +124,9 @@ public final class Batteries implements Pace {
         Coordinates place = planet.centerOf(from.position());
         double distance = from.position().equals(to.position()) ? 0 : planet.distance(from.position(), to.position());
         double metersPerMilli = busy.isZero() ? 0 : distance / busy.toMillis();
+        // Climbing takes more power
+        double climbing = distance > 0 && terrain instanceof ReliefTerrain relief
+                ? PowerSystem.slopeFactor(relief.slope(from.position(), to.position()), relief.maxSlopeDegrees()) : 1;
         Duration time = start;
         Duration left = busy;
         // waiting: since the rover last made progress; waited: in all, during this instruction
@@ -148,7 +155,7 @@ public final class Batteries implements Pace {
                     step = Duration.ofMillis(Math.max(1, untilTheLimit));
                 }
             }
-            double used = working ? PowerSystem.ACTIVE_WATTS : PowerSystem.IDLE_WATTS;
+            double used = working ? PowerSystem.ACTIVE_WATTS * climbing : PowerSystem.IDLE_WATTS;
             double done = busy.isZero() ? 0 : 1 - left.toMillis() / (double) busy.toMillis();
             double produced = system.source().watts(sun, along(from, to, done), time);
             if (system.source() instanceof PowerSource.SolarPanels) {

@@ -92,14 +92,16 @@ class PlanetMissionTest {
     }
 
     @Test
-    void theRouteToTheWaypointsIsPlannedAfterTheLandingUpToTheFirstUnreachableOne() {
-        // From (6, 2): first to (5, 2), then onto the peak in (3, 1), which no rover can drive onto
+    void anUnreachableWaypointIsSkippedAndTheNextOnesArePlanned() {
+        // From (6, 2): first to (5, 2), then onto the peak in (3, 1), which no rover can drive onto, then to (4, 2)
         RoverPlan explorer = new RoverPlan("Explorer", new LandingSite(PLANET.centerOf(new Position(6, 2)), Ellipse.NONE),
                 Direction.W, List.of(), PowerSystem.DEFAULT, Optional.empty(),
-                List.of(PLANET.centerOf(new Position(5, 2)), PLANET.centerOf(new Position(3, 1))));
+                List.of(PLANET.centerOf(new Position(5, 2)), PLANET.centerOf(new Position(3, 1)),
+                        PLANET.centerOf(new Position(4, 2))));
         Deployment deployment = mission(1, explorer).land();
         Route route = deployment.touchdowns().getFirst().route();
-        assertEquals(new Route(List.of(Instruction.MOVE), 1, 2), route);
+        assertEquals(new Route(List.of(Instruction.MOVE, Instruction.MOVE), 3, List.of(1)), route);
+        assertEquals(2, route.reachedWaypoints());
         assertEquals(route.instructions(), deployment.input().missions().getFirst().instructions());
     }
 }
