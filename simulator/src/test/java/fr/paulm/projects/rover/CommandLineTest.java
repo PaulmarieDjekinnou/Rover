@@ -70,6 +70,6 @@ class CommandLineTest {
 
     @Test
     void usageListsEveryModeOption() {
-        assertEquals("Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] [--map] [--telemetry server:port] input.txt", CommandLine.usage());
+        assertEquals("Usage: java -jar rover.jar [--step-by-step | --simultaneous] [--history] [--map] [--telemetry server:port | file:path] input.txt", CommandLine.usage());
     }
 }

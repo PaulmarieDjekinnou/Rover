@@ -12,9 +12,9 @@ import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.PlanetMission;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
-import fr.paulm.projects.rover.telemetry.KafkaSink;
 import fr.paulm.projects.rover.telemetry.TelemetryListener;
 import fr.paulm.projects.rover.telemetry.TelemetrySink;
+import fr.paulm.projects.rover.telemetry.TelemetrySinks;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,11 +40,12 @@ public class Main {
     // Tests give them a buffer instead of the standard output.
     private final ConsoleReport plateauReport;
     private final MissionReport missionReport;
-    // Creates where the telemetry goes, from the server given with --telemetry. Tests keep the messages in memory.
+    // Creates where the telemetry goes, from the target given with --telemetry (see TelemetrySinks).
+    // Tests keep the messages in memory.
     private final Function<String, TelemetrySink> telemetryFactory;
 
     Main() {
-        this(TextFileReader::new, System.out, KafkaSink::new);
+        this(TextFileReader::new, System.out, TelemetrySinks::open);
     }
 
     Main(Function<Path, SimulationReader> readerFactory, PrintStream out, Function<String, TelemetrySink> telemetryFactory) {

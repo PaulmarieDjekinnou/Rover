@@ -55,6 +55,6 @@ record CommandLine(Mode mode, boolean history, boolean map, Optional<String> tel
                 .flatMap(mode -> mode.option().stream())
                 .collect(Collectors.joining(" | "));
         return "Usage: java -jar rover.jar [" + modes + "] [" + HISTORY_OPTION + "] [" + MAP_OPTION + "] ["
-                + TELEMETRY_OPTION + " server:port] input.txt";
+                + TELEMETRY_OPTION + " server:port | file:path] input.txt";
     }
 }

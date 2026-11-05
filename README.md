@@ -200,7 +200,7 @@ With the `--telemetry server:port` option, a mission to a planet also sends its 
 | `rover.events` | the rover's name | landed, lost at landing, move blocked, stopped for good |
 | `mission.status` | the mission id | the start and the end of the mission (file, planet, seed) |
 
-Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning.
+Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning. With `--telemetry file:mission.jsonl`, the messages are written to a file instead, one per line (JSON Lines), each with its topic and key: to look at a mission or compare two runs without Kafka.
 
 **The ground station** is a second application, in its own module and jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`, see `ground-station/src/main/resources/ground/schema.sql`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and telemetry read twice is written once.
 
@@ -297,7 +297,7 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
 | `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
-| | `TelemetrySink`, `KafkaSink`, `TelemetryJson` | where the messages go (Kafka, or a list in tests), and their JSON |
+| | `TelemetrySink`, `TelemetrySinks`, `KafkaSink`, `JsonLinesSink` | where the messages go: Kafka, a file, or a list in tests |
 | `ground` | `GroundStation`, `Receiver`, `Archive`, `JdbcArchive` | the ground station: reads the topics and archives the messages in PostgreSQL |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
