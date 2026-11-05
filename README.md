@@ -154,13 +154,13 @@ Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from 
 Curiosity: 5.24S 137.95E (cell 551 339) facing E
   route to 2 of 2 waypoints
   59.0 km driven in 21.3 sols, 3521.5 sols waiting
-  battery 99%, local time 10:16, Sun 58 degrees high
+  battery 99%, local time 10:13, Sun 58 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 4278.8 sols waiting
-  battery 99%, local time 10:19, Sun 49 degrees high
+  battery 99%, local time 10:14, Sun 49 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
-  29.6 km driven in 8.3 sols, 5026.6 sols waiting
-  battery 63%, panels 100% clean, local time 10:27, Sun 67 degrees high
+  29.6 km driven in 8.3 sols, 4630.5 sols waiting
+  battery 41%, panels 93% clean, local time 10:09, Sun 56 degrees high
 ```
 
 A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell, but the time and the distance it drove before giving up count. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
@@ -196,7 +196,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its panels lie flat.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The power of a rover is computed every 10 minutes while it works, every hour while it waits (a step never jumps over the start of a drive window), where the rover is along its way between the centers of two cells; its panels lie flat.
 
 ## Telemetry with Kafka
 

@@ -4,7 +4,7 @@ Late landed on Sol 600 05:00 at 22.50N 292.50E (cell 6 2), 0.0 km from its targe
   local time 08:00, Sun 20 degrees high
 Early: 22.50N 157.50E (cell 3 2) facing E
   14.5 km driven in 4.1 sols, 862.7 sols waiting
-  battery 100%, local time 13:02, Sun 76 degrees high
+  battery 100%, local time 13:01, Sun 76 degrees high
 Late: 22.50N 247.50E (cell 5 2) facing W
   7.2 km driven in 2.0 sols, 430.1 sols waiting
-  battery 100%, local time 07:17, Sun 19 degrees high
+  battery 100%, local time 07:11, Sun 17 degrees high

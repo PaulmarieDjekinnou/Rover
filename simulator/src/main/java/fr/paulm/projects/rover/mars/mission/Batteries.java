@@ -32,12 +32,14 @@ import java.util.TreeMap;
 // events" that kept Spirit and Opportunity going. These rates are orders of magnitude, not a fit to the missions.
 // The operations add their rules (see Operations): a rover drives only in its drive window, at its local time,
 // and at most its distance per sol; otherwise it waits, using its idle power, until the next window or sol.
-// The power is computed step by step (10 minutes), where the rover is: between the centers of the cell it leaves
+// The power is computed step by step (10 minutes while it works, an hour while it waits), where the rover is: between the centers of the cell it leaves
 // and of the cell it goes to, as far along as it has driven (across a pole, on one side for the first half of the
 // way, on the other side for the second half).
 public final class Batteries implements Pace {
 
     private static final Duration STEP = Duration.ofMinutes(10);
+    // A rover that waits changes slowly: longer steps, which stop at the start of the next drive window
+    private static final Duration WAITING_STEP = Duration.ofHours(1);
     private static final double RESERVE = 0.2;
     private static final double RECHARGED = 0.8;
     private static final double DUSTING_PER_SOL = 0.0015;
@@ -149,7 +151,7 @@ public final class Batteries implements Pace {
             boolean allowed = rules.driveSol(sol) && rules.inWindow(sun.localTime(place, time))
                     && drivenThisSol[rover] < rules.maxMetersPerSol();
             boolean working = !charging[rover] && allowed;
-            Duration step = !working || STEP.compareTo(left) < 0 ? STEP : left;
+            Duration step = working ? (STEP.compareTo(left) < 0 ? STEP : left) : waitingStep(rules, place, time);
             if (working && metersPerMilli > 0) {
                 // The last step of the sol stops at the distance of the sol
                 long untilTheLimit = (long) Math.ceil((operations.get(rover).maxMetersPerSol() - drivenThisSol[rover])
@@ -185,6 +187,15 @@ public final class Batteries implements Pace {
             time = time.plus(step);
         }
         return Timing.done(busy, waited);
+    }
+
+    // How long to wait in one step: an hour, or less if the drive window opens before, so that a step never jumps
+    // over the start of a window, however short it is.
+    private Duration waitingStep(Operations rules, Coordinates place, Duration time) {
+        double hoursToWindow = ((rules.windowStartHours() - sun.localTime(place, time)) % 24 + 24) % 24;
+        // Rounded up, plus a millisecond: the step must land inside the window, not just before it
+        long millis = (long) Math.ceil(hoursToWindow / 24 * planet.dayLength().toMillis()) + 1;
+        return millis > 0 && millis < WAITING_STEP.toMillis() ? Duration.ofMillis(millis) : WAITING_STEP;
     }
 
     // The dust settles on the panels during a step, faster in a storm, and the wind may clean them.

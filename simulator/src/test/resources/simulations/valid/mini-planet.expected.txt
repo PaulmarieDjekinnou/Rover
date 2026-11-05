@@ -5,7 +5,7 @@ Climber landed on Sol 0 00:00 at 22.50N 202.50E (cell 4 2), 0.0 km from its targ
 Twin was lost at landing: landed on another rover (less than 100 m away)
 Polar: 22.50N 247.50E (cell 5 2) facing S
   23.6 km driven in 6.6 sols, 1406.8 sols waiting
-  battery 100%, local time 10:09, Sun 63 degrees high
+  battery 100%, local time 10:01, Sun 61 degrees high
 Climber: 22.50S 202.50E (cell 4 1) facing W
   7.9 km driven in 2.2 sols, 471.3 sols waiting
-  battery 100%, local time 10:12, Sun 65 degrees high
+  battery 100%, local time 10:06, Sun 64 degrees high

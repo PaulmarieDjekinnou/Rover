@@ -98,11 +98,11 @@ class MainTest {
         // the turn takes 5 minutes. Each rover comes with its battery charge, and (night) where the Sun is down.
         assertEquals(List.of(
                 "Sol 470 22:01: Polar 67.50N 67.50E N 100% (night) | Climber 22.50N 202.50E S 100% (night)",
-                "Sol 473 13:07: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E S 100%",
-                "Sol 473 13:12: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E W 100%",
-                "Sol 473 13:12: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E W 100% (blocked: Climber)",
-                "Sol 941 22:10: Polar 67.50N 247.50E S 100% (night) | Climber 22.50S 202.50E W 100% (night)",
-                "Sol 1413 10:09: Polar 22.50N 247.50E S 100% | Climber 22.50S 202.50E W 100%"),
+                "Sol 473 13:01: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E S 100%",
+                "Sol 473 13:06: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E W 100%",
+                "Sol 473 13:06: Polar 67.50N 67.50E N 100% (night) | Climber 22.50S 202.50E W 100% (blocked: Climber)",
+                "Sol 941 22:03: Polar 67.50N 247.50E S 100% (night) | Climber 22.50S 202.50E W 100% (night)",
+                "Sol 1413 10:01: Polar 22.50N 247.50E S 100% | Climber 22.50S 202.50E W 100%"),
                 outputLines().stream().filter(line -> line.startsWith("Sol ")).toList());
     }
 
@@ -112,7 +112,7 @@ class MainTest {
         assertEquals(0, main().run(new String[]{"--history", input.toString()}));
         // Early ends its first move on sol 431, before Late lands on sol 600
         List<String> history = outputLines().stream().filter(line -> line.startsWith("Sol ")).toList();
-        assertEquals("Sol 431 22:14: Early 22.50N 112.50E E 100%", history.getFirst());
+        assertEquals("Sol 431 22:11: Early 22.50N 112.50E E 100%", history.getFirst());
         assertTrue(history.getLast().contains("| Late "));
     }
 
