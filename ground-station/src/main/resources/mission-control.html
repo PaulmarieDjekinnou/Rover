@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mission Control</title>
+<style>
+  :root { --bg: #fafaf7; --fg: #1f2328; --muted: #6b7280; --line: #d9d9d2; --night: #3b4a6b; --day: #c27c0e; --mars: #b5542e; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #15171a; --fg: #e6e6e3; --muted: #9aa0a6; --line: #33363b; --night: #8ea2d6; --day: #f0b04a; --mars: #e07a52; } }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; }
+  h1 { font-size: 18px; margin: 0 0 12px; }
+  section { margin-bottom: 24px; }
+  h2 { font-size: 15px; margin: 0 0 8px; font-weight: 600; }
+  .muted { color: var(--muted); font-weight: 400; }
+  table { border-collapse: collapse; width: 100%; max-width: 900px; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  .bar { display: inline-block; width: 80px; height: 8px; border: 1px solid var(--line); vertical-align: middle; }
+  .bar > span { display: block; height: 100%; background: var(--fg); }
+  canvas { width: 100%; max-width: 900px; aspect-ratio: 2 / 1; border: 1px solid var(--line); margin-top: 8px; }
+</style>
+</head>
+<body>
+<h1>Mission Control</h1>
+<div id="missions"><p class="muted">Waiting for telemetry…</p></div>
+<script>
+// Draws each mission: a table of its rovers, and their positions on a longitude / latitude map of the planet.
+function draw(missions) {
+  const root = document.getElementById('missions');
+  if (missions.length === 0) return;
+  root.innerHTML = '';
+  for (const mission of missions) {
+    const section = document.createElement('section');
+    section.innerHTML = '<h2>' + (mission.clock || '') + ' <span class="muted">mission ' + mission.missionId
+      + (mission.ended ? ' (ended)' : '') + '</span></h2>';
+    const table = document.createElement('table');
+    table.innerHTML = '<tr><th>Rover</th><th>Latitude</th><th>Longitude</th><th>Heading</th><th>Battery</th>'
+      + '<th>Sky</th><th>Dust</th><th>Status</th></tr>';
+    for (const r of mission.rovers) {
+      const row = table.insertRow();
+      row.innerHTML = '<td>' + r.name + '</td><td>' + r.latitude.toFixed(2) + '</td><td>' + r.longitude.toFixed(2)
+        + '</td><td>' + r.direction + '</td><td><span class="bar"><span style="width:' + r.battery.toFixed(0)
+        + '%"></span></span> ' + r.battery.toFixed(0) + ' %</td><td>' + (r.night ? 'night' : 'day') + '</td><td>'
+        + r.dust.toFixed(1) + '</td><td>' + r.status + '</td>';
+    }
+    section.appendChild(table);
+    const canvas = document.createElement('canvas');
+    section.appendChild(canvas);
+    root.appendChild(section);
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    const g = canvas.getContext('2d');
+    const style = getComputedStyle(document.documentElement);
+    g.strokeStyle = style.getPropertyValue('--line');
+    for (let lon = 0; lon <= 360; lon += 30) { const x = lon / 360 * canvas.width; g.beginPath(); g.moveTo(x, 0); g.lineTo(x, canvas.height); g.stroke(); }
+    for (let lat = -90; lat <= 90; lat += 30) { const y = (90 - lat) / 180 * canvas.height; g.beginPath(); g.moveTo(0, y); g.lineTo(canvas.width, y); g.stroke(); }
+    g.font = (12 * devicePixelRatio) + 'px system-ui';
+    for (const r of mission.rovers) {
+      const x = r.longitude / 360 * canvas.width, y = (90 - r.latitude) / 180 * canvas.height;
+      g.fillStyle = style.getPropertyValue(r.night ? '--night' : '--day');
+      g.beginPath(); g.arc(x, y, 5 * devicePixelRatio, 0, 2 * Math.PI); g.fill();
+      g.fillStyle = style.getPropertyValue('--fg');
+      g.fillText(r.name, x + 8 * devicePixelRatio, y + 4 * devicePixelRatio);
+    }
+  }
+}
+async function refresh() {
+  try { draw(await (await fetch('/missions')).json()); } catch (e) { /* the station may be restarting */ }
+}
+refresh();
+setInterval(refresh, 1000);
+</script>
+</body>
+</html>

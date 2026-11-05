@@ -6,6 +6,7 @@ import fr.paulm.projects.rover.telemetry.RoverTelemetry;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -56,11 +57,20 @@ class DashboardTest {
     }
 
     @Test
-    void aNewMissionReplacesTheOldOne() {
+    void eachMissionHasItsOwnSectionTheMostRecentFirst() {
         dashboard.telemetry(at("m1", "Spirit", 0, 50, false));
         dashboard.telemetry(at("m2", "Curiosity", 0, 50, false));
         List<String> screen = dashboard.render();
-        assertEquals(2, screen.size());
-        assertTrue(screen.get(1).startsWith("Curiosity"));
+        assertEquals(5, screen.size());
+        assertTrue(screen.get(0).contains("mission m2") && screen.get(1).startsWith("Curiosity"), screen.toString());
+        assertTrue(screen.get(3).contains("mission m1") && screen.get(4).startsWith("Spirit"), screen.toString());
+    }
+
+    @Test
+    void theWebPageGetsEveryMissionAsJson() {
+        dashboard.telemetry(at("m1", "Spirit", 0, 50, true));
+        Map<String, Object> mission = dashboard.json().getFirst();
+        assertEquals("m1", mission.get("missionId"));
+        assertEquals(1, ((List<?>) mission.get("rovers")).size());
     }
 }
