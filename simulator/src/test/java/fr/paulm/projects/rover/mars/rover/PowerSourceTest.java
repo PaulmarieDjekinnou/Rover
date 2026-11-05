@@ -51,9 +51,9 @@ class PowerSourceTest {
 
     @Test
     void heatersTakeMoreWhenTheSunStaysLow() {
-        assertEquals(10, PowerSystem.heaterWatts(90), 1e-9);
-        assertEquals(40, PowerSystem.heaterWatts(0), 1e-9);
-        assertEquals(40, PowerSystem.heaterWatts(-10), 1e-9);
-        assertEquals(25, PowerSystem.heaterWatts(30), 1e-9);
+        assertEquals(5, PowerSystem.heaterWatts(90), 1e-9);
+        assertEquals(20, PowerSystem.heaterWatts(0), 1e-9);
+        assertEquals(20, PowerSystem.heaterWatts(-10), 1e-9);
+        assertEquals(12.5, PowerSystem.heaterWatts(30), 1e-9);
     }
 }

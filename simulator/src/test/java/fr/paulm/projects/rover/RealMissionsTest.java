@@ -13,14 +13,14 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// The sample mission against the orders of magnitude of real missions (see the references in the design notes):
-// real rovers drive some tens of meters per sol on average, rarely more than a few hundred meters in a sol,
-// and no more than a few hours a day. The bounds are wide on purpose: they catch a simulation that is ten times
-// too fast or too slow, not a few percent.
+// The sample mission against real missions. Real rovers average some 9 m per sol over their missions: Curiosity
+// 18.93 km in 2039 sols (JPL traverse map, May 2018), Opportunity 45.16 km in 5111 sols (June 2018). They drive no
+// more than a few hours a day. The bounds allow a factor of about 3 either way: they catch a simulation that is ten
+// times too fast or too slow, not a few percent.
 class RealMissionsTest {
 
     @Test
-    void roversDriveSomeTensOfMetersPerSol() throws Exception {
+    void roversDriveSomeMetersPerSolOnAverage() throws Exception {
         PlanetMission mission = ((Scenario.OnPlanet) new TextFileReader(TestResources.path("simulations/valid/mars.txt"))
                 .read()).mission();
         Deployment deployment = mission.land();
@@ -30,7 +30,7 @@ class RealMissionsTest {
         for (MissionResult result : results) {
             double sols = result.totalTime().toMillis() / sol;
             double metersPerSol = result.distanceMeters() / sols;
-            assertTrue(metersPerSol >= 10 && metersPerSol <= 150, metersPerSol + " m per sol");
+            assertTrue(metersPerSol >= 3 && metersPerSol <= 30, metersPerSol + " m per sol");
             // Driving a few hours a sol at most: the drive window is 5 hours
             assertTrue(result.drivingTime().toMillis() / sol <= sols * 5 / 24.0 + 1, "too many hours of driving");
         }

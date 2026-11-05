@@ -1,4 +1,4 @@
-# Two rovers on the small planet of mini-planet.map.txt: the second one lands on sol 100, after the first move of the first one
+# Two rovers on the small planet of mini-planet.map.txt: the second one lands on sol 600, after the first move of the first one
 planet map mini-planet.map.txt
 landing-max-elevation 500
 landing-max-latitude 60
@@ -12,4 +12,4 @@ rover Late
 site 22.5 292.5
 heading W
 orders M
-landing 100 08:00
+landing 600 08:00

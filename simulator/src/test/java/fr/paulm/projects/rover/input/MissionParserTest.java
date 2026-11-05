@@ -90,7 +90,8 @@ class MissionParserTest {
 
     @Test
     void readsTheOperations() {
-        assertEquals(new Operations(9, 16.5, 250), parse("drive-window 09:00 16:30", "max-drive-per-sol 250").operations());
+        assertEquals(new Operations(9, 16.5, 250, 2),
+                parse("drive-window 09:00 16:30", "max-drive-per-sol 250", "drive-every 2").operations());
         assertEquals(Operations.DEFAULT, parse().operations());
     }
 
@@ -111,7 +112,7 @@ class MissionParserTest {
         PlanetMission mission = parse("drive-window 09:00 16:00",
                 "rover Own", "site 22.5 67.5", "heading N", "max-drive-per-sol 40",
                 "rover Shared", "site -22.5 10", "heading N");
-        assertEquals(Optional.of(new Operations(9, 16, 40)), mission.rovers().get(0).operations());
+        assertEquals(Optional.of(new Operations(9, 16, 40, 3)), mission.rovers().get(0).operations());
         assertEquals(Optional.empty(), mission.rovers().get(1).operations());
     }
 
@@ -148,19 +149,19 @@ class MissionParserTest {
     @Test
     void errorsGiveTheLineInTheFile() {
         // The three lines added by parse come first: the rover line is line 4
-        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, drive-window, ellipse, heading, landing, max-drive-per-sol, orders, power, site",
+        assertEquals("Line 5: Unknown rover setting: \"color\". Expected: battery, drive-every, drive-window, ellipse, heading, landing, max-drive-per-sol, orders, power, site",
                 error("rover One", "color red"));
     }
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, seed, speed, start-ls, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, seed, speed, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
             "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",
             "landing-time 3pm                   | Line 4: Invalid time: \"3pm\". Expected: hh:mm, for example 15:00",
-            "drive-window 15:00 10:00          | Line 4: Invalid operations: a drive window from 15.0 to 10.0 hours and 100.0 m per sol. Expected: a window within the day, and a positive distance",
-            "max-drive-per-sol 0               | Line 4: Invalid operations: a drive window from 10.0 to 15.0 hours and 0.0 m per sol. Expected: a window within the day, and a positive distance",
+            "drive-window 15:00 10:00          | Line 4: Invalid operations: a drive window from 15.0 to 10.0 hours, 50.0 m per sol, one sol in 3. Expected: a window within the day, a positive distance, and a drive every sol or more",
+            "max-drive-per-sol 0               | Line 4: Invalid operations: a drive window from 10.0 to 15.0 hours, 0.0 m per sol, one sol in 3. Expected: a window within the day, a positive distance, and a drive every sol or more",
             "dust-opacity -1                    | Line 4: Invalid dust opacity: -1.0. Expected: a number that is not negative",
             "speed fast                         | Line 4: Invalid number: \"fast\"",
             "speed 0                            | Line 4: Invalid mobility: speed 0.0 m/s, max slope 10.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",

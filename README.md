@@ -110,7 +110,8 @@ orders MMMLMM
 | `start-ls 150` | optional: the season at the landing, as a solar longitude Ls in degrees: 0 at the northern spring equinox, 90 at the northern summer solstice (0 by default) |
 | `landing-time 15:00` | optional: the local solar time at the start of the mission, at the site of the first rover (12:00 by default) |
 | `drive-window 10:00 15:00` | optional: the local solar times between which the rovers drive and turn (10:00 to 15:00 by default) |
-| `max-drive-per-sol 100` | optional: the farthest a rover drives in a sol, in meters (100 by default) |
+| `max-drive-per-sol 50` | optional: the farthest a rover drives in a drive sol, in meters (50 by default) |
+| `drive-every 3` | optional: the rovers drive one sol in that many, the others go to science (3 by default) |
 | `dust-opacity 0.5` | optional: a dust opacity that stays the same all along: about 0.5 on a clear day, above 4 in a global dust storm (by default, the weather of Mars, see below) |
 | `rover <name>` | starts the block of a rover |
 | `site <latitude> <longitude>` | where the rover aims: latitude negative in the south, longitude from 0 to 360 to the east |
@@ -119,7 +120,7 @@ orders MMMLMM
 | `orders MMRM` | optional: the instructions, as on the plateau |
 | `power rtg 110` | optional: the power source, a radioisotope generator of 110 W (like Curiosity's), or `solar 1.3` for 1.3 m2 of solar panels (like Opportunity's) (`rtg 110` by default) |
 | `battery 2000` | optional: the capacity of the battery, in Wh (2000 by default) |
-| `drive-window`, `max-drive-per-sol` | optional, in a rover block: the operations of this rover, if they differ from the mission's |
+| `drive-window`, `max-drive-per-sol`, `drive-every` | optional, in a rover block: the operations of this rover, if they differ from the mission's |
 | `goto -4.90 137.40` | instead of `orders`: a waypoint to reach, one line per waypoint, in order; the route is planned after the landing |
 | `landing 3 14:00` | optional: the rover lands on sol 3 of the mission, when it is 14:00 local time at its site (by default, at the start of the mission, with the first rover) |
 
@@ -137,9 +138,9 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The waypoints.** Instead of orders, a rover can be given waypoints (`goto`), as real missions give destinations. Once it has landed, its route is planned on the orbital map with an A* search: the states are a cell and a direction (turning takes time), a step is a turn or a move the terrain allows, its cost is the energy it takes (its time, times the extra power of climbing), and the estimate of the cost left is the distance as the crow flies at the speed on flat ground, so the route is the cheapest one in energy: it may go around a hill rather than over it. The route becomes ordinary instructions (L, R, M). A waypoint no route reaches is skipped, and the next ones are planned from where the rover then is; the results say which were missed (`route to 2 of 3 waypoints, none to 5.08S 137.85E`), and the telemetry sends a `NO_ROUTE` event for each.
 
-**The operations.** Like real missions, the rovers are operated sol by sol: a rover drives and turns only in its drive window, at its local time, and at most `max-drive-per-sol` meters in its local sol; then it waits for the next window. Real rovers drive a few hours a day, some tens of meters per sol on average: `RealMissionsTest` checks that the sample mission stays within these orders of magnitude.
+**The operations.** Like real missions, the rovers are operated sol by sol: a rover drives only one sol in `drive-every` (the other sols go to science, the rover standing), only in its drive window, at its local time, and at most `max-drive-per-sol` meters in a drive sol; then it waits. Real rovers average some 9 m per sol over their missions (Curiosity 18.9 km in 2039 sols, Opportunity 45.2 km in 5111 sols) and rarely drive more than a few hundred meters in a sol: `RealMissionsTest` checks that the sample mission stays within a factor of about 3 of these averages.
 
-**The energy.** Each rover has a battery, full at the landing, charged by its power source: a generator gives the same power day and night, solar panels turn a fifth of the sunlight they get into power, so nothing at night, little in winter or in a dust storm. A rover uses 150 W when it drives on flat ground or turns, up to twice as much when it climbs the steepest slope it can take, and 15 W when it waits. At night, a solar rover also powers its survival heaters, from 10 W to 40 W, more when the Sun stays low at noon (winter, high latitude); a rover with a radioisotope generator is kept warm by it. It works while its battery holds more than a fifth of its capacity; below, it waits and recharges until the battery is four fifths full, then goes on, so a solar rover drives by day and waits at night. Waiting takes time on the common clock. A rover whose battery does not recharge in a whole year of waiting stops for good, like Spirit in 2010: its other orders are left undone.
+**The energy.** Each rover has a battery, full at the landing, charged by its power source: a generator gives the same power day and night, solar panels turn a fifth of the sunlight they get into power, so nothing at night, little in winter or in a dust storm. A rover uses 150 W when it drives on flat ground or turns, up to twice as much when it climbs the steepest slope it can take, and 15 W when it waits. At night, a solar rover also powers its electric survival heaters, from 5 W to 20 W (most of the heat of Spirit and Opportunity came from radioisotope heater units), more when the Sun stays low at noon (winter, high latitude); a rover with a radioisotope generator is kept warm by it. It works while its battery holds more than a fifth of its capacity; below, it waits and recharges until the battery is four fifths full, then goes on, so a solar rover drives by day and waits at night. Waiting takes time on the common clock. A rover whose battery does not recharge in a whole year of waiting stops for good, like Spirit in 2010: its other orders are left undone.
 
 Each rover enters the simulation when it lands, on the common clock: rovers sent at different dates land on different sols. The output gives the landing of each rover, on the mission clock (the sol, from 0, and the time of day), then, for each rover that landed, its final position, its cell and direction, the distance driven and the time spent driving, the time spent waiting (for energy, for the drive window, or for the next sol), in sols (Martian days of 24 h 39 min 35 s), and the charge of its battery, on several lines per rover. Both give the local time and the Sun:
 
@@ -152,14 +153,14 @@ Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from 
   local time 13:15, Sun 67 degrees high
 Curiosity: 5.24S 137.95E (cell 551 339) facing E
   route to 2 of 2 waypoints
-  59.0 km driven in 21.3 sols, 569.5 sols waiting
-  battery 99%, local time 10:16, Sun 52 degrees high
+  59.0 km driven in 21.3 sols, 3521.5 sols waiting
+  battery 99%, local time 10:16, Sun 58 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
-  71.7 km driven in 21.0 sols, 695.8 sols waiting
-  battery 98%, local time 10:36, Sun 63 degrees high
+  71.7 km driven in 21.0 sols, 4278.8 sols waiting
+  battery 99%, local time 10:19, Sun 49 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
-  29.6 km driven in 8.3 sols, 2065.6 sols waiting
-  battery 53%, panels 100% clean, local time 10:23, Sun 66 degrees high
+  29.6 km driven in 8.3 sols, 5026.6 sols waiting
+  battery 63%, panels 100% clean, local time 10:27, Sun 67 degrees high
 ```
 
 A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell, but the time and the distance it drove before giving up count. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:

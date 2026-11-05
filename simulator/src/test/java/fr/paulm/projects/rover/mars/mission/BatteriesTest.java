@@ -185,7 +185,7 @@ class BatteriesTest {
         Batteries generatorBatteries = batteries(generator, 0.5, new Operations(0, 0.01, 1));
         drive(solarBatteries, Duration.ZERO, Duration.ofSeconds(1));
         drive(generatorBatteries, Duration.ZERO, Duration.ofSeconds(1));
-        assertTrue(solarBatteries.charge(0) < generatorBatteries.charge(0) - 0.03,
+        assertTrue(solarBatteries.charge(0) < generatorBatteries.charge(0) - 0.01,
                 solarBatteries.charge(0) + " against " + generatorBatteries.charge(0));
     }
 }

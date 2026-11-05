@@ -146,7 +146,8 @@ public final class Batteries implements Pace {
                 drivenThisSol[rover] = 0;
             }
             Operations rules = operations.get(rover);
-            boolean allowed = rules.inWindow(sun.localTime(place, time)) && drivenThisSol[rover] < rules.maxMetersPerSol();
+            boolean allowed = rules.driveSol(sol) && rules.inWindow(sun.localTime(place, time))
+                    && drivenThisSol[rover] < rules.maxMetersPerSol();
             boolean working = !charging[rover] && allowed;
             Duration step = !working || STEP.compareTo(left) < 0 ? STEP : left;
             if (working && metersPerMilli > 0) {

@@ -40,7 +40,8 @@ import java.util.function.Function;
 //   dust-opacity 0.5              optional: a dust opacity that stays the same all along (by default, the weather of
 //                                 Mars: a dust season and storms on a clear base of 0.5)
 //   drive-window 10:00 15:00      optional: the local times between which the rovers drive (10:00 to 15:00)
-//   max-drive-per-sol 100         optional: the farthest a rover drives in a sol, in meters (100 by default)
+//   max-drive-per-sol 50          optional: the farthest a rover drives in a drive sol, in meters (50 by default)
+//   drive-every 3                 optional: the rovers drive one sol in that many (3 by default)
 //   landing-max-elevation -1000   optional: the highest landing site allowed, in meters
 //   landing-max-latitude 30       optional: the farthest landing site from the equator, in degrees
 //
@@ -62,10 +63,10 @@ public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
             Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
-                    "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol");
+                    "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing", "drive-window",
-                    "max-drive-per-sol");
+                    "max-drive-per-sol", "drive-every");
 
     // A block of lines: its first line (the planet or a rover), then its settings by keyword, and its waypoints
     private record Block(Line first, Map<String, Line> settings, List<Line> waypoints) {
@@ -175,14 +176,22 @@ public final class MissionParser {
             }
             double start = hours(line, times[0]);
             double end = times[1].equals("24:00") ? 24 : hours(line, times[1]);
-            double perSol = operations.maxMetersPerSol();
-            operations = line.check(() -> new Operations(start, end, perSol));
+            Operations current = operations;
+            operations = line.check(() -> new Operations(start, end, current.maxMetersPerSol(), current.driveEverySols()));
         }
         if (settings.containsKey("max-drive-per-sol")) {
             Line line = settings.get("max-drive-per-sol");
             double meters = line.decimal();
             Operations current = operations;
-            operations = line.check(() -> new Operations(current.windowStartHours(), current.windowEndHours(), meters));
+            operations = line.check(() -> new Operations(current.windowStartHours(), current.windowEndHours(), meters,
+                    current.driveEverySols()));
+        }
+        if (settings.containsKey("drive-every")) {
+            Line line = settings.get("drive-every");
+            long every = line.integer();
+            Operations current = operations;
+            operations = line.check(() -> new Operations(current.windowStartHours(), current.windowEndHours(),
+                    current.maxMetersPerSol(), (int) Math.clamp(every, 0, Integer.MAX_VALUE)));
         }
         return operations;
     }
@@ -289,7 +298,7 @@ public final class MissionParser {
         LandingSite landingSite = new LandingSite(target, ellipse);
         Line planLine = block.waypoints().isEmpty() ? block.first() : block.waypoints().getFirst();
         Optional<Operations> own = settings.containsKey("drive-window") || settings.containsKey("max-drive-per-sol")
-                ? Optional.of(operations(settings, missionOperations)) : Optional.empty();
+                || settings.containsKey("drive-every") ? Optional.of(operations(settings, missionOperations)) : Optional.empty();
         return planLine.check(() -> new RoverPlan(name, landingSite, heading, orders, power, date, waypoints, own));
     }
 
