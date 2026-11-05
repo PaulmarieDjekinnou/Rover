@@ -3,6 +3,8 @@ package fr.paulm.projects.rover;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
 import fr.paulm.projects.rover.domain.simulation.Turn;
+import fr.paulm.projects.rover.domain.simulation.Pilot;
+import fr.paulm.projects.rover.mars.mission.AutoNav;
 import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.MissionClock;
@@ -84,7 +86,8 @@ final class MissionReport {
     //   Curiosity: 5.49S 137.95E (cell 551 338) facing E
     //     73.8 km driven in 25.3 sols, 712.6 sols waiting
     //     battery 69%, local time 06:32, Sun 8 degrees high
-    void results(Deployment deployment, List<MissionResult> results, RoverPositions positions, Batteries batteries) {
+    void results(Deployment deployment, List<MissionResult> results, RoverPositions positions, Batteries batteries,
+                 List<Pilot> pilots) {
         Planet planet = deployment.planet();
         List<Touchdown> landed = deployment.landed();
         for (int i = 0; i < results.size(); i++) {
@@ -102,6 +105,10 @@ final class MissionReport {
             Route route = landed.get(i).route();
             if (route.waypoints() > 0) {
                 out.println("  " + waypoints(route, landed.get(i).plan()));
+            }
+            if (pilots.get(i) instanceof AutoNav autoNav && autoNav.rockFieldsFound() > 0) {
+                out.println("  " + autoNav.rockFieldsFound() + " rock field(s) found on the way, "
+                        + autoNav.replans() + " new route(s) planned around them");
             }
             out.println(String.format(Locale.ROOT, "  %.1f km driven in %.1f sols, %.1f sols waiting",
                     result.distanceMeters() / 1_000, sols(result.drivingTime(), planet), sols(result.waitingTime(), planet)));

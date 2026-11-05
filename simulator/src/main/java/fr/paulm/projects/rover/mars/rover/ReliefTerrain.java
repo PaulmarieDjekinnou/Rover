@@ -30,8 +30,14 @@ public final class ReliefTerrain implements Terrain {
     }
 
     // The limit applies both ways: a rover cannot climb a steep slope, and must not go down one either.
+    // Nor can it drive into a rock field.
     @Override
     public boolean canDrive(Position from, Position to) {
+        return canDriveOnTheMap(from, to) && !planet.rocky(to);
+    }
+
+    // What the orbital map shows: the slopes, but not the rock fields, too small to be seen from orbit.
+    public boolean canDriveOnTheMap(Position from, Position to) {
         return Math.abs(slope(from, to)) <= mobility.maxSlopeDegrees();
     }
 

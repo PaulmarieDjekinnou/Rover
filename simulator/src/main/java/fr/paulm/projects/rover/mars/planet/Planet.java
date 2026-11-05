@@ -16,8 +16,16 @@ public final class Planet {
     private final Orbit orbit;
     private final Relief elevations;
     private final SphereGrid grid;
+    // The share of cells covered by rock fields that no rover can cross, and the seed that places them
+    private final double rockFields;
+    private final long rockSeed;
 
     public Planet(String name, double radiusMeters, Duration dayLength, Orbit orbit, Relief elevations) {
+        this(name, radiusMeters, dayLength, orbit, elevations, 0, 0);
+    }
+
+    private Planet(String name, double radiusMeters, Duration dayLength, Orbit orbit, Relief elevations,
+                   double rockFields, long rockSeed) {
         if (!dayLength.isPositive()) {
             throw new InvalidInputException("Invalid day length: " + dayLength + ". Expected: a positive duration");
         }
@@ -27,6 +35,8 @@ public final class Planet {
         this.orbit = orbit;
         this.elevations = elevations;
         this.grid = new SphereGrid(elevations.columns(), elevations.rows());
+        this.rockFields = rockFields;
+        this.rockSeed = rockSeed;
     }
 
     public String name() {
@@ -48,7 +58,27 @@ public final class Planet {
 
     // The same planet on a grid factor times finer, its relief derived from this one (see FineRelief).
     public Planet refined(int factor, long seed) {
-        return new Planet(name, radiusMeters, dayLength, orbit, new FineRelief(elevations, factor, seed));
+        return new Planet(name, radiusMeters, dayLength, orbit, new FineRelief(elevations, factor, seed), rockFields, rockSeed);
+    }
+
+    // The same planet with rock fields on this share of its cells, placed from the seed: too small for the orbital
+    // map, a rover only sees them when it is next to them.
+    public Planet withRockFields(double share, long seed) {
+        if (!(share >= 0 && share < 1)) {
+            throw new InvalidInputException("Invalid rock fields: " + share + ". Expected: a share from 0 to 1");
+        }
+        return new Planet(name, radiusMeters, dayLength, orbit, elevations, share, seed);
+    }
+
+    // Whether a rock field covers the cell.
+    public boolean rocky(Position cell) {
+        if (rockFields == 0) {
+            return false;
+        }
+        long z = rockSeed * 0x9E3779B97F4A7C15L + cell.x() * 0xBF58476D1CE4E5B9L + cell.y() * 0x94D049BB133111EBL;
+        z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+        z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+        return ((z ^ (z >>> 31)) >>> 11) * 0x1.0p-53 < rockFields;
     }
 
     public SphereGrid grid() {

@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
+import java.util.Set;
 
 // Finds the fastest way for a rover to reach a cell, on the orbital map, as mission planners do: an A* search
 // over the states of the rover (its cell and its direction, since turning takes time). From a state, the rover can
@@ -45,6 +46,11 @@ public final class RoutePlanner {
     // The instructions that bring the rover from its state into the cell of the goal, the fastest way;
     // empty when no route exists (or none within the limit of the search).
     public Optional<List<Instruction>> route(Rover start, Coordinates goal) {
+        return route(start, goal, Set.of());
+    }
+
+    // The same, on the orbital map (which does not show the rock fields), avoiding the cells known to be impassable.
+    public Optional<List<Instruction>> route(Rover start, Coordinates goal, Set<Position> avoided) {
         Position target = planet.cellAt(goal);
         Coordinates goalCenter = planet.centerOf(target);
         Map<Rover, Long> best = new HashMap<>();
@@ -64,6 +70,9 @@ public final class RoutePlanner {
             }
             for (Instruction instruction : List.of(Instruction.MOVE, Instruction.LEFT, Instruction.RIGHT)) {
                 Rover next = state.apply(instruction, planet.grid());
+                if (avoided.contains(next.position())) {
+                    continue;
+                }
                 Optional<Duration> cost = cost(state, next);
                 if (cost.isEmpty()) {
                     continue;
@@ -85,7 +94,7 @@ public final class RoutePlanner {
         if (from.position().equals(to.position())) {
             return Optional.of(mobility.turnTime());
         }
-        if (!terrain.canDrive(from.position(), to.position())) {
+        if (!terrain.canDriveOnTheMap(from.position(), to.position())) {
             return Optional.empty();
         }
         double factor = PowerSystem.slopeFactor(terrain.slope(from.position(), to.position()), mobility.maxSlopeDegrees());

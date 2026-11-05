@@ -4,6 +4,7 @@ import fr.paulm.projects.rover.domain.Instruction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
+import fr.paulm.projects.rover.domain.simulation.Pilot;
 import fr.paulm.projects.rover.domain.simulation.RoverMission;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
@@ -115,6 +116,15 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
             instructions.addAll(leg.get());
         }
         return new Route(instructions, plan.waypoints().size(), missed);
+    }
+
+    // Who drives each rover that landed, in the order of the simulation input: its orders, or AutoNav to its
+    // waypoints (which discovers the rock fields on its way and plans around them).
+    public List<Pilot> pilots(Deployment deployment) {
+        RoutePlanner planner = new RoutePlanner(planet, mobility);
+        return deployment.landed().stream().<Pilot>map(touchdown -> touchdown.plan().waypoints().isEmpty()
+                ? Pilot.of(touchdown.plan().orders())
+                : new AutoNav(planet, planner, touchdown.plan().waypoints())).toList();
     }
 
     private Optional<LandingFailure> failureAt(Coordinates point, Position cell, List<Coordinates> landedPoints,

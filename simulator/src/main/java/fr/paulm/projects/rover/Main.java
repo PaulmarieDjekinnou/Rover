@@ -3,6 +3,7 @@ package fr.paulm.projects.rover;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.simulation.ClockSimulation;
 import fr.paulm.projects.rover.domain.simulation.MissionResult;
+import fr.paulm.projects.rover.domain.simulation.Pilot;
 import fr.paulm.projects.rover.domain.simulation.SimulationInput;
 import fr.paulm.projects.rover.domain.simulation.TurnListener;
 import fr.paulm.projects.rover.input.Scenario;
@@ -146,13 +147,14 @@ public class Main {
                 .<TurnListener>map(speed -> new PacedListener(everything, speed, Clock.systemUTC(), Thread::sleep))
                 .orElse(everything);
         List<MissionResult> results;
+        List<Pilot> pilots = mission.pilots(deployment);
         try {
-            results = new ClockSimulation(batteries).run(deployment.input(), listener);
+            results = new ClockSimulation(batteries, pilots).run(deployment.input(), listener);
             telemetry.ifPresent(emitter -> emitter.missionEnded(results, commandLine.file(), mission.seed()));
         } finally {
             sink.ifPresent(TelemetrySink::close);
         }
-        missionReport.results(deployment, results, positions, batteries);
+        missionReport.results(deployment, results, positions, batteries, pilots);
         if (commandLine.map()) {
             missionReport.maps(deployment, results, tracks);
         }

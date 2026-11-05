@@ -27,7 +27,8 @@ public final class Landing {
     }
 
     // Refuses a site that breaks the landing rules, or where the ground around the target cell is too steep
-    // for the rover to drive away: landing on a slope could tip it over.
+    // for the rover to drive away: landing on a slope could tip it over. Sites are chosen on the orbital map,
+    // which does not show the rock fields.
     public void check(Coordinates target) {
         Position cell = planet.cellAt(target);
         int elevation = planet.elevation(cell);
@@ -40,7 +41,7 @@ public final class Landing {
                     rules.maxLatitudeDegrees()));
         }
         boolean steep = Arrays.stream(Direction.values())
-                .anyMatch(direction -> !terrain.canDrive(cell, planet.grid().next(cell, direction).position()));
+                .anyMatch(direction -> !terrain.canDriveOnTheMap(cell, planet.grid().next(cell, direction).position()));
         if (steep) {
             throw refused(target, "too steep: the rover could not drive away in every direction");
         }

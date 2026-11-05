@@ -162,7 +162,7 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, resolution, seed, speed, start-ls, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, resolution, rocks, seed, speed, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
             "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",

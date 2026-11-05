@@ -32,6 +32,8 @@ import java.util.function.Function;
 //
 //   planet mars                   the planet: "mars" (the MOLA map), or "map <file>" (see TextMapParser)
 //   seed 42                       optional: the seed of the random draws (0 by default)
+//   rocks 0.03                    optional: the share of cells covered by rock fields, which the orbital map does not
+//                                 show and the rovers discover on their way (none by default)
 //   resolution 64                 optional: the cells per degree, finer than the map (see FineRelief); a multiple
 //                                 of the cells per degree of the map (4 for Mars)
 //   max-slope 10                  optional: the steepest slope the rovers can drive on, in degrees
@@ -64,7 +66,7 @@ import java.util.function.Function;
 public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
-            Set.of("seed", "resolution", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
+            Set.of("seed", "resolution", "rocks", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
                     "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing", "drive-window",
@@ -98,8 +100,14 @@ public final class MissionParser {
         Mobility mobility = mobility(mission.settings());
         LandingRules rules = landingRules(mission.settings());
         long seed = mission.settings().containsKey("seed") ? mission.settings().get("seed").integer() : 0;
-        Planet planet = mission.settings().containsKey("resolution")
+        Planet fine = mission.settings().containsKey("resolution")
                 ? refined(loaded, mission.settings().get("resolution"), seed) : loaded;
+        Planet planet = fine;
+        if (mission.settings().containsKey("rocks")) {
+            Line line = mission.settings().get("rocks");
+            double share = line.decimal();
+            planet = line.check(() -> fine.withRockFields(share, seed));
+        }
         Sky sky = sky(mission.settings(), planet);
 
         Landing landing = new PlanetMission(planet, mobility, rules, seed, List.of()).landing();
