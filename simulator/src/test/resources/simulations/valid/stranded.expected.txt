@@ -1,6 +1,6 @@
 Stranded landed on Sol 0 00:00 at 22.50N 67.50E (cell 1 2), 0.0 km from its target
   local time 12:00, Sun 68 degrees high
 Stranded: 22.50N 67.50E (cell 1 2) facing E
-  stopped on Sol 669 12:49, out of energy
-  0.1 km driven in 0.0 sols, 669.5 sols waiting
-  battery 0%, panels 12% clean, local time 00:49, night
+  stopped on Sol 668 15:05, out of energy
+  0.1 km driven in 0.0 sols, 668.6 sols waiting
+  battery 0%, panels 13% clean, local time 03:05, night

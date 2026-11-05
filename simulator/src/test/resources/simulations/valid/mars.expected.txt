@@ -12,5 +12,5 @@ Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 695.8 sols waiting
   battery 98%, local time 10:36, Sun 63 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
-  29.6 km driven in 8.3 sols, 688.6 sols waiting
-  battery 39%, panels 76% clean, local time 10:39, Sun 69 degrees high
+  29.6 km driven in 8.3 sols, 2065.6 sols waiting
+  battery 53%, panels 100% clean, local time 10:23, Sun 66 degrees high

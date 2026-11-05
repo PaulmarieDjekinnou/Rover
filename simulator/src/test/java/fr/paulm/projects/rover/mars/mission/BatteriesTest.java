@@ -175,4 +175,17 @@ class BatteriesTest {
         Pace.Timing timing = batteries.timing(0, from, to, Duration.ZERO, Duration.ofSeconds(Math.round(meters / 0.04)));
         assertEquals(meters / 10, timing.duration().toMillis() / (double) Mars.SOL.toMillis(), 2);
     }
+
+    @Test
+    void aSolarRoverHeatsItselfAtNightAndAGeneratorRoverDoesNot() {
+        // A whole sol of waiting, from noon: the solar rover spends the night heating
+        PowerSystem solar = new PowerSystem(new PowerSource.SolarPanels(0.01), 2_000);
+        PowerSystem generator = new PowerSystem(new PowerSource.Generator(0), 2_000);
+        Batteries solarBatteries = batteries(solar, 0.5, new Operations(0, 0.01, 1));
+        Batteries generatorBatteries = batteries(generator, 0.5, new Operations(0, 0.01, 1));
+        drive(solarBatteries, Duration.ZERO, Duration.ofSeconds(1));
+        drive(generatorBatteries, Duration.ZERO, Duration.ofSeconds(1));
+        assertTrue(solarBatteries.charge(0) < generatorBatteries.charge(0) - 0.03,
+                solarBatteries.charge(0) + " against " + generatorBatteries.charge(0));
+    }
 }

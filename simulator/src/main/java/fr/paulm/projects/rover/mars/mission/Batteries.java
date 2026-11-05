@@ -25,6 +25,8 @@ import java.util.TreeMap;
 // and recharges until its battery is four fifths full, then goes on: a solar rover drives by day, and spends its
 // nights waiting. A rover whose battery does not reach that level in a whole year of waiting is stopped for good,
 // as Spirit was in 2010.
+// At night, a solar rover also powers its survival heaters, more in winter (see PowerSystem.heaterWatts); a rover with
+// a radioisotope generator is kept warm by it.
 // Solar panels gather dust: they lose 0.15 % of their power a sol, three times faster in a dust storm, until the wind
 // cleans them (about once in 60 sols, drawn from the seed, giving back 30 % of their power), as the "cleaning
 // events" that kept Spirit and Opportunity going. These rates are orders of magnitude, not a fit to the missions.
@@ -156,6 +158,9 @@ public final class Batteries implements Pace {
                 }
             }
             double used = working ? PowerSystem.ACTIVE_WATTS * climbing : PowerSystem.IDLE_WATTS;
+            if (system.source() instanceof PowerSource.SolarPanels && sun.elevation(place, time) <= 0) {
+                used += PowerSystem.heaterWatts(noonElevation(place, time));
+            }
             double done = busy.isZero() ? 0 : 1 - left.toMillis() / (double) busy.toMillis();
             double produced = system.source().watts(sun, along(from, to, done), time);
             if (system.source() instanceof PowerSource.SolarPanels) {
@@ -189,6 +194,12 @@ public final class Batteries implements Pace {
         if (winds.get(rover).nextDouble() < CLEANINGS_PER_SOL * sols) {
             cleanliness[rover] = Math.min(1, cleanliness[rover] + CLEANING);
         }
+    }
+
+    // How high the Sun gets at noon at this place, in this season: 90 degrees minus the gap between the latitude and
+    // the declination.
+    private double noonElevation(Coordinates place, Duration time) {
+        return 90 - Math.abs(place.latitude() - sun.declination(time));
     }
 
     // The local sol at a place: it changes at local midnight.
