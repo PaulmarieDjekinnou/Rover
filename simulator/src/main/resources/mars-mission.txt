@@ -5,12 +5,14 @@ start-ls 150
 landing-time 15:00
 seed 2026
 
-# Curiosity, in Gale crater: heads for the central mound, Aeolis Mons. Powered by a radioisotope generator
+# Curiosity, in Gale crater: drives to the foot of the central mound, Aeolis Mons, through two waypoints;
+# the route is planned on the orbital map. Powered by a radioisotope generator
 rover Curiosity
 site -4.59 137.44
 ellipse 20 7 0
 heading S
-orders MMMLMM
+goto -4.90 137.40
+goto -5.08 137.85
 power rtg 110
 battery 2000
 

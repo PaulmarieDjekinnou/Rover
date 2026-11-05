@@ -95,6 +95,18 @@ class MissionParserTest {
     }
 
     @Test
+    void readsTheWaypointsOfARoverInOrder() {
+        PlanetMission mission = parse("rover Explorer", "site 22.5 67.5", "heading N", "goto 22.5 100", "goto -22.5 120");
+        assertEquals(List.of(new Coordinates(22.5, 100), new Coordinates(-22.5, 120)), mission.rovers().getFirst().waypoints());
+    }
+
+    @Test
+    void aRoverCannotHaveBothOrdersAndWaypoints() {
+        assertEquals("Line 8: Rover \"Both\" has both orders and waypoints. Expected: one or the other",
+                error("rover Both", "site 22.5 67.5", "heading N", "orders M", "goto 22.5 100"));
+    }
+
+    @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
         assertEquals(new Sky(150, 15.5, 2), mission.sky());

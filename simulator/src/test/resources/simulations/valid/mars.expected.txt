@@ -4,9 +4,10 @@ Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from 
   local time 15:53, Sun 34 degrees high
 Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target
   local time 13:15, Sun 67 degrees high
-Curiosity: 5.49S 137.95E (cell 551 338) facing E
-  73.8 km driven in 25.3 sols, 712.6 sols waiting
-  battery 98%, local time 11:07, Sun 77 degrees high
+Curiosity: 5.24S 137.95E (cell 551 339) facing E
+  route to 2 of 2 waypoints
+  59.0 km driven in 21.3 sols, 569.5 sols waiting
+  battery 100%, local time 10:16, Sun 52 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 695.8 sols waiting
   battery 99%, local time 10:36, Sun 63 degrees high

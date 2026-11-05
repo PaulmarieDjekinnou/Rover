@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover.mars.mission;
 
+import fr.paulm.projects.rover.domain.Instruction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
@@ -10,6 +11,7 @@ import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.Sun;
 import fr.paulm.projects.rover.mars.rover.Mobility;
 import fr.paulm.projects.rover.mars.rover.ReliefTerrain;
+import fr.paulm.projects.rover.mars.rover.RoutePlanner;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -80,14 +82,39 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
             Duration time = plan.landingDate()
                     .map(date -> date.time(sun, plan.site().target(), planet.dayLength()))
                     .orElse(Duration.ZERO);
-            touchdowns.add(new Touchdown(plan, time, point, cell, failure));
+            Route route = failure.isEmpty() ? route(plan, new Rover(cell, plan.heading())) : Route.of(plan.orders());
+            touchdowns.add(new Touchdown(plan, time, point, cell, failure, route));
             if (failure.isEmpty()) {
                 landedPoints.add(point);
-                missions.add(new RoverMission(new Rover(cell, plan.heading()), plan.orders()));
+                missions.add(new RoverMission(new Rover(cell, plan.heading()), route.instructions()));
             }
         }
         return new Deployment(planet, sun, touchdowns,
                 new SimulationInput(planet.grid(), terrain(), false, missions));
+    }
+
+    // The orders of the rover, or the route to its waypoints, planned from where it landed, one waypoint after the
+    // other, up to the first one it cannot reach.
+    private Route route(RoverPlan plan, Rover landed) {
+        if (plan.waypoints().isEmpty()) {
+            return Route.of(plan.orders());
+        }
+        RoutePlanner planner = new RoutePlanner(planet, mobility);
+        List<Instruction> instructions = new ArrayList<>();
+        Rover state = landed;
+        int reached = 0;
+        for (Coordinates waypoint : plan.waypoints()) {
+            Optional<List<Instruction>> leg = planner.route(state, waypoint);
+            if (leg.isEmpty()) {
+                break;
+            }
+            for (Instruction instruction : leg.get()) {
+                state = state.apply(instruction, planet.grid());
+            }
+            instructions.addAll(leg.get());
+            reached++;
+        }
+        return new Route(instructions, reached, plan.waypoints().size());
     }
 
     private Optional<LandingFailure> failureAt(Coordinates point, Position cell, List<Coordinates> landedPoints,

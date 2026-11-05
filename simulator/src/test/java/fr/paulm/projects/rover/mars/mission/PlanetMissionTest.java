@@ -1,11 +1,13 @@
 package fr.paulm.projects.rover.mars.mission;
 
 import fr.paulm.projects.rover.domain.Direction;
+import fr.paulm.projects.rover.domain.Instruction;
 import fr.paulm.projects.rover.domain.InvalidInputException;
 import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.rover.Mobility;
+import fr.paulm.projects.rover.mars.rover.PowerSystem;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -87,5 +89,17 @@ class PlanetMissionTest {
         RoverPlan wide = new RoverPlan("Wide", new LandingSite(PLANET.centerOf(new Position(6, 2)), new Ellipse(5, 3, 45)),
                 Direction.E, List.of());
         assertEquals(mission(42, wide).land().touchdowns(), mission(42, wide).land().touchdowns());
+    }
+
+    @Test
+    void theRouteToTheWaypointsIsPlannedAfterTheLandingUpToTheFirstUnreachableOne() {
+        // From (6, 2): first to (5, 2), then onto the peak in (3, 1), which no rover can drive onto
+        RoverPlan explorer = new RoverPlan("Explorer", new LandingSite(PLANET.centerOf(new Position(6, 2)), Ellipse.NONE),
+                Direction.W, List.of(), PowerSystem.DEFAULT, Optional.empty(),
+                List.of(PLANET.centerOf(new Position(5, 2)), PLANET.centerOf(new Position(3, 1))));
+        Deployment deployment = mission(1, explorer).land();
+        Route route = deployment.touchdowns().getFirst().route();
+        assertEquals(new Route(List.of(Instruction.MOVE), 1, 2), route);
+        assertEquals(route.instructions(), deployment.input().missions().getFirst().instructions());
     }
 }

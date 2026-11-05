@@ -119,6 +119,7 @@ orders MMMLMM
 | `orders MMRM` | optional: the instructions, as on the plateau |
 | `power rtg 110` | optional: the power source, a radioisotope generator of 110 W (like Curiosity's), or `solar 1.3` for 1.3 m2 of solar panels (like Opportunity's) (`rtg 110` by default) |
 | `battery 2000` | optional: the capacity of the battery, in Wh (2000 by default) |
+| `goto -4.90 137.40` | instead of `orders`: a waypoint to reach, one line per waypoint, in order; the route is planned after the landing |
 | `landing 3 14:00` | optional: the rover lands on sol 3 of the mission, when it is 14:00 local time at its site (by default, at the start of the mission, with the first rover) |
 
 Lines starting with `#` are comments. The whole file is checked before anything lands, and errors give the line number.
@@ -130,6 +131,8 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 **The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Unlike on the plateau, several rovers can be in the same cell: a cell is about 15 km wide, so they are kilometers apart, and rovers never block each other. Each instruction takes its time: a move lasts its distance divided by the speed, a turn on the spot `turn-minutes` (5 minutes by default), and a move blocked by the terrain no time. A rover starts its next instruction as soon as the previous one is over, and all the rovers share the same clock: the simulation handles the ends of instructions in time order. The three modes of the plateau do not apply to a mission: their options are ignored, with a warning. On a plateau, where instructions take no time, this clock would give exactly the step-by-step mode.
 
 **The Sun.** The planet turns on itself once a sol and goes around the Sun once a year (668.6 sols on Mars), on an axis tilted by 25.19 degrees, which makes the seasons. From the season (Ls), the time and the place, the simulation knows the local solar time and how high the Sun is. Sunlight on the ground is about 586 W/m2 above the atmosphere of Mars, weakened by the dust, all the more as the Sun is low.
+
+**The waypoints.** Instead of orders, a rover can be given waypoints (`goto`), as real missions give destinations. Once it has landed, its route is planned on the orbital map with an A* search: the states are a cell and a direction (turning takes time), a step is a turn or a move the terrain allows, its cost is its time, and the estimate of the time left is the distance as the crow flies at the speed on flat ground, so the route is the fastest one. The route becomes ordinary instructions (L, R, M). Planning stops at the first waypoint no route reaches; the results say how many were reached (`route to 1 of 2 waypoints, none to 5.08S 137.85E`), and the telemetry sends a `NO_ROUTE` event.
 
 **The operations.** Like real missions, the rovers are operated sol by sol: a rover drives and turns only in its drive window, at its local time, and at most `max-drive-per-sol` meters in its local sol; then it waits for the next window. Real rovers drive a few hours a day, some tens of meters per sol on average: `RealMissionsTest` checks that the sample mission stays within these orders of magnitude.
 
@@ -144,9 +147,10 @@ Perseverance landed on Sol 2 04:52 at 18.34N 77.61E (cell 310 433), 3.0 km from 
   local time 15:53, Sun 34 degrees high
 Opportunity landed on Sol 5 07:46 at 1.95S 354.47E (cell 1417 352), 0.0 km from its target
   local time 13:15, Sun 67 degrees high
-Curiosity: 5.49S 137.95E (cell 551 338) facing E
-  73.8 km driven in 25.3 sols, 712.6 sols waiting
-  battery 98%, local time 11:07, Sun 77 degrees high
+Curiosity: 5.24S 137.95E (cell 551 339) facing E
+  route to 2 of 2 waypoints
+  59.0 km driven in 21.3 sols, 569.5 sols waiting
+  battery 100%, local time 10:16, Sun 52 degrees high
 Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 695.8 sols waiting
   battery 99%, local time 10:36, Sun 63 degrees high
@@ -288,11 +292,13 @@ All classes are in the `fr.paulm.projects.rover` package.
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius and day length, cut into the grid of its elevation map; the height of each cell |
 | | `Orbit`, `Sun` | the year, the tilt of the axis and the sunlight of a planet; the season, the local time, the height of the Sun and the sunlight on the ground |
-| `mars.rover` | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
+| `mars.rover` | `RoutePlanner` | the A* search of the fastest route to a waypoint |
+| | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
 | | `PowerSource`, `PowerSystem` | a radioisotope generator or solar panels; the source and the battery of a rover, and what it uses |
 | `mars.mission` | `PlanetMission`, `RoverPlan` | the planet, the settings, the seed and the plan of each rover (name, landing site, heading, orders) |
 | | `Landing`, `LandingRules`, `LandingSite`, `Ellipse` | checks a landing site and draws the touchdown point in its ellipse |
 | | `Operations` | the drive window and the distance per sol |
+| | `Route` | what a rover carries out: its orders, or the instructions planned to its waypoints |
 | | `Sky`, `LandingDate` | the season and the time at the start of the mission, and the dust in the atmosphere; the sol and local time a rover lands at |
 | | `Deployment`, `Touchdown`, `LandingFailure` | the rovers on the ground: where each one landed, which ones are lost, and the simulation input of the others |
 | | `Batteries` | the batteries of the rovers through the mission, and the operations: the pace that makes them wait (to recharge, for the drive window, for the next sol), or stop |

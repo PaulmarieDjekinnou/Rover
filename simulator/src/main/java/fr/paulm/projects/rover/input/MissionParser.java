@@ -51,6 +51,8 @@ import java.util.function.Function;
 //   power rtg 110                 optional: a radioisotope generator of 110 W, or "solar 1.3" for 1.3 m2 of panels
 //   battery 2000                  optional: the capacity of the battery, in Wh (a 110 W generator and 2000 Wh by default)
 //   landing 3 14:00               optional: lands on sol 3 of the mission at 14:00 local time (at the start by default)
+//   goto -4.90 137.40             instead of orders: a waypoint to reach, the route being planned after the landing;
+//                                 one line per waypoint, in order
 //
 // The whole file is read and checked before anything lands. PlanetMission checks the landing sites again
 // on construction; they are checked here first, to report the line of the site.
@@ -62,8 +64,8 @@ public final class MissionParser {
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing");
 
-    // A block of lines: its first line (the planet or a rover), then its settings by keyword
-    private record Block(Line first, Map<String, Line> settings) {
+    // A block of lines: its first line (the planet or a rover), then its settings by keyword, and its waypoints
+    private record Block(Line first, Map<String, Line> settings, List<Line> waypoints) {
     }
 
     // Finds the planet named on the planet line ("mars" or "map <file>"): the reader knows where files are
@@ -109,14 +111,18 @@ public final class MissionParser {
     private List<Block> blocks(List<Line> lines) {
         List<Block> blocks = new ArrayList<>();
         Map<String, Line> settings = new HashMap<>();
-        blocks.add(new Block(lines.getFirst(), settings));
+        blocks.add(new Block(lines.getFirst(), settings, new ArrayList<>()));
         for (Line line : lines.subList(1, lines.size())) {
             if (line.keyword().equals("rover")) {
                 settings = new HashMap<>();
-                blocks.add(new Block(line, settings));
+                blocks.add(new Block(line, settings, new ArrayList<>()));
                 continue;
             }
             boolean inRover = blocks.size() > 1;
+            if (inRover && line.keyword().equals("goto")) {
+                blocks.getLast().waypoints().add(line);
+                continue;
+            }
             Set<String> keys = inRover ? ROVER_KEYS : MISSION_KEYS;
             String kind = inRover ? "rover setting" : "setting";
             if (!keys.contains(line.keyword())) {
@@ -269,7 +275,15 @@ public final class MissionParser {
         List<Instruction> orders = settings.containsKey("orders") ? orders(settings.get("orders")) : List.of();
         Optional<LandingDate> date = settings.containsKey("landing")
                 ? Optional.of(landingDate(settings.get("landing"))) : Optional.empty();
-        return new RoverPlan(name, new LandingSite(target, ellipse), heading, orders, power(settings), date);
+        List<Coordinates> waypoints = new ArrayList<>();
+        for (Line line : block.waypoints()) {
+            double[] point = line.numbers(2);
+            waypoints.add(line.check(() -> new Coordinates(point[0], point[1])));
+        }
+        PowerSystem power = power(settings);
+        LandingSite landingSite = new LandingSite(target, ellipse);
+        Line planLine = block.waypoints().isEmpty() ? block.first() : block.waypoints().getFirst();
+        return planLine.check(() -> new RoverPlan(name, landingSite, heading, orders, power, date, waypoints));
     }
 
     // The power source and the battery of a rover, each checked on its own line.

@@ -58,6 +58,10 @@ public final class TelemetryListener implements TurnListener {
         for (Touchdown touchdown : deployment.touchdowns()) {
             if (touchdown.landed()) {
                 event(touchdown.plan().name(), touchdown.time(), RoverEvent.Type.LANDED, touchdown.point().toString());
+                if (!touchdown.route().complete()) {
+                    event(touchdown.plan().name(), touchdown.time(), RoverEvent.Type.NO_ROUTE,
+                            touchdown.plan().waypoints().get(touchdown.route().reachedWaypoints()).toString());
+                }
             } else {
                 event(touchdown.plan().name(), touchdown.time(), RoverEvent.Type.LOST,
                         touchdown.failure().orElseThrow().description());

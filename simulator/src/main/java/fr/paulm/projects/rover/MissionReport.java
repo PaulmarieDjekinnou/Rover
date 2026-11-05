@@ -6,6 +6,8 @@ import fr.paulm.projects.rover.domain.simulation.Turn;
 import fr.paulm.projects.rover.mars.mission.Batteries;
 import fr.paulm.projects.rover.mars.mission.Deployment;
 import fr.paulm.projects.rover.mars.mission.MissionClock;
+import fr.paulm.projects.rover.mars.mission.Route;
+import fr.paulm.projects.rover.mars.mission.RoverPlan;
 import fr.paulm.projects.rover.mars.mission.RoverPositions;
 import fr.paulm.projects.rover.mars.mission.Touchdown;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
@@ -96,6 +98,10 @@ final class MissionReport {
             out.println(String.format(Locale.ROOT, "%s: %s (cell %s) facing %s", name, positions.of(i),
                     result.finalRover().position(), result.finalRover().direction()));
             result.stopTime().ifPresent(time -> out.println("  stopped on " + clock(time, planet) + ", out of energy"));
+            Route route = landed.get(i).route();
+            if (route.waypoints() > 0) {
+                out.println("  " + waypoints(route, landed.get(i).plan()));
+            }
             out.println(String.format(Locale.ROOT, "  %.1f km driven in %.1f sols, %.1f sols waiting",
                     result.distanceMeters() / 1_000, sols(result.drivingTime(), planet), sols(result.waitingTime(), planet)));
             Duration end = result.stopTime().orElse(landed.get(i).time().plus(result.totalTime()));
@@ -149,6 +155,12 @@ final class MissionReport {
 
     private static String nameOf(Touchdown touchdown) {
         return touchdown.plan().name();
+    }
+
+    // "route to 2 of 2 waypoints", or "route to 1 of 2 waypoints, none to 5.08S 137.85E".
+    private String waypoints(Route route, RoverPlan plan) {
+        String reached = "route to " + route.reachedWaypoints() + " of " + route.waypoints() + " waypoints";
+        return route.complete() ? reached : reached + ", none to " + plan.waypoints().get(route.reachedWaypoints());
     }
 
     private String clock(Duration time, Planet planet) {
