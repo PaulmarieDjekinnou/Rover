@@ -32,6 +32,8 @@ import java.util.function.Function;
 //
 //   planet mars                   the planet: "mars" (the MOLA map), or "map <file>" (see TextMapParser)
 //   seed 42                       optional: the seed of the random draws (0 by default)
+//   resolution 64                 optional: the cells per degree, finer than the map (see FineRelief); a multiple
+//                                 of the cells per degree of the map (4 for Mars)
 //   max-slope 10                  optional: the steepest slope the rovers can drive on, in degrees
 //   speed 0.04                    optional: the speed of the rovers on flat ground, in m/s
 //   turn-minutes 5                optional: how long a turn on the spot takes, in minutes
@@ -62,7 +64,7 @@ import java.util.function.Function;
 public final class MissionParser {
 
     private static final Set<String> MISSION_KEYS =
-            Set.of("seed", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
+            Set.of("seed", "resolution", "max-slope", "speed", "turn-minutes", "landing-max-elevation", "landing-max-latitude",
                     "start-ls", "landing-time", "dust-opacity", "drive-window", "max-drive-per-sol", "drive-every");
     private static final Set<String> ROVER_KEYS =
             Set.of("site", "ellipse", "heading", "orders", "power", "battery", "landing", "drive-window",
@@ -92,10 +94,12 @@ public final class MissionParser {
         }
         List<Block> blocks = blocks(lines);
         Block mission = blocks.getFirst();
-        Planet planet = mission.first().check(() -> planets.apply(mission.first().value("planet")));
+        Planet loaded = mission.first().check(() -> planets.apply(mission.first().value("planet")));
         Mobility mobility = mobility(mission.settings());
         LandingRules rules = landingRules(mission.settings());
         long seed = mission.settings().containsKey("seed") ? mission.settings().get("seed").integer() : 0;
+        Planet planet = mission.settings().containsKey("resolution")
+                ? refined(loaded, mission.settings().get("resolution"), seed) : loaded;
         Sky sky = sky(mission.settings(), planet);
 
         Landing landing = new PlanetMission(planet, mobility, rules, seed, List.of()).landing();
@@ -139,6 +143,20 @@ public final class MissionParser {
             }
         }
         return blocks;
+    }
+
+    // The planet at the resolution asked for, which must be a whole multiple of that of its map.
+    private Planet refined(Planet planet, Line line, long seed) {
+        long perDegree = line.integer();
+        int mapPerDegree = planet.grid().columns() / 360;
+        if (mapPerDegree == 0) {
+            throw line.error("Invalid resolution: the map of this planet has less than one cell per degree");
+        }
+        if (perDegree < mapPerDegree || perDegree % mapPerDegree != 0 || perDegree > 512) {
+            throw line.error("Invalid resolution: " + perDegree + " cells per degree. Expected: a multiple of "
+                    + mapPerDegree + ", up to 512");
+        }
+        return planet.refined((int) (perDegree / mapPerDegree), seed);
     }
 
     // The mobility given by the speed, max-slope and turn-minutes settings, each checked on its own line.

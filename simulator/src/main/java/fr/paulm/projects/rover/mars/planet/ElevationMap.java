@@ -8,7 +8,7 @@ import java.util.List;
 // The height of the ground in each cell of a latitude / longitude grid, in meters above the reference surface
 // (the areoid on Mars). Stored as 16-bit integers, like the MOLA files: the whole of Mars at 4 cells per degree
 // takes about 2 MB.
-public final class ElevationMap {
+public final class ElevationMap implements Relief {
     private final int columns;
     private final int rows;
     private final short[] elevations;
@@ -44,14 +44,17 @@ public final class ElevationMap {
         return new ElevationMap(columns, rows, elevations);
     }
 
+    @Override
     public int columns() {
         return columns;
     }
 
+    @Override
     public int rows() {
         return rows;
     }
 
+    @Override
     public int elevation(Position cell) {
         return elevations[cell.y() * columns + cell.x()];
     }

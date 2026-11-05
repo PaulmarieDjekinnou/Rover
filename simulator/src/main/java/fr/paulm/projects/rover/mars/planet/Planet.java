@@ -14,10 +14,10 @@ public final class Planet {
     private final double radiusMeters;
     private final Duration dayLength;
     private final Orbit orbit;
-    private final ElevationMap elevations;
+    private final Relief elevations;
     private final SphereGrid grid;
 
-    public Planet(String name, double radiusMeters, Duration dayLength, Orbit orbit, ElevationMap elevations) {
+    public Planet(String name, double radiusMeters, Duration dayLength, Orbit orbit, Relief elevations) {
         if (!dayLength.isPositive()) {
             throw new InvalidInputException("Invalid day length: " + dayLength + ". Expected: a positive duration");
         }
@@ -44,6 +44,11 @@ public final class Planet {
 
     public Orbit orbit() {
         return orbit;
+    }
+
+    // The same planet on a grid factor times finer, its relief derived from this one (see FineRelief).
+    public Planet refined(int factor, long seed) {
+        return new Planet(name, radiusMeters, dayLength, orbit, new FineRelief(elevations, factor, seed));
     }
 
     public SphereGrid grid() {

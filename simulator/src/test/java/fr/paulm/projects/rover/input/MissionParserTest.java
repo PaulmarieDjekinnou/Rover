@@ -117,6 +117,13 @@ class MissionParserTest {
     }
 
     @Test
+    void aResolutionRefinesTheGridOfThePlanet() {
+        // The flat test planet has 8 columns: 8 / 360 is less than a cell per degree
+        assertEquals("Line 4: Invalid resolution: the map of this planet has less than one cell per degree",
+                error("resolution 64"));
+    }
+
+    @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
         // A dust opacity given in the file stays the same: no weather
@@ -155,7 +162,7 @@ class MissionParserTest {
 
     @ParameterizedTest
     @CsvSource(delimiter = '|', value = {
-            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, seed, speed, start-ls, turn-minutes",
+            "altitude 3                         | Line 4: Unknown setting: \"altitude\". Expected: drive-every, drive-window, dust-opacity, landing-max-elevation, landing-max-latitude, landing-time, max-drive-per-sol, max-slope, resolution, seed, speed, start-ls, turn-minutes",
             "seed 1\\nseed 2                     | Line 5: Repeated setting: \"seed\"",
             "seed one                           | Line 4: Invalid integer: \"one\"",
             "landing-time 25:00                 | Line 4: Invalid time: \"25:00\". Expected: hh:mm, for example 15:00",

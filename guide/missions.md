@@ -21,6 +21,7 @@ orders MMMLMM
 |---|---|
 | `planet mars` | the planet: `mars`, or `map <file>` for a small planet drawn in text, in a file next to the mission (see below) |
 | `seed 42` | optional: the seed of the random draws (0 by default). The same seed always gives the same landings |
+| `resolution 64` | optional: drive on a finer grid, in cells per degree (a multiple of 4 on Mars, up to 512): the relief of each cell is the map interpolated, plus a detail drawn from the seed; 64 gives cells of about 925 m instead of 15 km |
 | `max-slope 10` | optional: the steepest slope the rovers can drive on, in degrees (10 by default) |
 | `speed 0.04` | optional: the speed of the rovers on flat ground, in m/s (0.04 by default, about Curiosity's top speed) |
 | `turn-minutes 5` | optional: how long a turn on the spot takes, in minutes (5 by default) |
