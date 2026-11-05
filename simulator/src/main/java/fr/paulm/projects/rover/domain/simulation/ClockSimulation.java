@@ -33,6 +33,8 @@ import java.util.Set;
 public final class ClockSimulation implements Simulation {
 
     private final Pace pace;
+    // The pilot of each rover, or none to follow the instructions of its mission
+    private final Optional<List<Pilot>> pilots;
 
     public ClockSimulation() {
         this(Pace.IMMEDIATE);
@@ -40,6 +42,13 @@ public final class ClockSimulation implements Simulation {
 
     public ClockSimulation(Pace pace) {
         this.pace = pace;
+        this.pilots = Optional.empty();
+    }
+
+    // Each rover driven by its pilot, in input order, instead of the instructions of its mission.
+    public ClockSimulation(Pace pace, List<Pilot> pilots) {
+        this.pace = pace;
+        this.pilots = Optional.of(List.copyOf(pilots));
     }
 
     // The start or the end of the rank-th instruction of a rover (rank from 0), at the given time
@@ -60,14 +69,13 @@ public final class ClockSimulation implements Simulation {
         Map<Position, Integer> heldCells = new HashMap<>();
         rovers.forEach(rover -> heldCells.merge(rover.position(), 1, Integer::sum));
         Map<Integer, Decision> decisions = new HashMap<>();
+        List<Pilot> drivers = pilots.orElseGet(() -> missions.stream().map(mission -> Pilot.of(mission.instructions())).toList());
 
         PriorityQueue<Event> events = new PriorityQueue<>(Comparator.comparing(Event::time)
                 .thenComparingInt(Event::rank).thenComparingInt(Event::rover)
                 .thenComparing(Event::start));
         for (int i = 0; i < missions.size(); i++) {
-            if (!missions.get(i).instructions().isEmpty()) {
-                events.add(new Event(pace.start(i), 0, i, true));
-            }
+            events.add(new Event(pace.start(i), 0, i, true));
         }
         int turn = 0;
         while (!events.isEmpty()) {
@@ -75,7 +83,11 @@ public final class ClockSimulation implements Simulation {
             int i = event.rover();
             Rover rover = rovers.get(i);
             if (event.start()) {
-                Decision decision = decide(input, rover, missions.get(i).instructions().get(event.rank()), heldCells);
+                Optional<Instruction> instruction = drivers.get(i).next(rover);
+                if (instruction.isEmpty()) {
+                    continue;
+                }
+                Decision decision = decide(input, rover, instruction.get(), heldCells);
                 Duration busy = duration(input.terrain(), rover, decision);
                 Pace.Timing timing = decision.obstacle().isPresent()
                         ? Pace.Timing.done(Duration.ZERO, Duration.ZERO) : pace.timing(i, rover, decision.next(), event.time(), busy);
@@ -108,9 +120,7 @@ public final class ClockSimulation implements Simulation {
             }
             listener.onTurn(new Turn(++turn, rovers, decision.obstacle().isEmpty() ? Set.of() : Set.of(i), event.time(),
                     OptionalInt.of(i)));
-            if (event.rank() + 1 < missions.get(i).instructions().size()) {
-                events.add(new Event(event.time(), event.rank() + 1, i, true));
-            }
+            events.add(new Event(event.time(), event.rank() + 1, i, true));
         }
         return log.results(rovers);
     }
