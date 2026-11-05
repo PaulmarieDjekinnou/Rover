@@ -91,7 +91,7 @@ java -jar simulator/target/rover.jar --map simulator/src/main/resources/mars-mis
 
 ## Telemetry with Kafka
 
-A mission can send its telemetry to Kafka (`--telemetry localhost:9092`) or to a file (`--telemetry file:mission.jsonl`); a ground station archives it in PostgreSQL, and mission control follows the rovers live, in the console or on a web page. Topics, messages, the archive and how to run the chain with Docker Compose: **[guide/telemetry.md](guide/telemetry.md)**.
+A mission can send its telemetry to Kafka (`--telemetry localhost:9092`) or to a file (`--telemetry file:mission.jsonl`); a mission with a date sends it through the link to Earth (relay orbiters, light delay, solar conjunctions). A ground station archives it in PostgreSQL, mission control follows the rovers live, in the console or on a web page, and a Kafka Streams application follows the link: each pass of an orbiter and the messages lost. Topics, messages, the archive and how to run the chain with Docker Compose: **[guide/telemetry.md](guide/telemetry.md)**.
 
 ## Requirements
 
@@ -135,7 +135,7 @@ The project has three Maven modules:
 |---|---|
 | `telemetry-model` | the messages the simulator sends and the ground station reads, their JSON and their topics |
 | `simulator` | the simulator: rovers on a plateau, missions to a planet, and their telemetry (`rover.jar`) |
-| `ground-station` | the ground station, which archives the telemetry in PostgreSQL (`ground-station.jar`); it only knows the messages, never the simulator |
+| `ground-station` | the ground station, which archives the telemetry in PostgreSQL (`ground-station.jar`), mission control, and the link monitor (Kafka Streams); it only knows the messages, never the simulator |
 
 The integration tests (`*IT`) run against real Kafka and PostgreSQL servers (`ChainIT` sends a mission through Kafka and checks what the ground station archives), started in Docker by Testcontainers, with `./mvnw verify`; without Docker, they are skipped. GitHub Actions runs them.
 
@@ -185,11 +185,13 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `RoverPositions` | follows the exact position of each rover that landed, turn by turn, across the poles too |
 | | `Link` | the link to Earth of a mission with a date: the passes of the relay orbiters, how many messages a pass carries and a rover keeps, the light delay and the solar conjunctions |
 | `telemetry` | `RoverTelemetry`, `RoverEvent`, `MissionStatus` | the messages a mission sends |
+| | `RelayPass`, `RoverLink` | what the link monitor finds: each pass of an orbiter, and the link of each rover so far |
 | | `TelemetryListener` | turns the landings, the turns and the end of a mission into messages |
 | | `TelemetrySink`, `TelemetrySinks`, `KafkaSink`, `JsonLinesSink` | where the messages go: Kafka, a file, or a list in tests |
 | | `Downlink` | the link to Earth between the messages and where they go: each rover keeps them until a pass of an orbiter, then they reach Earth after the light delay |
 | `ground` | `GroundStation`, `Receiver`, `Archive`, `JdbcArchive` | the ground station: reads the topics and archives the messages in PostgreSQL |
 | | `MissionControl`, `Dashboard`, `MissionView`, `WebPage` | mission control: follows the rovers of every mission live, in the console and on a web page |
+| | `LinkMonitor`, `JsonSerde` | the link monitor, a Kafka Streams application: groups the messages by pass and by rover, and counts the ones lost |
 | `input` | `SimulationReader`, `Scenario` | interface: a possible input for the simulation (text file, and later JSON, database…); what it describes, rovers on a plateau or a mission to a planet |
 | | `TextFileReader` | reads a file and passes its content to the parser of its format |
 | | `TextFormatParser` | reads and validates the plateau format, wherever the content comes from; errors give the line number |

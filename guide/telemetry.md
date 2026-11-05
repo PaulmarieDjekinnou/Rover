@@ -32,5 +32,12 @@ java -cp ground-station/target/ground-station.jar fr.paulm.projects.rover.ground
 java -jar simulator/target/rover.jar --speed 8877 --telemetry localhost:9092 simulator/src/main/resources/mars-mission.txt
 ```
 
+**The link monitor** is a Kafka Streams application: it follows the link to Earth from the telemetry and the events, and writes what it finds to two compacted topics. The messages of a rover that left at the same pass of an orbiter all reach Earth at the same time: grouped by that time, they give each pass in `rover.passes` (key `mission/rover/received seconds`: how many telemetry messages and events it carried, and the mission times of the oldest and newest of them). Grouped by rover, they give its link so far in `rover.links` (key `mission/rover`: how many messages reached Earth, how many were lost, which are the gaps in the sequence numbers whatever order the messages arrive in, when the latest one arrived, and the longest a message took). Each message updates its pass and its rover at once, so the last record of a key is the complete one. It runs exactly once: what it reads, its state and what it writes are committed together, so a message is counted once even if the application stops in the middle. Its state is kept in memory and rebuilt from Kafka when it starts again. A message it cannot read is logged and skipped:
+
+```bash
+java -cp ground-station/target/ground-station.jar fr.paulm.projects.rover.ground.LinkMonitor localhost:9092
+docker compose exec kafka /opt/kafka/bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic rover.links --from-beginning --property print.key=true
+```
+
 **Live.** With `--speed factor`, a mission runs at that many seconds of mission per real second, so that it can be followed live, in the history or in Kafka: `--speed 8877` runs a sol in about 10 seconds. The simulation waits before each turn until its time has come; on a plateau, the option is ignored with a warning.
 

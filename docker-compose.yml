@@ -36,6 +36,9 @@ services:
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic mission.status --partitions 1
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic rover.plans --partitions 3
         /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic rover.dead-letters --partitions 1
+        # What the link monitor finds: the last record of each pass and of each rover is the one that counts
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic rover.passes --partitions 3 --config cleanup.policy=compact
+        /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:29092 --create --if-not-exists --topic rover.links --partitions 3 --config cleanup.policy=compact
 
   postgres:
     image: postgres:17
