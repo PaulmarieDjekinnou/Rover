@@ -183,4 +183,32 @@ class ClockSimulationTest {
         assertEquals(List.of(OptionalInt.of(1), OptionalInt.of(1), OptionalInt.of(0)),
                 history(input).stream().map(Turn::actor).toList());
     }
+
+    @Test
+    void aRoverThatStopsPartwayCountsWhatItDrove() {
+        // A 3 minute move: the rover drives 1 minute, waits 9, then gives up
+        Pace giveUp = (rover, from, to, start, busy) -> Pace.Timing.stoppedAfter(Duration.ofMinutes(10), Duration.ofMinutes(9));
+        Terrain tenMeters = new Terrain() {
+            @Override
+            public boolean canDrive(Position from, Position to) {
+                return true;
+            }
+
+            @Override
+            public double distance(Position from, Position to) {
+                return 30;
+            }
+
+            @Override
+            public Duration driveTime(Position from, Position to) {
+                return Duration.ofMinutes(3);
+            }
+        };
+        MissionResult result = new ClockSimulation(giveUp).run(new SimulationInput(new Plateau(5, 5), tenMeters, false,
+                List.of(mission(0, 0, Direction.E, "M")))).getFirst();
+        assertEquals(new Position(0, 0), result.finalRover().position());
+        assertEquals(Duration.ofMinutes(1), result.drivingTime());
+        assertEquals(10, result.distanceMeters(), 1e-9);
+        assertEquals(Duration.ofMinutes(10), result.totalTime());
+    }
 }

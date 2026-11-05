@@ -57,6 +57,12 @@ final class MissionLog {
         waits[rover] = waits[rover].plus(time);
     }
 
+    // The rover drove part of an instruction it then gave up on: the time and the distance count.
+    void partway(int rover, Duration driving, double meters) {
+        times[rover] = times[rover].plus(driving);
+        distances[rover] += meters;
+    }
+
     // The rover can no longer act, from this time of the clock on: it leaves its other instructions undone.
     void stopped(int rover, Duration time) {
         stopTimes[rover] = time;

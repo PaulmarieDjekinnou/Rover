@@ -32,8 +32,8 @@ public record MissionResult(Rover finalRover, int blockedByRovers, int blockedBy
         return stopTime.isPresent();
     }
 
-    // The time from the start of the rover to the end of its last instruction. A rover that stopped may have been
-    // busy with the instruction it gave up on: that time is neither driving nor waiting, see stopTime.
+    // The time from the start of the rover to the end of its last instruction, or to the moment it gave up.
+    // A rover that stopped counts the part of its last instruction it drove, but stays in the cell it left.
     public Duration totalTime() {
         return drivingTime.plus(waitingTime);
     }

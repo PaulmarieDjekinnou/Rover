@@ -161,7 +161,7 @@ Opportunity: 1.95S 354.97E (cell 1419 352) facing E
   battery 39%, panels 76% clean, local time 10:39, Sun 69 degrees high
 ```
 
-A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
+A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell, but the time and the distance it drove before giving up count. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
 
 ```
 Sol 7 09:51: Curiosity 4.99S 137.45E S 80% (night) | Perseverance 18.34N 77.61E W 30% (night) | Opportunity 1.95S 354.47E E 50%

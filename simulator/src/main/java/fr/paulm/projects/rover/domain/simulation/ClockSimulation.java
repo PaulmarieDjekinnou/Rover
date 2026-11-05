@@ -81,6 +81,11 @@ public final class ClockSimulation implements Simulation {
                         ? Pace.Timing.done(Duration.ZERO, Duration.ZERO) : pace.timing(i, rover, decision.next(), event.time(), busy);
                 log.waited(i, timing.waiting());
                 if (timing.stopped()) {
+                    // It drove part of the way before giving up: that time and distance count, but it stays in its cell
+                    Duration driven = timing.duration().minus(timing.waiting());
+                    double part = busy.isZero() ? 0 : Math.min(1, driven.toMillis() / (double) busy.toMillis());
+                    boolean move = decision.obstacle().isEmpty() && !decision.next().position().equals(rover.position());
+                    log.partway(i, driven, move ? part * input.terrain().distance(rover.position(), decision.next().position()) : 0);
                     log.stopped(i, event.time().plus(timing.duration()));
                     continue;
                 }
