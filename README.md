@@ -79,7 +79,7 @@ Cannot read file "input.txt": file not found
 
 An unexpected error (a bug) is reported as `Unexpected error: …`, followed by its stack trace.
 
-The simulation itself has no side effect: it returns its results, sends each turn to a listener given by `Main`, and `ConsoleReport` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `src/main/resources/logback.xml` sends them to the standard error output, with the message only.
+The simulation itself has no side effect: it returns its results, sends each turn to a listener given by `Main`, and `ConsoleReport` prints the final positions on the standard output. Warnings and errors are written with SLF4J and Logback; `simulator/src/main/resources/logback.xml` sends them to the standard error output, with the message only.
 
 ## Missions to Mars
 
@@ -123,7 +123,7 @@ orders MMMLMM
 
 Lines starting with `#` are comments. The whole file is checked before anything lands, and errors give the line number.
 
-**The planet.** `planet mars` uses the topography measured by the MOLA laser altimeter of Mars Global Surveyor (NASA, public domain), at 4 cells per degree: 1440 × 720 cells of about 15 km at the equator, in `src/main/resources/mars/` with the description of its format (`.lbl`). The planet is a sphere cut into a latitude / longitude grid: `x` is the column (the longitude, to the east) and `y` the row (the latitude, from the south pole). Going east or west wraps around the planet; going north from the last row crosses the north pole: the rover arrives on the same row, half a turn of longitude away, now facing south (and likewise at the south pole).
+**The planet.** `planet mars` uses the topography measured by the MOLA laser altimeter of Mars Global Surveyor (NASA, public domain), at 4 cells per degree: 1440 × 720 cells of about 15 km at the equator, in `simulator/src/main/resources/mars/` with the description of its format (`.lbl`). The planet is a sphere cut into a latitude / longitude grid: `x` is the column (the longitude, to the east) and `y` the row (the latitude, from the south pole). Going east or west wraps around the planet; going north from the last row crosses the north pole: the rover arrives on the same row, half a turn of longitude away, now facing south (and likewise at the south pole).
 
 **The landing.** A site is refused if it is too high (the parachute needs enough atmosphere), too far from the equator, or next to a slope the rover could not drive. Each rover then touches down at a random point of its ellipse. A rover that touches down less than 100 m from another rover, or in a cell it cannot leave, is lost: it takes no part in the simulation.
 
@@ -202,12 +202,12 @@ With the `--telemetry server:port` option, a mission to a planet also sends its 
 
 Each run has its own mission id. All the messages of a rover share its key, so they go to the same partition and stay in order. The producer waits for the broker to confirm each message (`acks=all`) and never doubles one when it retries (idempotence). Without the option, nothing is sent; on a plateau, the option is ignored with a warning.
 
-**The ground station** is a second application, in the same jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`, see `src/main/resources/ground/schema.sql`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and telemetry read twice is written once.
+**The ground station** is a second application, in its own module and jar: it reads the three topics (consumer group `ground-station`) and archives the messages in PostgreSQL (tables `missions`, `telemetry` and `events`, see `ground-station/src/main/resources/ground/schema.sql`). It commits its Kafka offsets only once the messages are in the database: after a crash, it reads them again, and telemetry read twice is written once.
 
 ```bash
 docker compose up -d     # Kafka (KRaft, with its topics) and PostgreSQL
-java -jar target/rover.jar --telemetry localhost:9092 src/main/resources/mars-mission.txt
-java -cp target/rover.jar fr.paulm.projects.rover.ground.GroundStation localhost:9092 jdbc:postgresql://localhost:5432/rover --until-idle 10
+java -jar simulator/target/rover.jar --telemetry localhost:9092 simulator/src/main/resources/mars-mission.txt
+java -jar ground-station/target/ground-station.jar localhost:9092 jdbc:postgresql://localhost:5432/rover --until-idle 10
 ```
 
 The database user and password come from `ROVER_DB_USER` and `ROVER_DB_PASSWORD` (`rover` by default).
@@ -223,12 +223,12 @@ Every push is built and tested by GitHub Actions (`.github/workflows/build.yml`)
 
 ```bash
 ./mvnw package
-java -jar target/rover.jar src/main/resources/input.txt
-java -jar target/rover.jar --step-by-step src/main/resources/input.txt
-java -jar target/rover.jar --simultaneous src/main/resources/input.txt
-java -jar target/rover.jar --step-by-step --history src/main/resources/input.txt
-java -jar target/rover.jar src/main/resources/mars-mission.txt
-java -jar target/rover.jar --history --map src/main/resources/mars-mission.txt
+java -jar simulator/target/rover.jar simulator/src/main/resources/input.txt
+java -jar simulator/target/rover.jar --step-by-step simulator/src/main/resources/input.txt
+java -jar simulator/target/rover.jar --simultaneous simulator/src/main/resources/input.txt
+java -jar simulator/target/rover.jar --step-by-step --history simulator/src/main/resources/input.txt
+java -jar simulator/target/rover.jar simulator/src/main/resources/mars-mission.txt
+java -jar simulator/target/rover.jar --history --map simulator/src/main/resources/mars-mission.txt
 ```
 
 ## Tests
@@ -237,7 +237,7 @@ java -jar target/rover.jar --history --map src/main/resources/mars-mission.txt
 ./mvnw test
 ```
 
-The tests read input files from `src/test/resources/simulations/`:
+The tests read input files from `simulator/src/test/resources/simulations/`:
 
 - `valid/<name>.txt`: input of a nominal case, run through the program and compared to the expected result in `<name>.expected.txt` (`MainTest`);
 - `invalid/<name>.txt`: input of an error case, used to check that errors are reported (`TextFileReaderTest`, `MainTest`).
@@ -247,6 +247,15 @@ To add a nominal case, create both files and add the name to `MainTest.validFile
 `ArchitectureTest` (ArchUnit) checks the direction of the dependencies between packages: `domain` depends on nothing else; `domain.simulation` and `mars.planet` only on `domain`, and never on each other; `mars.rover` on `mars.planet`; `mars.mission` on all these; `input` on all of them; and only the root package uses everything. The build fails if a dependency goes the wrong way.
 
 ## Structure
+
+The project has three Maven modules:
+
+| Module | Content |
+|---|---|
+| `telemetry-model` | the messages the simulator sends and the ground station reads, their JSON and their topics |
+| `simulator` | the simulator: rovers on a plateau, missions to a planet, and their telemetry (`rover.jar`) |
+| `ground-station` | the ground station, which archives the telemetry in PostgreSQL (`ground-station.jar`); it only knows the messages, never the simulator |
+
 
 All classes are in the `fr.paulm.projects.rover` package.
 

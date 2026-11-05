@@ -45,4 +45,4 @@ services:
       POSTGRES_PASSWORD: ${ROVER_DB_PASSWORD:-rover}
     volumes:
       # Run once, when the database is created
-      - ./src/main/resources/ground/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+      - ./ground-station/src/main/resources/ground/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro

@@ -4,9 +4,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- The Rover project: the simulator, the ground station that archives its telemetry,
+         and the format of the messages they share -->
     <groupId>fr.paulm.projects</groupId>
-    <artifactId>Rover</artifactId>
+    <artifactId>rover-parent</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>telemetry-model</module>
+        <module>simulator</module>
+        <module>ground-station</module>
+    </modules>
 
     <properties>
         <maven.compiler.release>25</maven.compiler.release>
@@ -15,109 +24,111 @@
         <logback.version>1.6.5</logback.version>
         <kafka.version>4.4.0</kafka.version>
         <jackson.version>2.22.4</jackson.version>
+        <testcontainers.version>2.0.5</testcontainers.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>ch.qos.logback</groupId>
-            <artifactId>logback-classic</artifactId>
-            <version>${logback.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.14</version>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.11.3</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.tngtech.archunit</groupId>
-            <artifactId>archunit-junit5</artifactId>
-            <version>1.5.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>fr.paulm.projects</groupId>
+                <artifactId>telemetry-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.kafka</groupId>
+                <artifactId>kafka-clients</artifactId>
+                <version>${kafka.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-databind</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>42.7.14</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>5.11.3</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>1.5.1</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
-        <finalName>rover</finalName>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.4.2</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>fr.paulm.projects.rover.Main</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <!-- Packages the dependencies (SLF4J, Logback) into rover.jar so that java -jar works on its own -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.6.2</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                        <configuration>
-                            <createDependencyReducedPom>false</createDependencyReducedPom>
-                            <transformers>
-                                <!-- SLF4J finds Logback through META-INF/services -->
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>fr.paulm.projects.rover.Main</mainClass>
-                                </transformer>
-                            </transformers>
-                            <filters>
-                                <filter>
-                                    <artifact>*:*</artifact>
-                                    <excludes>
-                                        <exclude>META-INF/*.SF</exclude>
-                                        <exclude>META-INF/*.DSA</exclude>
-                                        <exclude>META-INF/*.RSA</exclude>
-                                        <exclude>META-INF/MANIFEST.MF</exclude>
-                                    </excludes>
-                                </filter>
-                            </filters>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.4.2</version>
+                </plugin>
+                <!-- Packages an application with its dependencies, so that java -jar works on its own.
+                     Each application module sets main.class -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.6.2</version>
+                    <executions>
+                        <execution>
+                            <phase>package</phase>
+                            <goals>
+                                <goal>shade</goal>
+                            </goals>
+                            <configuration>
+                                <createDependencyReducedPom>false</createDependencyReducedPom>
+                                <transformers>
+                                    <!-- SLF4J finds Logback through META-INF/services -->
+                                    <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                        <mainClass>${main.class}</mainClass>
+                                    </transformer>
+                                </transformers>
+                                <filters>
+                                    <filter>
+                                        <artifact>*:*</artifact>
+                                        <excludes>
+                                            <exclude>META-INF/*.SF</exclude>
+                                            <exclude>META-INF/*.DSA</exclude>
+                                            <exclude>META-INF/*.RSA</exclude>
+                                            <exclude>META-INF/MANIFEST.MF</exclude>
+                                        </excludes>
+                                    </filter>
+                                </filters>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
-
 </project>
