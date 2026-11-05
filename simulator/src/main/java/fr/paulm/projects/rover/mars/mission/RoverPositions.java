@@ -1,5 +1,6 @@
 package fr.paulm.projects.rover.mars.mission;
 
+import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.simulation.Turn;
 import fr.paulm.projects.rover.domain.simulation.TurnListener;
@@ -39,6 +40,17 @@ public final class RoverPositions implements TurnListener {
             }
             states.set(i, after);
         }
+    }
+
+    // A rover that stopped during a move: it got this part of the way toward the cell (not across a pole).
+    public void partway(int rover, Position toward, double part) {
+        Rover state = states.get(rover);
+        Coordinates from = planet.centerOf(state.position());
+        Coordinates to = planet.centerOf(toward);
+        double eastward = ((to.longitude() - from.longitude()) % 360 + 540) % 360 - 180;
+        Coordinates point = points.get(rover);
+        points.set(rover, new Coordinates(Math.clamp(point.latitude() + part * (to.latitude() - from.latitude()), -90, 90),
+                point.longitude() + part * eastward));
     }
 
     // Where a rover that landed is now, in input order among the rovers that landed.

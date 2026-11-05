@@ -210,5 +210,7 @@ class ClockSimulationTest {
         assertEquals(Duration.ofMinutes(1), result.drivingTime());
         assertEquals(10, result.distanceMeters(), 1e-9);
         assertEquals(Duration.ofMinutes(10), result.totalTime());
+        // A third of the way toward (1, 0)
+        assertEquals(Optional.of(new MissionResult.Partway(new Position(1, 0), 1 / 3.0)), result.partway());
     }
 }

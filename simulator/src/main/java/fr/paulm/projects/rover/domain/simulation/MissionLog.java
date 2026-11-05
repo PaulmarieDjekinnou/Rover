@@ -1,6 +1,7 @@
 package fr.paulm.projects.rover.domain.simulation;
 
 import fr.paulm.projects.rover.domain.Obstacle;
+import fr.paulm.projects.rover.domain.Position;
 import fr.paulm.projects.rover.domain.Rover;
 import fr.paulm.projects.rover.domain.Terrain;
 
@@ -22,6 +23,7 @@ final class MissionLog {
     private final Duration[] times;
     private final Duration[] waits;
     private final Duration[] stopTimes;
+    private final MissionResult.Partway[] partways;
 
     MissionLog(int rovers, Terrain terrain) {
         this.terrain = terrain;
@@ -33,6 +35,7 @@ final class MissionLog {
         waits = new Duration[rovers];
         Arrays.fill(waits, Duration.ZERO);
         stopTimes = new Duration[rovers];
+        partways = new MissionResult.Partway[rovers];
     }
 
     void blocked(int rover, Obstacle obstacle) {
@@ -58,9 +61,12 @@ final class MissionLog {
     }
 
     // The rover drove part of an instruction it then gave up on: the time and the distance count.
-    void partway(int rover, Duration driving, double meters) {
+    void partway(int rover, Duration driving, double meters, Position toward, double part) {
         times[rover] = times[rover].plus(driving);
         distances[rover] += meters;
+        if (part > 0) {
+            partways[rover] = new MissionResult.Partway(toward, part);
+        }
     }
 
     // The rover can no longer act, from this time of the clock on: it leaves its other instructions undone.
@@ -73,7 +79,7 @@ final class MissionLog {
         List<MissionResult> results = new ArrayList<>();
         for (int i = 0; i < finalRovers.size(); i++) {
             results.add(new MissionResult(finalRovers.get(i), blockedByRovers[i], blockedByTerrain[i],
-                    distances[i], times[i], waits[i], Optional.ofNullable(stopTimes[i])));
+                    distances[i], times[i], waits[i], Optional.ofNullable(stopTimes[i]), Optional.ofNullable(partways[i])));
         }
         return results;
     }

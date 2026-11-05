@@ -133,7 +133,7 @@ class MainTest {
         // Polar crossed the north pole: its path goes through the northern row on both sides of the planet
         assertEquals(List.of(
                 "",
-                "Around Polar (P Polar, C Climber; lower case where they landed, ~ where they drove):",
+                "Around Polar (P Polar, C Climber; lower case where they landed, ~ where they drove, o rock fields):",
                 "Relief from 0 m (.) to 9000 m (@), north up, 8 x 4 cells:",
                 "~...~...",
                 "p..cP...",

@@ -127,6 +127,19 @@ final class MissionReport {
         List<Touchdown> landed = deployment.landed();
         List<Character> labels = labels(landed);
         Map<Position, Character> marks = new HashMap<>();
+        // The rock fields around each rover, as o
+        for (int i = 0; i < results.size(); i++) {
+            Position center = results.get(i).finalRover().position();
+            for (int dx = -15; dx <= 15; dx++) {
+                for (int dy = -7; dy <= 7; dy++) {
+                    int y = center.y() + dy;
+                    Position cell = new Position(Math.floorMod(center.x() + dx, deployment.planet().grid().columns()), y);
+                    if (y >= 0 && y < deployment.planet().grid().rows() && deployment.planet().rocky(cell)) {
+                        marks.put(cell, 'o');
+                    }
+                }
+            }
+        }
         for (int i = 0; i < results.size(); i++) {
             tracks.of(i).forEach(cell -> marks.put(cell, '~'));
         }
@@ -143,7 +156,7 @@ final class MissionReport {
         for (int i = 0; i < results.size(); i++) {
             out.println();
             out.println("Around " + nameOf(landed.get(i)) + " (" + String.join(", ", legend)
-                    + "; lower case where they landed, ~ where they drove):");
+                    + "; lower case where they landed, ~ where they drove, o rock fields):");
             reliefMap.draw(deployment.planet(), results.get(i).finalRover().position(), marks).forEach(out::println);
         }
     }

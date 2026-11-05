@@ -154,6 +154,11 @@ public class Main {
         } finally {
             sink.ifPresent(TelemetrySink::close);
         }
+        // A rover that stopped during a move is where it got to, not where it started from
+        for (int i = 0; i < results.size(); i++) {
+            int rover = i;
+            results.get(i).partway().ifPresent(way -> positions.partway(rover, way.toward(), way.part()));
+        }
         missionReport.results(deployment, results, positions, batteries, pilots);
         if (commandLine.map()) {
             missionReport.maps(deployment, results, tracks);

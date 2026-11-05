@@ -97,7 +97,8 @@ public final class ClockSimulation implements Simulation {
                     Duration driven = timing.duration().minus(timing.waiting());
                     double part = busy.isZero() ? 0 : Math.min(1, driven.toMillis() / (double) busy.toMillis());
                     boolean move = decision.obstacle().isEmpty() && !decision.next().position().equals(rover.position());
-                    log.partway(i, driven, move ? part * input.terrain().distance(rover.position(), decision.next().position()) : 0);
+                    log.partway(i, driven, move ? part * input.terrain().distance(rover.position(), decision.next().position()) : 0,
+                            decision.next().position(), move ? part : 0);
                     log.stopped(i, event.time().plus(timing.duration()));
                     continue;
                 }

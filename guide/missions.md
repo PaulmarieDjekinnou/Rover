@@ -84,14 +84,14 @@ Opportunity: 1.95S 354.97E (cell 1419 352) facing E
   battery 41%, panels 93% clean, local time 10:09, Sun 56 degrees high
 ```
 
-A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell, but the time and the distance it drove before giving up count. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
+A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell, but the time and the distance it drove before giving up count, and its position is where it got to. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
 
 ```
 Sol 7 09:51: Curiosity 4.99S 137.45E S 80% (night) | Perseverance 18.34N 77.61E W 30% (night) | Opportunity 1.95S 354.47E E 50%
 Sol 7 20:30: Curiosity 4.99S 137.45E S 58% | Perseverance 18.34N 77.36E W 80% | Opportunity 1.95S 354.47E E 0% (night)
 ```
 
-With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window. Each rover has its own letter (the first letter of its name that no rover before it uses, or else a free letter, then a digit: up to 36 rovers), in capitals where it is, in lower case where it landed, and `~` marks the cells the rovers drove through. Around Curiosity, the floor of Gale crater appears as dots:
+With the `--map` option, a map of the relief around each rover is drawn after the results, north up: each cell is a character from the lowest (`.`) to the highest (`@`) elevation of the window. Each rover has its own letter (the first letter of its name that no rover before it uses, or else a free letter, then a digit: up to 36 rovers), in capitals where it is, in lower case where it landed, `~` marks the cells the rovers drove through, and `o` the rock fields. Around Curiosity, the floor of Gale crater appears as dots:
 
 ```
 Around Curiosity (C Curiosity, P Perseverance; lower case where they landed, ~ where they drove):
