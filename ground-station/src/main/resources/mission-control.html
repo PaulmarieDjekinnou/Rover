@@ -23,24 +23,25 @@
 <h1>Mission Control</h1>
 <div id="missions"><p class="muted">Waiting for telemetry…</p></div>
 <script>
-// Draws each mission: a table of its rovers, and their positions on a longitude / latitude map of the planet.
+// Draws each mission: the time on Earth, a table of its rovers (with how old their news are), and their positions on
+// a longitude / latitude map of the planet.
 function draw(missions) {
   const root = document.getElementById('missions');
   if (missions.length === 0) return;
   root.innerHTML = '';
   for (const mission of missions) {
     const section = document.createElement('section');
-    section.innerHTML = '<h2>' + (mission.clock || '') + ' <span class="muted">mission ' + mission.missionId
+    section.innerHTML = '<h2>' + (mission.clock || '') + ' <span class="muted">on Earth, mission ' + mission.missionId
       + (mission.ended ? ' (ended)' : '') + '</span></h2>';
     const table = document.createElement('table');
     table.innerHTML = '<tr><th>Rover</th><th>Latitude</th><th>Longitude</th><th>Heading</th><th>Battery</th>'
-      + '<th>Sky</th><th>Dust</th><th>Status</th></tr>';
+      + '<th>Sky</th><th>Dust</th><th>News</th><th>Status</th></tr>';
     for (const r of mission.rovers) {
       const row = table.insertRow();
       row.innerHTML = '<td>' + r.name + '</td><td>' + r.latitude.toFixed(2) + '</td><td>' + r.longitude.toFixed(2)
         + '</td><td>' + r.direction + '</td><td><span class="bar"><span style="width:' + r.battery.toFixed(0)
         + '%"></span></span> ' + r.battery.toFixed(0) + ' %</td><td>' + (r.night ? 'night' : 'day') + '</td><td>'
-        + r.dust.toFixed(1) + '</td><td>' + r.status + '</td>';
+        + r.dust.toFixed(1) + '</td><td>' + r.age + ' old</td><td>' + r.status + '</td>';
     }
     section.appendChild(table);
     const canvas = document.createElement('canvas');

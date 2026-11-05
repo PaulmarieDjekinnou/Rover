@@ -16,7 +16,7 @@ class DashboardTest {
     private final Dashboard dashboard = new Dashboard();
 
     private RoverTelemetry at(String mission, String rover, long seconds, double battery, boolean night) {
-        return new RoverTelemetry(mission, rover, 0, seconds, "Sol " + seconds / 88_775 + " 10:00", -4.5, 137.4, 0, 0,
+        return new RoverTelemetry(mission, rover, seconds, seconds, "Sol " + seconds / 88_775 + " 10:00", -4.5, 137.4, 0, 0,
                 "S", battery, night, 0, 0.5, 1);
     }
 
@@ -28,7 +28,7 @@ class DashboardTest {
         assertEquals(2, screen.size());
         assertTrue(screen.get(0).contains("mission m1"), screen.get(0));
         assertTrue(screen.get(1).startsWith("Curiosity"), screen.get(1));
-        assertTrue(screen.get(1).contains("########..  80 %  night  dust 0.5  active"), screen.get(1));
+        assertTrue(screen.get(1).contains("########..  80 %  night  dust 0.5  00:00 old      active"), screen.get(1));
     }
 
     @Test
@@ -36,6 +36,33 @@ class DashboardTest {
         dashboard.telemetry(at("m1", "Spirit", 0, 50, false));
         dashboard.telemetry(at("m1", "Opportunity", 200_000, 50, false));
         assertTrue(dashboard.render().get(2).endsWith("silent"), dashboard.render().get(2));
+    }
+
+    @Test
+    void theClockIsTheTimeOnEarthAndEachRoverShowsHowOldItsNewsAre() {
+        // Sent at Sol 1 00:00, received three hours of Mars later
+        dashboard.telemetry(at("m1", "Curiosity", 88_775, 50, false).received(88_775 + 11_097));
+        List<String> screen = dashboard.render();
+        assertTrue(screen.get(0).startsWith("Sol 1 03:00"), screen.get(0));
+        assertTrue(screen.get(1).contains("03:00 old"), screen.get(1));
+        assertEquals("03:00", ((Map<?, ?>) ((List<?>) dashboard.json().getFirst().get("rovers")).getFirst()).get("age"));
+    }
+
+    @Test
+    void aMessageThatArrivesLateNeverReplacesANewerState() {
+        dashboard.telemetry(at("m1", "Curiosity", 200, 80, false));
+        dashboard.telemetry(at("m1", "Curiosity", 100, 20, false).received(300));
+        assertTrue(dashboard.render().get(1).contains(" 80 %"), dashboard.render().get(1));
+    }
+
+    @Test
+    void aRoverIsSilentWhenNothingFromItHasReachedEarthForASol() {
+        // Both rovers sent at the same time, but the news of Spirit took more than a sol to arrive
+        dashboard.telemetry(at("m1", "Spirit", 0, 50, false).received(1_000));
+        dashboard.telemetry(at("m1", "Opportunity", 0, 50, false).received(100_000));
+        List<String> screen = dashboard.render();
+        assertTrue(screen.get(1).endsWith("active"), screen.get(1));
+        assertTrue(screen.get(2).endsWith("silent"), screen.get(2));
     }
 
     @Test

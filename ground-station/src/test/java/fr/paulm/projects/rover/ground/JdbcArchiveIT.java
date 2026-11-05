@@ -60,4 +60,16 @@ class JdbcArchiveIT {
         assertEquals(1, count("telemetry"));
         assertEquals(1, count("events"));
     }
+
+    @Test
+    void eachMessageKeepsWhenItReachedEarth() throws Exception {
+        try (Archive archive = new JdbcArchive(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword())) {
+            archive.telemetry(new RoverTelemetry("m2", "Spirit", 0, 60, "Sol 0 00:01", 1, 2, 3, 4, "N", 90, false, 10, 0.5, 1)
+                    .received(900));
+            archive.event(new RoverEvent("m2", "Spirit", 0, 0, "Sol 0 00:00", RoverEvent.Type.LANDED, "here").received(840));
+            archive.commit();
+        }
+        assertEquals(1, count("telemetry WHERE mission_id = 'm2' AND mission_seconds = 60 AND received_seconds = 900"));
+        assertEquals(1, count("events WHERE mission_id = 'm2' AND received_seconds = 840"));
+    }
 }

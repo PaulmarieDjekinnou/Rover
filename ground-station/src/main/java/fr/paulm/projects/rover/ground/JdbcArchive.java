@@ -14,7 +14,7 @@ import java.sql.Timestamp;
 
 // The archive in PostgreSQL, with plain JDBC, in one transaction per poll. The schema is created and upgraded by
 // Flyway when the archive opens (db/migration: V1 the tables, V2 the numbers of the events, V3 the plans of the rovers,
-// the dust and the length of the sol).
+// the dust and the length of the sol, V4 when each message reached Earth).
 // Telemetry and events read twice are written once, thanks to their primary keys (mission, rover, sequence).
 // A mission is created by the first message that mentions it: the start of a mission and its telemetry come
 // through different topics, so nothing says which one arrives first. The start then fills the mission in.
@@ -58,22 +58,24 @@ public final class JdbcArchive implements Archive {
         update("""
                 INSERT INTO telemetry (mission_id, rover, sequence, mission_seconds, mission_clock, latitude, longitude,
                                        cell_x, cell_y, direction, battery_percent, night, distance_meters,
-                                       dust_opacity, panel_cleanliness)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                       dust_opacity, panel_cleanliness, received_seconds)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT DO NOTHING""",
                 m.missionId(), m.rover(), m.sequence(), m.missionSeconds(), m.missionClock(), m.latitude(), m.longitude(),
                 m.cellX(), m.cellY(), m.direction(), m.batteryPercent(), m.night(), m.distanceMeters(), m.dustOpacity(),
-                m.panelCleanliness());
+                m.panelCleanliness(), m.receivedSeconds());
     }
 
     @Override
     public void event(RoverEvent m) {
         ensureMission(m.missionId());
         update("""
-                INSERT INTO events (mission_id, rover, sequence, mission_seconds, mission_clock, type, detail)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO events (mission_id, rover, sequence, mission_seconds, mission_clock, type, detail,
+                                    received_seconds)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT DO NOTHING""",
-                m.missionId(), m.rover(), m.sequence(), m.missionSeconds(), m.missionClock(), m.type().name(), m.detail());
+                m.missionId(), m.rover(), m.sequence(), m.missionSeconds(), m.missionClock(), m.type().name(), m.detail(),
+                m.receivedSeconds());
     }
 
     @Override
