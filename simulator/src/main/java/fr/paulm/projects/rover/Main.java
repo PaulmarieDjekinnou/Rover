@@ -125,7 +125,7 @@ public class Main {
         missionReport.landings(deployment);
         // The batteries and the operations set the pace: a rover waits when it must recharge, outside its drive
         // window, or once it has driven its distance of the sol
-        Batteries batteries = new Batteries(deployment, mission.operations());
+        Batteries batteries = new Batteries(deployment, mission.operations(), mission.seed());
         // The exact positions follow each turn, the tracks are drawn on the maps; each turn is printed
         // as soon as it is over, with the history option
         RoverPositions positions = new RoverPositions(deployment);

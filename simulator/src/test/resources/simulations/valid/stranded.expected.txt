@@ -3,4 +3,4 @@ Stranded landed on Sol 0 00:00 at 22.50N 67.50E (cell 1 2), 0.0 km from its targ
 Stranded: 22.50N 67.50E (cell 1 2) facing E
   stopped on Sol 669 12:49, out of energy
   0.0 km driven in 0.0 sols, 669.5 sols waiting
-  battery 0%, local time 00:49, night
+  battery 0%, panels 12% clean, local time 00:49, night

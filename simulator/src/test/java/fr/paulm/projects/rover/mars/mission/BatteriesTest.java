@@ -141,4 +141,21 @@ class BatteriesTest {
         assertThrows(InvalidInputException.class, () -> new Operations(15, 10, 100));
         assertThrows(InvalidInputException.class, () -> new Operations(10, 15, 0));
     }
+
+    @Test
+    void solarPanelsGatherDustAndTheWindCleansThem() {
+        Batteries batteries = batteries(new PowerSystem(new PowerSource.SolarPanels(1.3), 600), 0.5);
+        // A long wait in the dark: a turn of 300 sols, with the battery too low to work
+        drive(batteries, Duration.ZERO, Mars.SOL.multipliedBy(300));
+        double clean = batteries.panelCleanliness(0);
+        assertTrue(clean < 1, "dust settled: " + clean);
+        assertTrue(clean > 0.55, "the wind cleaned them now and then: " + clean);
+    }
+
+    @Test
+    void aRoverWithoutPanelsHasNothingToClean() {
+        Batteries batteries = batteries(PowerSystem.DEFAULT, 0.5);
+        drive(batteries, Duration.ZERO, Duration.ofHours(10));
+        assertEquals(1, batteries.panelCleanliness(0));
+    }
 }

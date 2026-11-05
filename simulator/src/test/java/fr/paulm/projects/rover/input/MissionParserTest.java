@@ -109,7 +109,8 @@ class MissionParserTest {
     @Test
     void readsTheSky() {
         PlanetMission mission = parse("start-ls 150", "landing-time 15:30", "dust-opacity 2");
-        assertEquals(new Sky(150, 15.5, 2), mission.sky());
+        // A dust opacity given in the file stays the same: no weather
+        assertEquals(new Sky(150, 15.5, 2, false), mission.sky());
     }
 
     @Test
@@ -151,7 +152,7 @@ class MissionParserTest {
             "landing-time 3pm                   | Line 4: Invalid time: \"3pm\". Expected: hh:mm, for example 15:00",
             "drive-window 15:00 10:00          | Line 4: Invalid operations: a drive window from 15.0 to 10.0 hours and 100.0 m per sol. Expected: a window within the day, and a positive distance",
             "max-drive-per-sol 0               | Line 4: Invalid operations: a drive window from 10.0 to 15.0 hours and 0.0 m per sol. Expected: a window within the day, and a positive distance",
-            "dust-opacity -1                    | Line 4: Invalid sky: solar longitude 0.0, dust opacity -1.0. Expected: a dust opacity that is not negative",
+            "dust-opacity -1                    | Line 4: Invalid dust opacity: -1.0. Expected: a number that is not negative",
             "speed fast                         | Line 4: Invalid number: \"fast\"",
             "speed 0                            | Line 4: Invalid mobility: speed 0.0 m/s, max slope 10.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",
             "max-slope 90                       | Line 4: Invalid mobility: speed 0.04 m/s, max slope 90.0 degrees, turn time PT5M. Expected: a positive speed, a slope below 90 and a turn time that is not negative",

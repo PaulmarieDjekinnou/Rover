@@ -13,6 +13,7 @@ import fr.paulm.projects.rover.mars.mission.Touchdown;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.Sun;
+import fr.paulm.projects.rover.mars.rover.PowerSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,9 @@ final class MissionReport {
             out.println(String.format(Locale.ROOT, "  %.1f km driven in %.1f sols, %.1f sols waiting",
                     result.distanceMeters() / 1_000, sols(result.drivingTime(), planet), sols(result.waitingTime(), planet)));
             Duration end = result.stopTime().orElse(landed.get(i).time().plus(result.totalTime()));
-            out.println(String.format(Locale.ROOT, "  battery %.0f%%, %s", 100 * batteries.charge(i),
+            String panels = landed.get(i).plan().power().source() instanceof PowerSource.SolarPanels
+                    ? String.format(Locale.ROOT, ", panels %.0f%% clean", 100 * batteries.panelCleanliness(i)) : "";
+            out.println(String.format(Locale.ROOT, "  battery %.0f%%%s, %s", 100 * batteries.charge(i), panels,
                     sky(deployment.sun(), positions.of(i), end)));
         }
     }

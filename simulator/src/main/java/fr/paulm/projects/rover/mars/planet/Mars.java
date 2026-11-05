@@ -12,8 +12,10 @@ public final class Mars {
     public static final Duration SOL = Duration.ofSeconds(88_775);
 
     // A year of 668.6 sols, an axis tilted by 25.19 degrees (close to the Earth's 23.44, so Mars has seasons too),
-    // and about 586 W/m2 of sunlight above the atmosphere, 43 % of what the Earth gets
-    public static final Orbit ORBIT = new Orbit(668.6, 25.19, 586);
+    // about 586 W/m2 of sunlight above the atmosphere at the mean distance, 43 % of what the Earth gets, and an
+    // eccentric orbit (0.0934, against 0.0167 for the Earth) with its perihelion near Ls 251, in the southern
+    // spring: sunlight varies by about 20 % over the year, and the southern summers are short and hot
+    public static final Orbit ORBIT = new Orbit(668.6, 25.19, 586, 0.0934, 251);
 
     private Mars() {
     }

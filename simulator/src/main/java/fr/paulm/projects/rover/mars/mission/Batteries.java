@@ -5,12 +5,15 @@ import fr.paulm.projects.rover.domain.simulation.Pace;
 import fr.paulm.projects.rover.mars.planet.Coordinates;
 import fr.paulm.projects.rover.mars.planet.Planet;
 import fr.paulm.projects.rover.mars.planet.Sun;
+import fr.paulm.projects.rover.mars.rover.PowerSource;
 import fr.paulm.projects.rover.mars.rover.PowerSystem;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.SplittableRandom;
 import java.util.TreeMap;
 
 // The batteries of the rovers that landed, followed through the mission: the pace of the rovers on the clock.
@@ -20,6 +23,9 @@ import java.util.TreeMap;
 // and recharges until its battery is four fifths full, then goes on: a solar rover drives by day, and spends its
 // nights waiting. A rover whose battery does not reach that level in a whole year of waiting is stopped for good,
 // as Spirit was in 2010.
+// Solar panels gather dust: they lose 0.15 % of their power a sol, three times faster in a dust storm, until the wind
+// cleans them (about once in 60 sols, drawn from the seed, giving back 30 % of their power), as the "cleaning
+// events" that kept Spirit and Opportunity going. These rates are orders of magnitude, not a fit to the missions.
 // The operations add their rules (see Operations): a rover drives only in its drive window, at its local time,
 // and at most its distance per sol; otherwise it waits, using its idle power, until the next window or sol.
 // The power is computed step by step (10 minutes), where the rover is: between the centers of the cell it leaves
@@ -30,6 +36,10 @@ public final class Batteries implements Pace {
     private static final Duration STEP = Duration.ofMinutes(10);
     private static final double RESERVE = 0.2;
     private static final double RECHARGED = 0.8;
+    private static final double DUSTING_PER_SOL = 0.0015;
+    private static final double STORM_OPACITY = 2;
+    private static final double CLEANINGS_PER_SOL = 1 / 60.0;
+    private static final double CLEANING = 0.3;
 
     private final Planet planet;
     private final Sun sun;
@@ -41,6 +51,9 @@ public final class Batteries implements Pace {
     // The local sol of each rover (counted from the start of the mission), and how far it has driven in it
     private final long[] sols;
     private final double[] drivenThisSol;
+    // How clean the solar panels of each rover are, from 0 to 1, and the draws of the wind that cleans them
+    private final double[] cleanliness;
+    private final List<SplittableRandom> winds = new ArrayList<>();
     // The level of each battery as it went, at each step: the history needs it at any time
     private final List<TreeMap<Duration, Double>> histories = new ArrayList<>();
 
@@ -49,7 +62,12 @@ public final class Batteries implements Pace {
         this(deployment, Operations.UNLIMITED);
     }
 
+    // With the operations, and no seed for the wind.
     public Batteries(Deployment deployment, Operations operations) {
+        this(deployment, operations, 0);
+    }
+
+    public Batteries(Deployment deployment, Operations operations, long seed) {
         this.planet = deployment.planet();
         this.sun = deployment.sun();
         this.operations = operations;
@@ -59,7 +77,10 @@ public final class Batteries implements Pace {
         this.charging = new boolean[systems.size()];
         this.sols = new long[systems.size()];
         this.drivenThisSol = new double[systems.size()];
+        this.cleanliness = new double[systems.size()];
+        Arrays.fill(cleanliness, 1);
         for (int i = 0; i < systems.size(); i++) {
+            winds.add(new SplittableRandom(seed * 31 + i));
             TreeMap<Duration, Double> history = new TreeMap<>();
             history.put(starts.get(i), levels[i]);
             histories.add(history);
@@ -70,6 +91,11 @@ public final class Batteries implements Pace {
     @Override
     public Duration start(int rover) {
         return starts.get(rover);
+    }
+
+    // How clean the solar panels of a rover are after its last instruction, from 0 to 1 (1 without panels).
+    public double panelCleanliness(int rover) {
+        return cleanliness[rover];
     }
 
     // How full the battery of a rover is after its last instruction, from 0 to 1.
@@ -122,6 +148,10 @@ public final class Batteries implements Pace {
             double used = working ? PowerSystem.ACTIVE_WATTS : PowerSystem.IDLE_WATTS;
             double done = busy.isZero() ? 0 : 1 - left.toMillis() / (double) busy.toMillis();
             double produced = system.source().watts(sun, along(from, to, done), time);
+            if (system.source() instanceof PowerSource.SolarPanels) {
+                produced *= cleanliness[rover];
+                gatherDust(rover, step, time);
+            }
             double hours = step.toMillis() / 3_600_000.0;
             levels[rover] = Math.clamp(levels[rover] + (produced - used) * hours, 0, capacity);
             histories.get(rover).put(time.plus(step), levels[rover]);
@@ -139,6 +169,16 @@ public final class Batteries implements Pace {
             time = time.plus(step);
         }
         return Timing.done(busy, waited);
+    }
+
+    // The dust settles on the panels during a step, faster in a storm, and the wind may clean them.
+    private void gatherDust(int rover, Duration step, Duration time) {
+        double sols = step.toMillis() / (double) planet.dayLength().toMillis();
+        double rate = DUSTING_PER_SOL * (sun.opticalDepth(time) > STORM_OPACITY ? 3 : 1);
+        cleanliness[rover] = Math.max(0, cleanliness[rover] - rate * sols);
+        if (winds.get(rover).nextDouble() < CLEANINGS_PER_SOL * sols) {
+            cleanliness[rover] = Math.min(1, cleanliness[rover] + CLEANING);
+        }
     }
 
     // The local sol at a place: it changes at local midnight.

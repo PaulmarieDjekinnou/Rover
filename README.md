@@ -111,7 +111,7 @@ orders MMMLMM
 | `landing-time 15:00` | optional: the local solar time at the start of the mission, at the site of the first rover (12:00 by default) |
 | `drive-window 10:00 15:00` | optional: the local solar times between which the rovers drive and turn (10:00 to 15:00 by default) |
 | `max-drive-per-sol 100` | optional: the farthest a rover drives in a sol, in meters (100 by default) |
-| `dust-opacity 0.5` | optional: the optical depth of the dust in the atmosphere, which weakens sunlight: about 0.5 on a clear day, above 4 in a global dust storm (0.5 by default) |
+| `dust-opacity 0.5` | optional: a dust opacity that stays the same all along: about 0.5 on a clear day, above 4 in a global dust storm (by default, the weather of Mars, see below) |
 | `rover <name>` | starts the block of a rover |
 | `site <latitude> <longitude>` | where the rover aims: latitude negative in the south, longitude from 0 to 360 to the east |
 | `ellipse <major> <minor> <azimuth>` | optional: the landing ellipse, axes in km, azimuth of the major axis in degrees from north (none by default) |
@@ -130,7 +130,9 @@ Lines starting with `#` are comments. The whole file is checked before anything 
 
 **The drive.** A move is blocked by the terrain when the slope between the two cells is steeper than `max-slope`, uphill or downhill. Distances are measured in meters between the centers of the cells, along the surface; climbing slows the rover down, to half its speed at the steepest slope. Unlike on the plateau, several rovers can be in the same cell: a cell is about 15 km wide, so they are kilometers apart, and rovers never block each other. Each instruction takes its time: a move lasts its distance divided by the speed, a turn on the spot `turn-minutes` (5 minutes by default), and a move blocked by the terrain no time. A rover starts its next instruction as soon as the previous one is over, and all the rovers share the same clock: the simulation handles the ends of instructions in time order. The three modes of the plateau do not apply to a mission: their options are ignored, with a warning. On a plateau, where instructions take no time, this clock would give exactly the step-by-step mode.
 
-**The Sun.** The planet turns on itself once a sol and goes around the Sun once a year (668.6 sols on Mars), on an axis tilted by 25.19 degrees, which makes the seasons. From the season (Ls), the time and the place, the simulation knows the local solar time and how high the Sun is. Sunlight on the ground is about 586 W/m2 above the atmosphere of Mars, weakened by the dust, all the more as the Sun is low.
+**The Sun.** The planet turns on itself once a sol and goes around the Sun once a year (668.6 sols on Mars), on an axis tilted by 25.19 degrees, which makes the seasons. Its orbit is eccentric (0.0934): Mars goes faster near the Sun (Kepler's equation gives where it is), so the seasons do not last the same time (the northern spring about 194 sols, the northern autumn about 142), and sunlight above the atmosphere goes from about 490 W/m2 at the aphelion to 713 at the perihelion (Ls 251). From the season (Ls), the time and the place, the simulation knows the local solar time and how high the Sun is. Sunlight on the ground is weakened by the dust, all the more as the Sun is low.
+
+**The weather.** Unless `dust-opacity` fixes it, the dust follows the weather of Mars: clear skies in the northern spring and summer, twice as much dust at the height of the dust season (Ls 270), two regional storms a year in that season, and one year in three a global storm that lasts for months (opacity above 4), as in 2001, 2007 and 2018. The storms are drawn from the seed. Solar panels gather dust (0.15 % of their power a sol, three times faster in a storm) until the wind cleans them (about once in 60 sols, giving back 30 %); the results give how clean they are. These rates are orders of magnitude, not a fit to the missions.
 
 **The waypoints.** Instead of orders, a rover can be given waypoints (`goto`), as real missions give destinations. Once it has landed, its route is planned on the orbital map with an A* search: the states are a cell and a direction (turning takes time), a step is a turn or a move the terrain allows, its cost is its time, and the estimate of the time left is the distance as the crow flies at the speed on flat ground, so the route is the fastest one. The route becomes ordinary instructions (L, R, M). Planning stops at the first waypoint no route reaches; the results say how many were reached (`route to 1 of 2 waypoints, none to 5.08S 137.85E`), and the telemetry sends a `NO_ROUTE` event.
 
@@ -155,8 +157,8 @@ Perseverance: 18.84N 76.86E (cell 307 435) facing N
   71.7 km driven in 21.0 sols, 695.8 sols waiting
   battery 99%, local time 10:36, Sun 63 degrees high
 Opportunity: 1.95S 354.97E (cell 1419 352) facing E
-  29.6 km driven in 8.3 sols, 286.6 sols waiting
-  battery 70%, local time 10:32, Sun 63 degrees high
+  29.6 km driven in 8.3 sols, 688.6 sols waiting
+  battery 39%, panels 76% clean, local time 10:39, Sun 69 degrees high
 ```
 
 A rover that ran out of energy gets one more line, with the time it stopped: `stopped on Sol 668 17:39, out of energy`. The instruction it was on is not done: it stays in its cell. Warnings name the rovers: `Climber: 1 move(s) blocked by the terrain.` With `--history`, a line is printed each time an instruction ends, in time order: the time of the common clock, as the sol since the start of the mission (from 0) and the time of day (a sol cut into 24 hours, like the local time on Mars), then each rover that has landed by then, with its position, direction and battery charge, `(night)` where the Sun is down, and the names of the blocked rovers:
@@ -192,7 +194,7 @@ meters-per-digit 1000
 00090000
 ```
 
-**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The orbit is taken as a circle: the seasons go at a steady pace, whereas the eccentric orbit of Mars makes its southern summers shorter and hotter. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its consumption does not depend on the slope or the temperature, and dust does not settle on its panels.
+**Simplifications.** At 4 cells per degree, slopes are smoothed over about 15 km, which is why the default slope limit is low. A move goes from a cell to the next one, and its distance is the one between their centers. The rover keeps the place where it touched down inside its cell: its exact position makes the same step as its cell at each move. Across a pole, it goes on to the other side, so a rover north of the center of its cell ends south of the center of the next one. The power of a rover is computed every 10 minutes, where the rover is along its way between the centers of two cells; its consumption does not depend on the slope or the temperature, and its panels lie flat.
 
 ## Telemetry with Kafka
 
@@ -301,7 +303,8 @@ All classes are in the `fr.paulm.projects.rover` package.
 | | `MissionResult`, `MissionLog` | how a mission ended: the rover's final state, its moves blocked by rovers and by the terrain, the distance, the time driving and waiting, and whether it stopped; the log that counts them during the simulation |
 | `mars.planet` | `Coordinates`, `Mars` | latitude and longitude, the center of a cell, the distance along the surface; the constants of Mars |
 | | `Planet`, `ElevationMap` | a sphere of a given radius and day length, cut into the grid of its elevation map; the height of each cell |
-| | `Orbit`, `Sun` | the year, the tilt of the axis and the sunlight of a planet; the season, the local time, the height of the Sun and the sunlight on the ground |
+| | `Orbit`, `Sun` | the year, the tilt of the axis, the sunlight and the eccentricity of a planet (Kepler's equation); the season, the local time, the height of the Sun and the sunlight on the ground |
+| | `Dust`, `DustWeather` | the dust in the atmosphere: constant, or the dust season and the storms of Mars |
 | `mars.rover` | `RoutePlanner` | the A* search of the fastest route to a waypoint |
 | | `ReliefTerrain`, `Mobility` | the slopes between cells, which ones a rover can drive and how long it takes; the speed and slope limit of the rovers |
 | | `PowerSource`, `PowerSystem` | a radioisotope generator or solar panels; the source and the battery of a rover, and what it uses |

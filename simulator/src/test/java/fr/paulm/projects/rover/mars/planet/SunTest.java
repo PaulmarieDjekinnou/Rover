@@ -13,8 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SunTest {
 
-    // A planet with the day and the orbit of Mars
-    private final Planet planet = TestPlanets.planet(10_000, 100, "00", "00");
+    // A planet with the day of Mars, on a circular orbit like Mars's (the eccentricity is tested in OrbitTest)
+    private final Planet planet = new Planet("circle", 10_000, Mars.SOL, new Orbit(668.6, 25.19, 586),
+            ElevationMap.fromDigits(java.util.List.of("00", "00"), 100));
     private final Sun equinox = new Sun(planet, 0, 0, 0);
     private final double precision = 1e-6;
 

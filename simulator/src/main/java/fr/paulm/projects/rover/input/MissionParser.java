@@ -37,7 +37,8 @@ import java.util.function.Function;
 //   turn-minutes 5                optional: how long a turn on the spot takes, in minutes
 //   start-ls 150                  optional: the season at the landing, as a solar longitude in degrees (0 by default)
 //   landing-time 15:00            optional: the local time of the landing, at the site of the first rover (12:00)
-//   dust-opacity 0.5              optional: the optical depth of the dust in the atmosphere (0.5 by default)
+//   dust-opacity 0.5              optional: a dust opacity that stays the same all along (by default, the weather of
+//                                 Mars: a dust season and storms on a clear base of 0.5)
 //   drive-window 10:00 15:00      optional: the local times between which the rovers drive (10:00 to 15:00)
 //   max-drive-per-sol 100         optional: the farthest a rover drives in a sol, in meters (100 by default)
 //   landing-max-elevation -1000   optional: the highest landing site allowed, in meters
@@ -194,7 +195,8 @@ public final class MissionParser {
         if (settings.containsKey("dust-opacity")) {
             settings.get("dust-opacity").check(() -> new Sky(startLs, hours, dust).sun(planet, new Coordinates(0, 0)));
         }
-        return new Sky(startLs, hours, dust);
+        // A dust opacity given in the file stays the same all along; otherwise, the weather of Mars
+        return new Sky(startLs, hours, dust, !settings.containsKey("dust-opacity"));
     }
 
     // "3 14:00": sol 3 of the mission, at 14:00 local time.

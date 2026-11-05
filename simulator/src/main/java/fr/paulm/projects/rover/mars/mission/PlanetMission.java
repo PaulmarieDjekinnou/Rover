@@ -58,7 +58,7 @@ public record PlanetMission(Planet planet, Mobility mobility, LandingRules landi
     // The Sun of the mission: the landing time is the local time at the site of the first rover.
     public Sun sun() {
         Coordinates site = rovers.isEmpty() ? new Coordinates(0, 0) : rovers.getFirst().site().target();
-        return sky.sun(planet, site);
+        return sky.sun(planet, site, seed);
     }
 
     public Landing landing() {
